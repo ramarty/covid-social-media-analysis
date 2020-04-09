@@ -2,6 +2,7 @@
 
 # Load Data --------------------------------------------------------------------
 trends_df <- readRDS(file.path(dropbox_file_path, "Data/google_trends/RawData/brazil_extract.Rds"))
+geo_data <- readRDS(file.path(dropbox_file_path, "Data/GADM/RawData/gadm36_BRA_1_sp.rds"))
 
 # Clean Variables --------------------------------------------------------------
 
@@ -16,8 +17,21 @@ trends_df$date <- trends_df$date %>% as.Date()
 
 # Merge with Shapefile ---------------------------------------------------------
 
+sf_geo_data <- st_as_sf(geo_data)
+
+sf_geo_data <- 
+  sf_geo_data %>% 
+  mutate(HASC_1 = str_replace(HASC_1, pattern = "[.]", replacement = "-"))
+
+data_trends_geo <- 
+  data_trends %>% 
+  left_join(sf_geo_data, by = c("geo" = "HASC_1"))
+
 # TODO
 
 # Export -----------------------------------------------------------------------
+saveRDS(trends_df, file.path(dropbox_file_path, "Data/google_trends/FinalData/brazil_extract_clean.Rds"))
+write.csv(trends_df, file.path(dropbox_file_path, "Data/google_trends/FinalData/brazil_extract_clean.csv"), row.names = F)
+
 saveRDS(trends_df, file.path(dropbox_file_path, "Data/google_trends/FinalData/brazil_extract_clean.Rds"))
 write.csv(trends_df, file.path(dropbox_file_path, "Data/google_trends/FinalData/brazil_extract_clean.csv"), row.names = F)
