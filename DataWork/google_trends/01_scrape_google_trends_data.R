@@ -2,6 +2,7 @@
 
 # RESOURCES
 # https://github.com/GeneralMills/pytrends
+# https://support.google.com/trends/answer/4365533?hl=en
 
 # Grab admin codes to scrape ---------------------------------------------------
 data("countries")
@@ -12,6 +13,9 @@ brazil_search$id <- 1:nrow(brazil_search)
 
 brazil_search$search_group <- rep(1:550, each=5)[1:nrow(brazil_search)]
 
+# Categories ----
+data("categories")
+
 # Scrape Data ------------------------------------------------------------------
 
 ## Initialize dataframe
@@ -19,10 +23,12 @@ trends_df_all <- data.frame(NULL)
 
 ## Loop through search terms
 for(term in c("febre", 
+              "covid",
               "coronavirus", 
               "sintomas do coronavirus",
               "febre alta valor",
-              "tosse")){
+              "tosse",
+              "perda de olfato")){
   
   ## Scrape for specific localities
   trends_df <- lapply(1:27, function(i){
@@ -32,8 +38,8 @@ for(term in c("febre",
     tryCatch({  
                out <- gtrends(term, 
                               category = "0",
-                              geo = brazil_search$sub_code[i],
-                              time = "today+5-y",
+                              geo = c(brazil_search$sub_code[i]),
+                              time = "today 3-m",
                               onlyInterest=T,
                               low_search_volume=T)
                

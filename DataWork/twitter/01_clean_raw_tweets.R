@@ -4,7 +4,7 @@
 # Produces CSV and Rds files for each date/hour. 
 
 #### Create list of tweet json files
-json_files <- lapply(c("2020-01", "2020-02", "2020-03"), function(yyyy_mm){
+json_files <- lapply(c("2020-01", "2020-02", "2020-03", "2020-04"), function(yyyy_mm){
   list.files(file.path(covid_twitter_github, yyyy_mm),
              full.names = T,
              pattern = ".jsonl.gz")
