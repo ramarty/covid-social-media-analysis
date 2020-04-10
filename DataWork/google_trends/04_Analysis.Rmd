@@ -36,11 +36,22 @@ trends_df <-
   )
 ```
 
+# Create new variables: death rate, cases & deaths per 100,000
 
-TO DOs:
-- create death rate
-- create cases per 100,000 people
-- create deaths per 100,000 people
+```{r}
+trends_df <- 
+  trends_df %>% 
+  mutate(
+    case_rate = cases*100000/estimate_2018_state, 
+    death_rate = deaths*100000/estimate_2018_state, 
+    fatalities_per_case = cases/deaths
+  )
+
+trends_df <- 
+  trends_df %>% 
+  mutate(fatalities_per_case = if_else(is.na(fatalities_per_case), 0, fatalities_per_case))
+```
+
 - check NAs for Rondonia and Santa Catalina
 
 
@@ -48,7 +59,7 @@ TO DOs:
 
 ```{r}
 trends_df %>% 
-  filter(!is.na(state), !is.na(keyword)) %>% 
+  filter(!is.na(state), !is.na(keyword), categories == "symptoms") %>% 
   count(keyword, date, hits, state) %>% 
   ggplot() +
   geom_line(aes(date, hits, group = state, color = state)) + 
