@@ -1,7 +1,7 @@
 # Clean Google Trends Data
 
 # Load Data --------------------------------------------------------------------
-trends_df <- readRDS(file.path(dropbox_file_path, "Data/google_trends/RawData/brazil_extract.Rds"))
+trends_df <- readRDS(file.path(dropbox_file_path, "Data/google_trends/RawData/brazil_extract_2020-04-10.Rds"))
 admin_data <- read.dta13(file.path(dropbox_file_path, "Data/brazil_admin_data/admindata.dta"))
 geo_data <- readRDS(file.path(dropbox_file_path, "Data/GADM/RawData/gadm36_BRA_1_sp.rds"))
 
