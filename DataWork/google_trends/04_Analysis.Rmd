@@ -1,0 +1,102 @@
+---
+title: "04_Analysis"
+output: html_document
+---
+
+```{r}
+trends_df <- read.csv(file.path(dropbox_file_path, "Data/google_trends/FinalData/brazil_admin_trends_clean.csv"))
+```
+
+# Cleaning of variables
+```{r}
+trends_df <- trends_df %>% mutate(date = as.Date(date))
+```
+
+# Searches per state
+
+```{r}
+trends_df %>% 
+  filter(!is.na(state), !is.na(keyword)) %>% 
+  count(keyword, date, hits, state) %>% 
+  ggplot() +
+  geom_line(aes(date, hits, group = state, color = state)) + 
+  facet_wrap(vars(keyword))
+```
+
+# Cases per state
+
+```{r}
+trends_df %>% 
+  filter(!is.na(state), !is.na(cases)) %>% 
+  count(cases, date, state) %>% 
+  ggplot() +
+  geom_line(aes(date, cases, group = state, color = state)) 
+
+```
+
+# Cases and deaths at the regional level 
+```{r}
+trends_df %>% 
+  filter(!is.na(state), !is.na(cases)) %>% 
+  group_by(region, date) %>% 
+  summarize(
+    sum_cases_region = sum(cases, na.rm = TRUE), 
+    sum_deaths_region = sum(deaths, na.rm = TRUE)
+  ) %>% 
+  pivot_longer(c(sum_cases_region, sum_deaths_region), names_to = "variable") %>% 
+  ggplot() +
+  geom_line(aes(date, value, group = region, color = region)) +
+  facet_wrap(vars(variable), scales = "free")
+
+```
+
+# Cases and deaths at the state level 
+```{r}
+trends_df %>% 
+  filter(!is.na(state), !is.na(cases)) %>% 
+  group_by(state, date) %>% 
+  summarize(
+    sum_cases_state = sum(cases, na.rm = TRUE), 
+    sum_deaths_state = sum(deaths, na.rm = TRUE)
+  ) %>% 
+  pivot_longer(c(sum_cases_state, sum_deaths_state), names_to = "variable") %>% 
+  ggplot() +
+  geom_line(aes(date, value, group = state, color = state)) +
+  facet_wrap(vars(variable), scales = "free")
+
+```
+
+# We decide to focus on top 5 states in number of cases
+
+```{r}
+top_5_states <- 
+  trends_df %>% 
+  group_by(state) %>% 
+  summarize(sum_cases = sum(cases, na.rm = TRUE)) %>% 
+  arrange(desc(sum_cases)) %>% 
+  head(5) %>% 
+  mutate(state = as.character(state)) %>%
+  pull(state)
+```
+
+Just checking the hits per keyword across states
+```{r}
+trends_df %>% 
+  filter(state %in% top_5_states) %>% 
+  count(keyword, date, hits, state) %>% 
+  ggplot() +
+  geom_line(aes(date, hits, group = state, color = state)) + 
+  facet_wrap(vars(keyword))
+```
+
+We now change the focus to the state level, and see the correlations of each keyword with the number of cases
+```{r}
+trends_df %>% 
+  filter(state %in% top_5_states) %>% 
+  count(keyword, date, hits, state, cases) %>% 
+  ggplot() +
+  geom_line(aes(date, hits, group = keyword, color = keyword)) + 
+  geom_line(aes(date, cases)) +
+  facet_wrap(vars(state), scales = "free")
+```
+
