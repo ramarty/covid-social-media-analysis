@@ -7,10 +7,42 @@ output: html_document
 trends_df <- read.csv(file.path(dropbox_file_path, "Data/google_trends/FinalData/brazil_admin_trends_clean.csv"))
 ```
 
-# Cleaning of variables
+# Cleaning and creation of new variables
 ```{r}
 trends_df <- trends_df %>% mutate(date = as.Date(date))
 ```
+
+# We create categories for key words
+
+```{r}
+trends_df <- 
+  trends_df %>% 
+  mutate(
+    categories = case_when(
+      keyword %in% 
+        c("abuso", "abuso sexual", "desemprego",  "dívida", "Educação online",
+          "psicologia", "terapia" ) ~ "consequences",
+      keyword %in% 
+        c("cama de hospital", "desinfetantes", "hidroxicloroquina", 
+          "máscara facial", "termômetros", "ventiladores") ~ "resources",
+      keyword %in% 
+        c( "dificuldade ao respirar", "dor nos olhos", "falta de cheiro", 
+           "febre", "febre alta valor","perda de olfato", "tosse",
+           "sintomas do coronavirus") ~ "symptoms",
+      keyword %in% 
+        c("distância social","fique em casa", "lavar as mãos") ~ "prevention", 
+      keyword %in% c("coronavirus", "covid") ~ "virus"
+      )
+  )
+```
+
+
+TO DOs:
+- create death rate
+- create cases per 100,000 people
+- create deaths per 100,000 people
+- check NAs for Rondonia and Santa Catalina
+
 
 # Searches per state
 
@@ -97,6 +129,18 @@ trends_df %>%
   ggplot() +
   geom_line(aes(date, hits, group = keyword, color = keyword)) + 
   geom_line(aes(date, cases)) +
-  facet_wrap(vars(state), scales = "free")
+  facet_wrap(vars(state), scales = "free") +
+  coord_cartesian(ylim = c(0, 100))
+```
+
+
+```{r}
+trends_df %>% 
+  count(keyword, date, hits, state, cases) %>% 
+  ggplot() +
+  geom_line(aes(date, hits, group = keyword, color = keyword)) + 
+  facet_wrap(vars(state), scales = "free") +
+  geom_line(aes(date, cases)) +
+  coord_cartesian(ylim = c(0, 100))
 ```
 
