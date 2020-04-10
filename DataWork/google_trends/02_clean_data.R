@@ -24,14 +24,12 @@ sf_geo_data <-
   mutate(HASC_1 = str_replace(HASC_1, pattern = "[.]", replacement = "-"))
 
 data_trends_geo <- 
-  data_trends %>% 
+  trends_df %>% 
   left_join(sf_geo_data, by = c("geo" = "HASC_1"))
-
-# TODO
 
 # Export -----------------------------------------------------------------------
 saveRDS(trends_df, file.path(dropbox_file_path, "Data/google_trends/FinalData/brazil_extract_clean.Rds"))
 write.csv(trends_df, file.path(dropbox_file_path, "Data/google_trends/FinalData/brazil_extract_clean.csv"), row.names = F)
 
-saveRDS(trends_df, file.path(dropbox_file_path, "Data/google_trends/FinalData/brazil_extract_clean.Rds"))
-write.csv(trends_df, file.path(dropbox_file_path, "Data/google_trends/FinalData/brazil_extract_clean.csv"), row.names = F)
+saveRDS(data_trends_geo, file.path(dropbox_file_path, "Data/google_trends/FinalData/brazil_geo_clean.Rds"))
+write.csv(data_trends_geo, file.path(dropbox_file_path, "Data/google_trends/FinalData/brazil_geo_clean.csv"), row.names = F)
