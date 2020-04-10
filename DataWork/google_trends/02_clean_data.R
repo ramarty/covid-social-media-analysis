@@ -4,6 +4,7 @@
 trends_df <- readRDS(file.path(dropbox_file_path, "Data/google_trends/RawData/brazil_extract_2020-04-10.Rds"))
 admin_data <- read.dta13(file.path(dropbox_file_path, "Data/brazil_admin_data/admindata.dta"))
 geo_data <- readRDS(file.path(dropbox_file_path, "Data/GADM/RawData/gadm36_BRA_1_sp.rds"))
+state_pop_data <- read.csv(file.path(dropbox_file_path, "Data/city_population/FinalData/brazil_state_pop.csv"))
 
 # Clean Variables --------------------------------------------------------------
 
@@ -16,7 +17,7 @@ trends_df$hits <- trends_df$hits %>% as.numeric()
 # Convert into date format
 trends_df$date <- trends_df$date %>% as.Date()
 
-# Merge google trends data with admin cases and deaths---------------------------------------------------------
+# Merge admin cases with deaths and pop data---------------------------------------------------------
 
 admin_data <- 
   admin_data %>% 
@@ -24,6 +25,15 @@ admin_data <-
     state_en = stringi::stri_trans_general(state, "Latin-ASCII") %>% str_to_upper(), 
     date = as.Date(date)
   ) 
+
+admin_data <- 
+  admin_data %>% 
+  left_join(
+    state_pop_data, 
+    by = c("state" = "State")
+  )
+
+# Merge google trends data with admin data---------------------------------------------------------
 
 trends_admin_df <- 
   admin_data %>% 
