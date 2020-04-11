@@ -57,25 +57,81 @@ trends_df <-
 
 # Searches per state
 
+Evolution of symptoms
 ```{r}
 trends_df %>% 
   filter(!is.na(state), !is.na(keyword), categories == "symptoms") %>% 
   count(keyword, date, hits, state) %>% 
   ggplot() +
   geom_line(aes(date, hits, group = state, color = state)) + 
+  geom_smooth(aes(date, hits)) +
   facet_wrap(vars(keyword))
 ```
 
+Consequences
+```{r}
+trends_df %>% 
+  filter(!is.na(state), !is.na(keyword), categories == "consequences") %>% 
+  count(keyword, date, hits, state) %>% 
+  ggplot() +
+  geom_line(aes(date, hits, group = state, color = state)) + 
+  geom_smooth(aes(date, hits)) +
+  facet_wrap(vars(keyword))
+```
+Prevention
+```{r}
+trends_df %>% 
+  filter(!is.na(state), !is.na(keyword), categories == "prevention") %>% 
+  count(keyword, date, hits, state) %>% 
+  ggplot() +
+  geom_line(aes(date, hits, group = state, color = state)) + 
+  geom_smooth(aes(date, hits)) +
+  facet_wrap(vars(keyword))
+```
+
+
+Resources
+
+```{r}
+trends_df %>% 
+  filter(!is.na(state), !is.na(keyword), categories == "resources") %>% 
+  count(keyword, date, hits, state) %>% 
+  ggplot() +
+  geom_line(aes(date, hits, group = state, color = state)) + 
+  geom_smooth(aes(date, hits)) +
+  facet_wrap(vars(keyword))
+```
+
+
 # Cases per state
 
+Total number of cases across states
 ```{r}
 trends_df %>% 
   filter(!is.na(state), !is.na(cases)) %>% 
   count(cases, date, state) %>% 
   ggplot() +
   geom_line(aes(date, cases, group = state, color = state)) 
-
 ```
+
+Case rate per state
+```{r}
+trends_df %>% 
+  filter(!is.na(state), !is.na(case_rate)) %>% 
+  count(case_rate, date, state) %>% 
+  ggplot() +
+  geom_line(aes(date, case_rate, group = state, color = state)) 
+```
+
+Death rate per state
+```{r}
+trends_df %>% 
+  filter(!is.na(state), !is.na(death_rate)) %>% 
+  count(death_rate, date, state) %>% 
+  ggplot() +
+  geom_line(aes(date, death_rate, group = state, color = state)) 
+```
+
 
 # Cases and deaths at the regional level 
 ```{r}
@@ -106,7 +162,6 @@ trends_df %>%
   ggplot() +
   geom_line(aes(date, value, group = state, color = state)) +
   facet_wrap(vars(variable), scales = "free")
-
 ```
 
 # We decide to focus on top 5 states in number of cases
@@ -136,6 +191,15 @@ We now change the focus to the state level, and see the correlations of each key
 ```{r}
 trends_df %>% 
   filter(state %in% top_5_states) %>% 
+  count(keyword, date, hits, state, cases) %>% 
+  ggplot() +
+  geom_line(aes(date, hits, group = keyword, color = keyword)) + 
+  geom_line(aes(date, cases)) +
+  facet_wrap(vars(state), scales = "free") +
+  coord_cartesian(ylim = c(0, 100))
+
+trends_df %>% 
+  filter(state %in% top_5_states, keyword %in% c("coronavirus", "febre", "tosse", "fique em casa")) %>% 
   count(keyword, date, hits, state, cases) %>% 
   ggplot() +
   geom_line(aes(date, hits, group = keyword, color = keyword)) + 
