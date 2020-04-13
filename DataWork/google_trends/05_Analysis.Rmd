@@ -1,59 +1,27 @@
 ---
-title: "04_Analysis"
-output: html_document
+title: "05_Analysis"
+author: Manuel Ramos
+output: 
+  html_document:
+    toc: true
+    toc_depth: 3
+    code_folding: hide
+    toc_fold: TRUE
 ---
 
-```{r}
-trends_df <- read.csv(file.path(dropbox_file_path, "Data/google_trends/FinalData/brazil_admin_trends_clean.csv"))
+```{r, include = FALSE}
+library(tidyverse)
+library(gridExtra)
+
+#trends_df <- read.csv(file.path(dropbox_file_path, "Data/google_trends/FinalData/brazil_trends_clean_final.csv"))
+
+trends_df <- read.csv("/Users/wb537287/Dropbox/COVID Social Media Analysis/Data/google_trends/FinalData/brazil_trends_clean_final.csv")
+
 ```
 
-# Cleaning and creation of new variables
 ```{r}
 trends_df <- trends_df %>% mutate(date = as.Date(date))
 ```
-
-# We create categories for key words
-
-```{r}
-trends_df <- 
-  trends_df %>% 
-  mutate(
-    categories = case_when(
-      keyword %in% 
-        c("abuso", "abuso sexual", "desemprego",  "dívida", "Educação online",
-          "psicologia", "terapia" ) ~ "consequences",
-      keyword %in% 
-        c("cama de hospital", "desinfetantes", "hidroxicloroquina", 
-          "máscara facial", "termômetros", "ventiladores") ~ "resources",
-      keyword %in% 
-        c( "dificuldade ao respirar", "dor nos olhos", "falta de cheiro", 
-           "febre", "febre alta valor","perda de olfato", "tosse",
-           "sintomas do coronavirus") ~ "symptoms",
-      keyword %in% 
-        c("distância social","fique em casa", "lavar as mãos") ~ "prevention", 
-      keyword %in% c("coronavirus", "covid") ~ "virus"
-      )
-  )
-```
-
-# Create new variables: death rate, cases & deaths per 100,000
-
-```{r}
-trends_df <- 
-  trends_df %>% 
-  mutate(
-    case_rate = cases*100000/estimate_2018_state, 
-    death_rate = deaths*100000/estimate_2018_state, 
-    fatalities_per_case = cases/deaths
-  )
-
-trends_df <- 
-  trends_df %>% 
-  mutate(fatalities_per_case = if_else(is.na(fatalities_per_case), 0, fatalities_per_case))
-```
-
-- check NAs for Rondonia and Santa Catalina
-
 
 # Searches per state
 
@@ -164,7 +132,53 @@ trends_df %>%
   facet_wrap(vars(variable), scales = "free")
 ```
 
-# We decide to focus on top 5 states in number of cases
+# States ordered by death and case rate on April 1st
+
+```{r}
+case_rate_per_state <- 
+  trends_df %>% 
+  filter(date == "2020-04-01", is.na(keyword) | keyword == "coronavirus") %>% 
+  ggplot() +
+  geom_col(aes(fct_reorder(state, case_rate), case_rate)) +
+  coord_flip() +
+  labs(x = "Cases per 100,000 people")
+
+death_rate_per_state <- 
+  trends_df %>% 
+  filter(date == "2020-04-01", is.na(keyword) | keyword == "coronavirus") %>% 
+  ggplot() +
+  geom_col(aes(fct_reorder(state, death_rate), death_rate)) +
+  coord_flip() +
+  labs(x = "Deaths per 100,000 people")
+
+
+fatality_per_case_state <- 
+  trends_df %>% 
+  filter(date == "2020-04-01", is.na(keyword) | keyword == "coronavirus") %>% 
+  ggplot() +
+  geom_col(aes(fct_reorder(state, fatalities_per_case), fatalities_per_case)) +
+  coord_flip() + 
+  labs(x = "Deaths per case")
+  
+grid.arrange(case_rate_per_state, death_rate_per_state, fatality_per_case_state, ncol = 3)
+```
+
+```{r}
+top_5_case_rate <- 
+  trends_df %>% 
+  filter(date == "2020-04-01", is.na(keyword) | keyword == "coronavirus") %>% 
+  arrange(desc(case_rate)) %>% 
+  head(5) %>% pull(state)
+
+top_5_death_rate <- 
+  trends_df %>% 
+  filter(date == "2020-04-01", is.na(keyword) | keyword == "coronavirus") %>% 
+  arrange(desc(death_rate)) %>% 
+  head(5) %>% pull(state)
+```
+
+
+# We focus on top 5 states in number of cases
 
 ```{r}
 top_5_states <- 
@@ -197,9 +211,11 @@ trends_df %>%
   geom_line(aes(date, cases)) +
   facet_wrap(vars(state), scales = "free") +
   coord_cartesian(ylim = c(0, 100))
+```
 
+```{r}
 trends_df %>% 
-  filter(state %in% top_5_states, keyword %in% c("coronavirus", "febre", "tosse", "fique em casa")) %>% 
+  filter(state %in% top_5_states, keyword %in% c("coronavirus", "febre", "tosse", "fique em casa") ) %>% 
   count(keyword, date, hits, state, cases) %>% 
   ggplot() +
   geom_line(aes(date, hits, group = keyword, color = keyword)) + 
@@ -208,6 +224,8 @@ trends_df %>%
   coord_cartesian(ylim = c(0, 100))
 ```
 
+- "fique em cassa" (stay at home) becomes popular after the increase in cases of coronavirus takes place.
+- in contrast, the increase in popularity of "coronavirus", "tosse" and "febre" precedes the increase in actual cases. 
 
 ```{r}
 trends_df %>% 
@@ -219,3 +237,68 @@ trends_df %>%
   coord_cartesian(ylim = c(0, 100))
 ```
 
+
+# Group by category, see the time lag between the average of the category and the case rate
+
+```{r}
+sum_cases_date <- 
+  trends_df %>% 
+  filter(!is.na(state), !is.na(cases), is.na(keyword) | keyword == "coronavirus") %>% 
+  group_by(date) %>% 
+  summarize(
+    cases_total = sum(cases, na.rm = TRUE), 
+    cases_mean = mean(cases, na.rm = TRUE), 
+    deaths_total = sum(deaths, na.rm = TRUE), 
+    deaths_mean = mean(deaths, na.rm = TRUE), 
+  )
+
+trends_df %>% 
+  filter(!is.na(categories)) %>% 
+  group_by(categories, date) %>% 
+  summarize(
+    mean_hits = mean(hits, na.rm = TRUE)
+  ) %>% 
+  ggplot() + 
+  geom_line(aes(date, mean_hits, group = categories, color = categories)) +
+  geom_line(data = sum_cases_date, aes(date, cases_total)) +
+  geom_line(data = sum_cases_date, aes(date, deaths_total)) +
+  coord_cartesian(ylim = c(0, 100))
+  
+```
+
+```{r}
+trends_df %>% 
+  filter(!is.na(categories), state %in% top_5_case_rate, categories != "consequences") %>% 
+  group_by(categories, state, date) %>% 
+  mutate(
+    mean_hits = mean(hits, na.rm = TRUE)
+  ) %>% 
+  ggplot() + 
+  geom_line(aes(date, mean_hits, group = categories, color = categories)) +
+  geom_line(aes(date, cases)) +
+  coord_cartesian(ylim = c(0, 100)) + 
+  facet_wrap(vars(state))
+```
+
+- people start to google about the virus and about symptoms around the time when the number of cases in Sao Paulo starts to increase. 
+- the search of those terms in the rest of states increases as well, so these searcehs
+
+```{r}
+trends_df %>% 
+  filter(!is.na(categories), categories != "consequences") %>% 
+  group_by(categories, state, date) %>% 
+  mutate(
+    mean_hits = mean(hits, na.rm = TRUE)
+  ) %>% 
+  ggplot() + 
+  geom_line(aes(date, mean_hits, group = categories, color = categories)) +
+  geom_line(aes(date, cases)) +
+  coord_cartesian(ylim = c(0, 100)) + 
+  facet_wrap(vars(state))
+```
+
+
+# TO DOs
+- reorder the states (figure out)
+- create dashboard
+- rescrape missing states
