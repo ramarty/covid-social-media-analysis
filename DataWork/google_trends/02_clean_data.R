@@ -2,9 +2,18 @@
 
 # Load Data --------------------------------------------------------------------
 trends_df <- readRDS(file.path(dropbox_file_path, "Data/google_trends/RawData/brazil_extract_2020-04-10.Rds"))
+trends_df_ms <- readRDS(file.path(dropbox_file_path, "Data/google_trends/RawData/brazil_extract_ms_2020-04-12.Rds"))
 admin_data <- read.dta13(file.path(dropbox_file_path, "Data/brazil_admin_data/admindata.dta"))
 geo_data <- readRDS(file.path(dropbox_file_path, "Data/GADM/RawData/gadm36_BRA_1_sp.rds"))
 state_pop_data <- read.csv(file.path(dropbox_file_path, "Data/city_population/FinalData/brazil_state_pop.csv"))
+
+# Merge trends_df with trends_df_ms
+trends_df <- 
+  trends_df %>% 
+  bind_rows(trends_df_ms)
+
+trends_df %>% 
+  count(name, date) %>% view() 
 
 # Clean Variables --------------------------------------------------------------
 
