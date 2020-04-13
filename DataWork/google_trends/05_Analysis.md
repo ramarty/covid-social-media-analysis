@@ -14,20 +14,12 @@ output:
     number_sections: true
 ---
 
-```{r global_options, include=FALSE}
-knitr::opts_chunk$set(fig.width=12, fig.height=8, warning=FALSE, message=FALSE)
-```
 
-```{r, include = FALSE}
-library(tidyverse)
-library(gridExtra)
 
-#trends_df <- read.csv(file.path(dropbox_file_path, "Data/google_trends/FinalData/brazil_trends_clean_final.csv"))
 
-trends_df <- read.csv("/Users/wb537287/Dropbox/COVID Social Media Analysis/Data/google_trends/FinalData/brazil_trends_clean_final.csv")
-```
 
-```{r}
+
+```r
 trends_df <- trends_df %>% mutate(date = as.Date(date))
 trends_df <- 
   trends_df %>% 
@@ -38,7 +30,8 @@ trends_df <-
 
 Evolution of symptoms and virus searches
 
-```{r}
+
+```r
 symptoms <- 
   trends_df %>% 
   filter(!is.na(state), !is.na(keyword), categories %in% c("symptoms", "virus"), !is.na(hits)) %>% 
@@ -58,9 +51,12 @@ symptoms <-
 symptoms
 ```
 
+![](05_Analysis_files/figure-html/unnamed-chunk-3-1.png)<!-- -->
+
 Evolution of prevention
 
-```{r}
+
+```r
 prevention <- 
   trends_df %>% 
   filter(!is.na(state), !is.na(keyword), categories == "prevention", !is.na(hits)) %>% 
@@ -80,9 +76,12 @@ prevention <-
 prevention
 ```
 
+![](05_Analysis_files/figure-html/unnamed-chunk-4-1.png)<!-- -->
+
 Evolution of Resources
 
-```{r}
+
+```r
 resources <- 
   trends_df %>% 
   filter(!is.na(state), !is.na(keyword), categories == "resources", !is.na(hits)) %>% 
@@ -102,9 +101,12 @@ resources <-
 resources
 ```
 
+![](05_Analysis_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
+
 Evolution of consequences
 
-```{r}
+
+```r
 consequences <- 
   trends_df %>% 
   filter(!is.na(state), !is.na(keyword), categories == "consequences", !is.na(hits)) %>% 
@@ -124,8 +126,11 @@ consequences <-
 consequences
 ```
 
+![](05_Analysis_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
+
 All in one graph
-```{r}
+
+```r
 trends_df %>% 
   filter(!is.na(state), !is.na(keyword), !is.na(hits)) %>% 
   group_by(date, keyword) %>% 
@@ -142,10 +147,13 @@ trends_df %>%
   facet_wrap(vars(keyword))
 ```
 
+![](05_Analysis_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
+
 # Covid-19 per state
 
 Total number of cases across states
-```{r}
+
+```r
 trends_df %>% 
   filter(!is.na(state), !is.na(cases)) %>% 
   count(cases, date, state) %>% 
@@ -157,9 +165,12 @@ trends_df %>%
   )
 ```
 
+![](05_Analysis_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
+
 Total number of deaths across states
 
-```{r}
+
+```r
 trends_df %>% 
   filter(!is.na(state), !is.na(cases)) %>% 
   count(deaths, date, state) %>% 
@@ -169,11 +180,13 @@ trends_df %>%
     title = "Deaths per State",
     color = "State"
   )
-
 ```
 
+![](05_Analysis_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
+
 Case rate per state
-```{r}
+
+```r
 trends_df %>% 
   filter(!is.na(state), !is.na(case_rate)) %>% 
   count(case_rate, date, state) %>% 
@@ -185,8 +198,11 @@ trends_df %>%
   )
 ```
 
+![](05_Analysis_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
+
 Death rate per state
-```{r}
+
+```r
 trends_df %>% 
   filter(!is.na(state), !is.na(death_rate)) %>% 
   count(death_rate, date, state) %>% 
@@ -198,11 +214,14 @@ trends_df %>%
   )
 ```
 
+![](05_Analysis_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
+
 
 # Cumulative figures of covid-19
 
 At the regional level 
-```{r}
+
+```r
 trends_df %>% 
   filter(!is.na(state), !is.na(cases)) %>% 
   group_by(region, date) %>% 
@@ -216,11 +235,13 @@ trends_df %>%
   labs(color = "Region", title = "Cumulative Number of Cases and Deaths per Region") +
   theme(plot.title = element_text(hjust = 0.55)) +
   facet_wrap(vars(variable), scales = "free")
-
 ```
 
+![](05_Analysis_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
+
 At the state level
-```{r}
+
+```r
 trends_df %>% 
   filter(!is.na(state), !is.na(cases)) %>% 
   group_by(state, date) %>% 
@@ -236,9 +257,12 @@ trends_df %>%
   facet_wrap(vars(variable), scales = "free")
 ```
 
+![](05_Analysis_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
+
 # States ordered by death and case rate on April 1st
 
-```{r}
+
+```r
 case_rate_per_state <- 
   trends_df %>% 
   filter(date == "2020-04-01", is.na(keyword) | keyword == "coronavirus") %>% 
@@ -267,7 +291,10 @@ fatality_per_case_state <-
 grid.arrange(case_rate_per_state, death_rate_per_state, fatality_per_case_state, ncol = 3)
 ```
 
-```{r}
+![](05_Analysis_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
+
+
+```r
 top_5_case_rate <- 
   trends_df %>% 
   filter(date == "2020-04-01", is.na(keyword) | keyword == "coronavirus") %>% 
@@ -284,7 +311,8 @@ top_5_death_rate <-
 
 # We focus on top 5 states in number of cases
 
-```{r}
+
+```r
 top_5_states <- 
   trends_df %>% 
   group_by(state) %>% 
@@ -296,7 +324,8 @@ top_5_states <-
 ```
 
 Just checking the hits per keyword across states
-```{r}
+
+```r
 trends_df %>% 
   filter(state %in% top_5_states) %>% 
   count(keyword, date, hits, state) %>% 
@@ -305,22 +334,27 @@ trends_df %>%
   facet_wrap(vars(keyword))
 ```
 
+![](05_Analysis_files/figure-html/unnamed-chunk-17-1.png)<!-- -->
+
 We now change the focus to the state level, and see the correlations of each keyword with the number of cases
 
 
 Selected keywords
 
-```{r}
+
+```r
 trends_df %>% 
   filter(state %in% top_5_states, keyword %in% c("coronavirus", "febre", "tosse", "fique em casa") ) %>% 
   count(keyword, date, hits, state, cases) %>% 
   ggplot() +
   geom_line(aes(date, hits, group = keyword, color = fct_reorder2(keyword, date, hits))) + 
-  geom_line(aes(date, cases, color = "covid-19 cases"), fill = "black", size = 1.5) +
+  geom_line(aes(date, cases)) +
   labs(color = "Keyword") +
   facet_wrap(vars(state), scales = "free") +
   coord_cartesian(ylim = c(0, 100))
 ```
+
+![](05_Analysis_files/figure-html/unnamed-chunk-18-1.png)<!-- -->
 
 - "fique em cassa" (stay at home) becomes popular after the increase in cases of coronavirus takes place.
 - in contrast, the increase in popularity of "coronavirus", "tosse" and "febre" precedes the increase in actual cases. 
@@ -330,7 +364,8 @@ trends_df %>%
 
 We group by category, then evaluate the time lag between the average of the category and the case rate
 
-```{r}
+
+```r
 sum_cases_date <- 
   trends_df %>% 
   filter(!is.na(state), !is.na(cases), is.na(keyword) | keyword == "coronavirus") %>% 
@@ -356,28 +391,14 @@ trends_df %>%
   ggplot2::annotate("text", label = "Cases", x = as.Date("2020-03-08"), y = 100, size = 4) +
   ggplot2::annotate("text", label = "Deaths", x = as.Date("2020-04-03"), y = 100, size = 4) +
   labs(color = "Category") +
-  coord_cartesian(ylim = c(0, 100)) +
-  theme_light()
-  
+  coord_cartesian(ylim = c(0, 100))
 ```
+
+![](05_Analysis_files/figure-html/unnamed-chunk-19-1.png)<!-- -->
 
 We now look into each of the states
-```{r}
-trends_df %>% 
-  filter(!is.na(categories), state %in% top_5_case_rate, categories != "consequences") %>% 
-  group_by(categories, state, date) %>% 
-  mutate(
-    mean_hits = mean(hits, na.rm = TRUE)
-  ) %>% 
-  ggplot() + 
-  geom_line(aes(date, mean_hits, group = categories, color = fct_reorder2(categories, date, mean_hits))) +
-  geom_line(aes(date, cases)) +
-  labs(color = "Category", caption = "The black line refers to number of cases") +
-  coord_cartesian(ylim = c(0, 100)) + 
-  facet_wrap(vars(state)) 
-```
 
-```{r}
+```r
 trends_df %>% 
   filter(!is.na(categories), state %in% top_5_case_rate, categories != "consequences") %>% 
   group_by(categories, state, date) %>% 
@@ -390,12 +411,16 @@ trends_df %>%
   labs(color = "Category", caption = "The black line refers to number of cases") +
   coord_cartesian(ylim = c(0, 100)) + 
   facet_wrap(vars(state)) +
-  theme_light()
+  cowplot::theme_minimal_vgrid() 
 ```
+
+![](05_Analysis_files/figure-html/unnamed-chunk-20-1.png)<!-- -->
+
 - people start to google about the virus and about symptoms around the time when the number of cases in Sao Paulo starts to increase. 
 - the search of those terms in the rest of states increases as well, so these searcehs
 
-```{r}
+
+```r
 trends_df %>% 
   filter(!is.na(categories), categories != "consequences", !is.na(state)) %>% 
   group_by(categories, state, date) %>% 
@@ -409,6 +434,8 @@ trends_df %>%
   coord_cartesian(ylim = c(0, 100)) + 
   facet_wrap(vars(state))
 ```
+
+![](05_Analysis_files/figure-html/unnamed-chunk-21-1.png)<!-- -->
 
 # TO DOs
 - create dashboard
