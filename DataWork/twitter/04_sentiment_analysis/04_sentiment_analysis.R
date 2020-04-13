@@ -126,7 +126,39 @@ tweets_sentiments %>%
 ggsave(filename = file.path(brazil_twitter_figures_path, "tweets_sentiments.png"), 
        dpi = 400, height = 6, width = 10)
 
+## Most common positive and negative words
+sentiments_counts <- tweets_sentiments %>% 
+    filter(sentiment %in% c("negative", "positive")) %>% 
+    count(word, sentiment, sort = TRUE) %>% 
+    ungroup()  
+    
+sentiments_counts %>% 
+    group_by(sentiment) %>% 
+    top_n(10) %>% 
+    ungroup() %>% 
+    mutate(word = reorder(word, n)) %>% 
+    ggplot(aes(word, n, fill = sentiment)) + 
+    geom_col(show.legend = FALSE) + 
+    coord_flip() + 
+    facet_wrap(~sentiment, scales = "free_y") + 
+    scale_y_continuous(label = comma) + 
+    labs(
+        x = "", 
+        y = "Contribution to sentiment",
+        title = "Words that contribute to positive and negative sentiment in Brazil"
+    ) + 
+    theme_ipsum_rc() + 
+    theme(
+        panel.grid.minor = element_blank(),
+        legend.position = "bottom"
+    )
 
+ggsave(filename = file.path(brazil_twitter_figures_path, "tweets_top10_negative_positive.png"), 
+       dpi = 400, height = 6, width = 10)
+
+
+
+## Pending
 unnest_words %>%
     mutate(word_count = 1:n(),
            index = word_count %/% 500 + 1) %>%
@@ -136,7 +168,12 @@ unnest_words %>%
     spread(sentiment, n, fill = 0) %>%
     mutate(sentiment = positive - negative) %>% 
     ggplot(aes(index, sentiment)) + 
-    geom_bar(alpha = 0.5, stat = "identity", show.legend = FALSE)
+    geom_bar(alpha = 0.5, stat = "identity", show.legend = FALSE) + 
+    theme_ipsum_rc() + 
+    theme(
+        panel.grid.minor = element_blank(),
+        legend.position = "bottom"
+    )
     
 
 
