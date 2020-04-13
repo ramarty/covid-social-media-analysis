@@ -2,6 +2,7 @@
 
 # Packages ---------------------------------------------------------------------
 library(gtrendsR)
+library(tidyverse)
 library(dplyr)
 library(parallel)
 library(pbmcapply)
@@ -22,6 +23,8 @@ library(tokenizers)
 library(wordcloud)
 library(ggwordcloud)
 library(ggpubr)
+library(hrbrthemes)
+library(scales)
 
 # Filepaths --------------------------------------------------------------------
 if(Sys.info()[["user"]] == "WB521633") dropbox_file_path <- "C:/Users/wb521633/Dropbox/World Bank/Side Work/COVID Social Media Analysis"
