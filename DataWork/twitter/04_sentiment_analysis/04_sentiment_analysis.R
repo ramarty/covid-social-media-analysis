@@ -1,13 +1,16 @@
 # Restrict Tweets to Those in Brazil 
-library(lexiconPT)
 
 # Load Data --------------------------------------------------------------------
 brazil_tweets <- readRDS(file.path(dropbox_file_path, "Data", "twitter", "FinalData", "brazil_tweets", "rds", "brazil_tweets_appended_clean.Rds"))
 
 # Tweets Over Time -------------------------------------------------------------
+
+#### Removes RTs
+brazil_tweets_norts <- brazil_tweets %>%
+    filter(!grepl("rt @", full_text))
+    
 #### All Tweets
-brazil_tweets_daysum <- brazil_tweets %>%
-    filter(!grepl("rt @", full_text)) %>%
+brazil_tweets_daysum <- brazil_tweets_norts %>%
     filter(constant_words %in% T) %>%
     group_by(date) %>%
     summarise(N = n(),
@@ -31,31 +34,37 @@ brazil_tweets_daysum_long <- brazil_tweets_daysum %>%
         word = gsub("N_", "", word)
     )
 
-# Line graph
+# Graphs -----------------------------------------------------------------------
+####  Line graph = Corona, Coronavirus, hospital, quarentena
 brazil_tweets_daysum_long %>% 
     filter(!word %in% c("covid", "socialdistance", "mort")) %>%
-    ggplot(aes(x = date, y = count)) + 
-    geom_line() + 
+    ggplot(aes(x = date, y = count, color = word)) + 
+    geom_line(size = 1) + 
     facet_wrap(~word) +
     scale_y_continuous(label = comma) + 
     labs(
-        x = "Date", 
+        x = "", 
         y = "Number of tweets",
         title = "Tweets per day in Brazil - Selected words"
     ) + 
     theme_ipsum_rc() + 
     theme(
-        panel.grid.minor = element_blank()
+        panel.grid.minor = element_blank(),
+        legend.position = "none"
     )
 
+ggsave(filename = file.path(brazil_twitter_figures_path, "tweets_selected_words.png"), 
+       dpi = 400, height = 6, width = 10)
+
+# Line graph = COVID
 brazil_tweets_daysum_long %>% 
     filter(word == "covid",
-           date < "2020-03-21") %>%
+           date < "2020-03-21") %>% # Need to fix when we get the most recent data
     ggplot(aes(x = date, y = count)) + 
     geom_line() + 
     scale_y_continuous(label = comma) + 
     labs(
-        x = "Date", 
+        x = "", 
         y = "Number of tweets",
         title = "Tweets per day that include the word 'coronavirus' in Brazil"
     ) + 
@@ -64,15 +73,59 @@ brazil_tweets_daysum_long %>%
         panel.grid.minor = element_blank()
     )
 
+ggsave(filename = file.path(brazil_twitter_figures_path, "tweets_covid.png"), 
+       dpi = 400, height = 6, width = 10)
+
 #### Sentiments   --------------------------------------------------------------
-unnest_words <- brazil_tweets %>%
-    filter(!grepl("rt @", full_text)) %>%
+
+## Load PT lexicon 
+data("sentiLex_lem_PT02")
+
+## combine portuguese and english words 
+words <- get_sentiments("nrc") %>% 
+    mutate(term = word) %>% 
+    bind_rows(sentiLex_lem_PT02) %>% 
+    mutate(sentiment = case_when(polarity == -1 ~ "negative",
+                                 polarity == 1 ~ "positive",
+                                 polarity == 0 ~ "neutral",
+                                 TRUE ~ as.character(sentiment)),
+           word = ifelse(is.na(word), term, word)
+    ) %>% 
+    dplyr::select(word, sentiment)
+
+## Unnest tweets
+unnest_words <- brazil_tweets_norts %>%
     unnest_tokens(word, full_text)
 
-unnest_words %>%
-    right_join(get_sentiments("nrc")) %>%
-    filter(!is.na(sentiment)) %>%
-    count(sentiment, sort = TRUE)
+## Join with words that include sentiments
+tweets_sentiments <- unnest_words %>%
+    right_join(words) %>%
+    filter(!is.na(sentiment),
+           !is.na(date)) 
+
+## Tweets sentiments gr
+tweets_sentiments %>% 
+    filter(sentiment %in% c("negative", "positive")) %>% 
+    group_by(date) %>% 
+    count(date, sentiment) %>% 
+    ggplot(aes(x = date, y = n, fill = sentiment)) + 
+    geom_bar(stat = "identity") +
+    scale_y_continuous(label = comma) + 
+    labs(
+        x = "", 
+        y = "Number of tweets",
+        color = "Sentiment", 
+        title = "Tweets per day with negative and positive sentiments in Brazil"
+    ) + 
+    theme_ipsum_rc() + 
+    theme(
+        panel.grid.minor = element_blank(),
+        legend.position = "bottom"
+    )
+
+ggsave(filename = file.path(brazil_twitter_figures_path, "tweets_sentiments.png"), 
+       dpi = 400, height = 6, width = 10)
+
 
 unnest_words %>%
     mutate(word_count = 1:n(),

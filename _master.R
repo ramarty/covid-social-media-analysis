@@ -4,9 +4,9 @@
 if (!require("pacman")) install.packages("pacman")
 
 pacman::p_load(gtrendsR, tidyverse, parallel, pbmcapply, ggplot2, scales,
-               jsonlite, stringr, raster, stringi, lubridate, purrr, 
+               jsonlite, stringr, raster, stringi, lubridate, purrr, lexiconPT,
                tidytext, quanteda, qdap, SentimentAnalysis, sentimentr,
-               tm, tokenizers, wordcloud, ggwordscloud, ggpubr, hrbrthemes) 
+               tm, tokenizers, wordcloud, ggwordcloud, ggpubr, hrbrthemes)
 
 # Filepaths --------------------------------------------------------------------
 if(Sys.info()[["user"]] == "WB521633") dropbox_file_path <- "C:/Users/wb521633/Dropbox/World Bank/Side Work/COVID Social Media Analysis"
