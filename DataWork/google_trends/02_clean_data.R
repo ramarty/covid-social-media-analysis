@@ -68,5 +68,5 @@ write.csv(trends_df, file.path(dropbox_file_path, "Data/google_trends/FinalData/
 saveRDS(trends_admin_df, file.path(dropbox_file_path, "Data/google_trends/FinalData/brazil_admin_trends_clean.Rds"))
 write.csv(trends_admin_df, file.path(dropbox_file_path, "Data/google_trends/FinalData/brazil_admin_trends_clean.csv"), row.names = F)
 
-saveRDS(trends_df_geo, file.path(dropbox_file_path, "Data/google_trends/FinalData/brazil_extract_clean.Rds"))
-write.csv(trends_df_geo, file.path(dropbox_file_path, "Data/google_trends/FinalData/brazil_extract_clean.csv"), row.names = F)
+saveRDS(trends_df_geo, file.path(dropbox_file_path, "Data/google_trends/FinalData/brazil_geo_clean.Rds"))
+write.csv(trends_df_geo, file.path(dropbox_file_path, "Data/google_trends/FinalData/brazil_geo_clean.csv"), row.names = F)
