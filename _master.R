@@ -1,30 +1,12 @@
 # COVID Webscraping and Social Media Analysis
 
 # Packages ---------------------------------------------------------------------
-library(gtrendsR)
-library(tidyverse)
-library(dplyr)
-library(parallel)
-library(pbmcapply)
-library(ggplot2)
-library(jsonlite)
-library(stringr)
-library(raster)
-library(stringi)
-library(lubridate)
-library(purrr)
-library(tidytext)
-library(quanteda)
-library(qdap)
-library(SentimentAnalysis)
-library(sentimentr)
-library(tm)
-library(tokenizers)
-library(wordcloud)
-library(ggwordcloud)
-library(ggpubr)
-library(hrbrthemes)
-library(scales)
+if (!require("pacman")) install.packages("pacman")
+
+pacman::p_load(gtrendsR, tidyverse, parallel, pbmcapply, ggplot2, scales,
+               jsonlite, stringr, raster, stringi, lubridate, purrr, 
+               tidytext, quanteda, qdap, SentimentAnalysis, sentimentr,
+               tm, tokenizers, wordcloud, ggwordscloud, ggpubr, hrbrthemes) 
 
 # Filepaths --------------------------------------------------------------------
 if(Sys.info()[["user"]] == "WB521633") dropbox_file_path <- "C:/Users/wb521633/Dropbox/World Bank/Side Work/COVID Social Media Analysis"
