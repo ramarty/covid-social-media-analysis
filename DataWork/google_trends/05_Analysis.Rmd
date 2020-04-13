@@ -21,6 +21,10 @@ trends_df <- read.csv("/Users/wb537287/Dropbox/COVID Social Media Analysis/Data/
 
 ```{r}
 trends_df <- trends_df %>% mutate(date = as.Date(date))
+trends_df <- 
+  trends_df %>% 
+  filter(!is.na(date))
+
 ```
 
 # Searches per state
@@ -31,8 +35,12 @@ trends_df %>%
   filter(!is.na(state), !is.na(keyword), categories == "symptoms") %>% 
   count(keyword, date, hits, state) %>% 
   ggplot() +
-  geom_line(aes(date, hits, group = state, color = state)) + 
+  geom_line(aes(date, hits, group = state, color = fct_reorder2(state, date, hits))) + 
   geom_smooth(aes(date, hits)) +
+  labs(
+    color = "State", 
+    title = "Evolution of Searches related to Symptoms"
+  ) +
   facet_wrap(vars(keyword))
 ```
 
@@ -42,8 +50,12 @@ trends_df %>%
   filter(!is.na(state), !is.na(keyword), categories == "consequences") %>% 
   count(keyword, date, hits, state) %>% 
   ggplot() +
-  geom_line(aes(date, hits, group = state, color = state)) + 
+  geom_line(aes(date, hits, group = state, color = fct_reorder2(state, date, hits))) + 
   geom_smooth(aes(date, hits)) +
+  labs(
+    color = "State", 
+    title = "Evolution of Searches related to Consequences"
+  ) +
   facet_wrap(vars(keyword))
 ```
 Prevention
@@ -52,8 +64,12 @@ trends_df %>%
   filter(!is.na(state), !is.na(keyword), categories == "prevention") %>% 
   count(keyword, date, hits, state) %>% 
   ggplot() +
-  geom_line(aes(date, hits, group = state, color = state)) + 
+  geom_line(aes(date, hits, group = state, color = fct_reorder2(state, date, hits))) + 
   geom_smooth(aes(date, hits)) +
+  labs(
+    color = "State", 
+    title = "Evolution of Searches related to Prevention"
+  ) +  
   facet_wrap(vars(keyword))
 ```
 
@@ -65,8 +81,12 @@ trends_df %>%
   filter(!is.na(state), !is.na(keyword), categories == "resources") %>% 
   count(keyword, date, hits, state) %>% 
   ggplot() +
-  geom_line(aes(date, hits, group = state, color = state)) + 
+  geom_line(aes(date, hits, group = state, color = fct_reorder2(state, date, hits))) + 
   geom_smooth(aes(date, hits)) +
+  labs(
+    color = "State", 
+    title = "Evolution of Searches related to Resources"
+  ) +
   facet_wrap(vars(keyword))
 ```
 
@@ -79,7 +99,11 @@ trends_df %>%
   filter(!is.na(state), !is.na(cases)) %>% 
   count(cases, date, state) %>% 
   ggplot() +
-  geom_line(aes(date, cases, group = state, color = state)) 
+  geom_line(aes(date, cases, group = state, color = fct_reorder2(state, date, cases))) +
+  labs(
+    title = "Cases per State",
+    color = "State"
+  )
 ```
 
 Case rate per state
@@ -88,7 +112,11 @@ trends_df %>%
   filter(!is.na(state), !is.na(case_rate)) %>% 
   count(case_rate, date, state) %>% 
   ggplot() +
-  geom_line(aes(date, case_rate, group = state, color = state)) 
+  geom_line(aes(date, case_rate, group = state, color = fct_reorder2(state, date, case_rate))) +
+  labs(
+    title = "Case rate per State",
+    color = "State"
+  )
 ```
 
 Death rate per state
@@ -97,7 +125,11 @@ trends_df %>%
   filter(!is.na(state), !is.na(death_rate)) %>% 
   count(death_rate, date, state) %>% 
   ggplot() +
-  geom_line(aes(date, death_rate, group = state, color = state)) 
+  geom_line(aes(date, death_rate, group = state, color = fct_reorder2(state, date, death_rate))) +
+  labs(
+    title = "Death rate per State",
+    color = "State"
+  )
 ```
 
 
@@ -112,7 +144,8 @@ trends_df %>%
   ) %>% 
   pivot_longer(c(sum_cases_region, sum_deaths_region), names_to = "variable") %>% 
   ggplot() +
-  geom_line(aes(date, value, group = region, color = region)) +
+  geom_line(aes(date, value, group = region, color = fct_reorder2(region, date, value))) +
+  labs(color = "Region") +
   facet_wrap(vars(variable), scales = "free")
 
 ```
@@ -128,7 +161,8 @@ trends_df %>%
   ) %>% 
   pivot_longer(c(sum_cases_state, sum_deaths_state), names_to = "variable") %>% 
   ggplot() +
-  geom_line(aes(date, value, group = state, color = state)) +
+  geom_line(aes(date, value, group = state, color = fct_reorder2(state, date, value))) +
+  labs(color = "State") +
   facet_wrap(vars(variable), scales = "free")
 ```
 
@@ -218,8 +252,9 @@ trends_df %>%
   filter(state %in% top_5_states, keyword %in% c("coronavirus", "febre", "tosse", "fique em casa") ) %>% 
   count(keyword, date, hits, state, cases) %>% 
   ggplot() +
-  geom_line(aes(date, hits, group = keyword, color = keyword)) + 
+  geom_line(aes(date, hits, group = keyword, color = fct_reorder2(keyword, date, hits))) + 
   geom_line(aes(date, cases)) +
+  labs(color = "Keyword") +
   facet_wrap(vars(state), scales = "free") +
   coord_cartesian(ylim = c(0, 100))
 ```
@@ -229,10 +264,10 @@ trends_df %>%
 
 ```{r}
 trends_df %>% 
-  count(keyword, date, hits, state, cases) %>% 
+  count(keyword, date, hits, state_en, cases) %>% 
   ggplot() +
   geom_line(aes(date, hits, group = keyword, color = keyword)) + 
-  facet_wrap(vars(state), scales = "free") +
+  facet_wrap(vars(state_en), scales = "free") +
   geom_line(aes(date, cases)) +
   coord_cartesian(ylim = c(0, 100))
 ```
@@ -254,14 +289,18 @@ sum_cases_date <-
 
 trends_df %>% 
   filter(!is.na(categories)) %>% 
+  mutate(date = as.Date(date, format = "%Y%m%d")) %>% 
   group_by(categories, date) %>% 
   summarize(
     mean_hits = mean(hits, na.rm = TRUE)
   ) %>% 
   ggplot() + 
-  geom_line(aes(date, mean_hits, group = categories, color = categories)) +
+  geom_line(aes(date, mean_hits, group = categories, color = fct_reorder2(categories, date, mean_hits))) +
   geom_line(data = sum_cases_date, aes(date, cases_total)) +
   geom_line(data = sum_cases_date, aes(date, deaths_total)) +
+  ggplot2::annotate("text", label = "Cases", x = as.Date("2020-03-08"), y = 100, size = 4) +
+  ggplot2::annotate("text", label = "Deaths", x = as.Date("2020-04-03"), y = 100, size = 4) +
+  labs(color = "Category") +
   coord_cartesian(ylim = c(0, 100))
   
 ```
@@ -274,8 +313,9 @@ trends_df %>%
     mean_hits = mean(hits, na.rm = TRUE)
   ) %>% 
   ggplot() + 
-  geom_line(aes(date, mean_hits, group = categories, color = categories)) +
+  geom_line(aes(date, mean_hits, group = categories, color = fct_reorder2(categories, date, mean_hits))) +
   geom_line(aes(date, cases)) +
+  labs(color = "Category") +
   coord_cartesian(ylim = c(0, 100)) + 
   facet_wrap(vars(state))
 ```
@@ -285,20 +325,19 @@ trends_df %>%
 
 ```{r}
 trends_df %>% 
-  filter(!is.na(categories), categories != "consequences") %>% 
+  filter(!is.na(categories), categories != "consequences", !is.na(state)) %>% 
   group_by(categories, state, date) %>% 
   mutate(
     mean_hits = mean(hits, na.rm = TRUE)
   ) %>% 
   ggplot() + 
-  geom_line(aes(date, mean_hits, group = categories, color = categories)) +
+  geom_line(aes(date, mean_hits, group = categories, color = fct_reorder2(categories, date, mean_hits))) +
   geom_line(aes(date, cases)) +
+  labs(color = "Category") +
   coord_cartesian(ylim = c(0, 100)) + 
   facet_wrap(vars(state))
 ```
 
 
 # TO DOs
-- reorder the states (figure out)
 - create dashboard
-- rescrape missing states
