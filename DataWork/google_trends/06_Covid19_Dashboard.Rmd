@@ -1,0 +1,271 @@
+---
+title: "Dashboard Searches"
+author: "Manuel Ramos"
+date: "04/13/2020"
+output: flexdashboard::flex_dashboard
+runtime: shiny
+resource_files:
+- brazil_trends_clean_final.csv
+---
+
+```{r include=FALSE}
+library(tidyverse)
+library(gridExtra)
+library(shinydashboard)
+library(dashboardthemes)
+
+setwd(dir = "/Users/wb537287/Documents/GitHub/covid-social-media-analysis/DataWork/google_trends/")
+
+#trends_df <- read.csv(file.path(dropbox_file_path, "Data/google_trends/FinalData/brazil_trends_clean_final.csv"))
+
+#trends_df <- read.csv("/Users/wb537287/Dropbox/COVID Social Media Analysis/Data/google_trends/FinalData/brazil_trends_clean_final.csv")
+#trends_df <- read.csv("/Users/wb537287/Documents/GitHub/covid-social-media-analysis/DataWork/google_trends/brazil_trends_clean_final.csv")
+trends_df <- read.csv("brazil_trends_clean_final.csv")
+
+
+trends_df <- trends_df %>% mutate(date = as.Date(date))
+trends_df <- trends_df %>% mutate(state = as.character(state))
+```
+
+Searches by State {data-navmenu="Google Trends and Covid-19"}
+=====================================
+
+```{r fig.align="center"}
+states_name <-
+  trends_df %>%
+  count(state) %>%
+  pull(state)
+
+ui <- dashboardPage(
+  dashboardHeader(
+    title = h3("Brazil Trends Dashboard")
+  ),
+  dashboardSidebar(
+    selectInput(
+      inputId = 'state',
+      label = 'State',
+      choices = states_name,
+      selected = "Acre"
+      )
+    ),
+  dashboardBody(
+    plotOutput('plotName'), 
+    shinyDashboardThemes(theme = "blue_gradient")
+  )
+)
+
+server <- function(input, output) {
+  dataset <- reactive({
+      trends_df %>%
+      filter(!is.na(categories), categories != "consequences") %>%
+      group_by(categories, state, date) %>%
+      mutate(mean_hits = mean(hits, na.rm = TRUE)) %>%
+      ungroup()
+  })
+
+  output$plotName <- renderPlot({
+      dataset() %>%
+      filter(state == input$state)  %>%
+      ggplot() +
+      geom_line(
+        aes(date, mean_hits, group = categories, color = fct_reorder2(categories, date, mean_hits)), 
+        size = 1.25
+      ) +
+      geom_line(aes(date, cases, color = "Covid-19 cases"), color = "black", size = 2) +
+      coord_cartesian(ylim = c(0, 100)) +
+      labs(
+        title = "Evolution of Search Trends Compared to Covid-19 Cases",
+        color = "Category", 
+        caption = "The black line indicates number of cases"
+      ) +
+      theme_light() +
+      theme(
+        plot.title = element_text(size = 16, hjust = 0.55), 
+        text = element_text(size = 14)
+      ) 
+  }, 
+  height = 700, width = 900
+)}
+
+shinyApp(ui = ui, server = server)
+```
+
+Presence of Covid-19 per State {data-navmenu="Covid-19 per State"}
+=====================================
+
+```{r fig.width=12, fig.height=8}
+case_rate_per_state <- 
+  trends_df %>% 
+  filter(date == "2020-04-01", is.na(keyword) | keyword == "coronavirus") %>% 
+  ggplot() +
+  geom_col(aes(fct_reorder(state, case_rate), case_rate)) +
+  coord_flip() +
+  labs(x = "Cases per 100,000 people") +
+  theme_light()
+
+death_rate_per_state <- 
+  trends_df %>% 
+  filter(date == "2020-04-01", is.na(keyword) | keyword == "coronavirus") %>% 
+  ggplot() +
+  geom_col(aes(fct_reorder(state, death_rate), death_rate)) +
+  coord_flip() +
+  labs(x = "Deaths per 100,000 people") +
+  theme_light()
+
+
+fatality_per_case_state <- 
+  trends_df %>% 
+  filter(date == "2020-04-01", is.na(keyword) | keyword == "coronavirus") %>% 
+  ggplot() +
+  geom_col(aes(fct_reorder(state, fatalities_per_case), fatalities_per_case)) +
+  coord_flip() + 
+  labs(x = "Deaths per case") +
+  theme_light()
+  
+grid.arrange(case_rate_per_state, death_rate_per_state, fatality_per_case_state, ncol = 3)
+```
+
+Overall Cases of Covid-19 per State {data-navmenu="Covid-19 per State"}
+=====================================
+
+Column {data-width=600}
+-------------------------------------
+
+### Cases per State
+```{r}
+trends_df %>% 
+  filter(!is.na(state), !is.na(cases)) %>% 
+  count(cases, date, state) %>% 
+  ggplot() +
+  geom_line(aes(date, cases, group = state, color = fct_reorder2(state, date, cases))) +
+  labs(
+    title = "Cases per State",
+    color = "State"
+  ) +
+  theme_light()
+```
+
+Column {data-width=600}
+-------------------------------------
+
+### Deaths per State
+```{r}
+trends_df %>% 
+  filter(!is.na(state), !is.na(cases)) %>% 
+  count(deaths, date, state) %>% 
+  ggplot() +
+  geom_line(aes(date, deaths, group = state, color = fct_reorder2(state, date, deaths))) +
+  labs(
+    title = "Deaths per State",
+    color = "State"
+  ) +
+  theme_light()
+
+```
+
+Overall Case Rates of Covid-19 per State {data-navmenu="Covid-19 per State"}
+=====================================
+
+Column {data-width=600}
+-------------------------------------
+
+### Case Rate per State
+
+```{r}
+trends_df %>% 
+  filter(!is.na(state), !is.na(case_rate)) %>% 
+  count(case_rate, date, state) %>% 
+  ggplot() +
+  geom_line(aes(date, case_rate, group = state, color = fct_reorder2(state, date, case_rate))) +
+  labs(
+    title = "Case rate per State",
+    y = "Cases per 100,000 people",
+    color = "State"
+  ) + 
+  theme_light()
+```
+
+Column {data-width=600}
+-------------------------------------
+
+### Death Rate per State
+
+```{r}
+trends_df %>% 
+  filter(!is.na(state), !is.na(death_rate)) %>% 
+  count(death_rate, date, state) %>% 
+  ggplot() +
+  geom_line(aes(date, death_rate, group = state, color = fct_reorder2(state, date, death_rate))) +
+  labs(
+    title = "Death rate per State",
+    y = "Deaths per 100,000 people",
+    color = "State"
+  ) + 
+  theme_light()
+```
+
+Presence of Covid-19 per State {data-navmenu="Overall Google Trends"}
+=====================================
+
+
+```{r, fig.width=12, fig.height=8, fig.align="center"}
+trends_df %>% 
+  filter(!is.na(state), !is.na(keyword), !is.na(hits)) %>% 
+  group_by(date, keyword) %>% 
+  summarize(
+    weighted_mean_hits = weighted.mean(hits, w = estimate_2018_state)
+  ) %>% 
+  ggplot() +
+  geom_line(aes(date, weighted_mean_hits)) +
+  labs(
+    y = "Weighted Average Number of Hits",
+    title = "Average Number of Hits by Keyword Over Time", 
+    subtitle = "The average is weighted by the number of people in each state"
+  ) +
+  facet_wrap(vars(keyword)) + 
+  theme_light()
+```
+```{r echo=FALSE}
+# states_name <- 
+#   trends_df %>% 
+#   count(state) %>%
+#   filter(!state %in% c("Santa Catarina", "Rondônia", NA)) %>% 
+#   pull(state)
+# 
+# ui <- fluidPage(
+#   sidebarPanel(
+#     selectInput(
+#       inputId = 'state', 
+#       label = 'State',
+#       choices = states_name, 
+#       selected = "Acre"
+#     ), 
+#   mainPanel(
+#     plotOutput('plotName')
+#   )
+#   )
+# )
+# 
+# server <- function(input, output) {
+#   dataset <- reactive({
+#       trends_df %>% 
+#       filter(!is.na(categories), categories != "consequences") %>% 
+#       group_by(categories, state, date) %>% 
+#       mutate(mean_hits = mean(hits, na.rm = TRUE)) %>% 
+#       ungroup()
+#   })
+#   
+#   output$plotName <- renderPlot({ 
+#       dataset() %>% 
+#       filter(state == input$state)  %>% 
+#       ggplot() + 
+#       geom_line(aes(date, mean_hits, group = categories, color = categories)) +
+#       geom_line(aes(date, cases)) +
+#       coord_cartesian(ylim = c(0, 100))
+#   }, height = 700, width = 800)
+#   
+# }
+# 
+# shinyApp(ui = ui, server = server)
+```
+
