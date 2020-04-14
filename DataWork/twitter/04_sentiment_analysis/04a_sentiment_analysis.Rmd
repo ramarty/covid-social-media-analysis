@@ -1,0 +1,216 @@
+---
+title: "COVID Webscraping and Social Media Analysis: Twitter Sentiment Analysis"
+author: Rony Rodriguez-Ramirez
+output:
+  tufte::tufte_html: default
+---
+
+```{r setup, include=FALSE}
+library(tufte)
+# invalidate cache when the tufte version changes
+knitr::opts_chunk$set(tidy = FALSE, cache.extra = packageVersion('tufte'))
+options(htmltools.dir.version = FALSE)
+```
+
+```{r fig-margin-separate, message=FALSE, include = FALSE}
+# Packages ---------------------------------------------------------------------
+if (!require("pacman")) install.packages("pacman")
+
+pacman::p_load(gtrendsR, tidyverse, parallel, pbmcapply, ggplot2, scales,
+               jsonlite, stringr, raster, stringi, lubridate, purrr, lexiconPT,
+               tidytext, quanteda, qdap, SentimentAnalysis, sentimentr,
+               tm, tokenizers, wordcloud, ggwordcloud, ggpubr, hrbrthemes)
+
+# Folder settings --------------------------------------------------------------
+if (Sys.getenv("USERNAME") == "maximiliano") {
+    dropbox_file_path       <- file.path("D:/Dropbox/COVID Social Media Analysis")
+    github_file_path        <- file.path("D:/Documents/RA Jobs/DIME/github/covid-social-media-analysis")
+    covid_twitter_github    <- file.path("D:/Documents/RA Jobs/DIME/github/COVID-19-TweetIDs")
+}
+
+brazil_twitter_figures_path <- file.path(dropbox_file_path, "Data", "twitter", "Outputs", "figures")
+
+```
+
+# Introduction
+
+This note describes the use of Twitter to analyze conversations, opinions and sentiment
+surrounding the COVID-19 pandemic in Brazil. We draw from a public Twitter dataset
+that scrapes coronavirus related tweets in real time starting from the end of January.
+The dataset contains over 70 million tweets. We restrict tweets to those that contained
+a Brazil location in the tweet or in the user’s location description.
+This process yields about 840,000 tweets for Brazil. When exclude retweets, the total number of
+tweets is about 253,000.
+
+```{r message = FALSE, include = FALSE}
+# Load Data --------------------------------------------------------------------
+brazil_tweets <- readRDS(file.path(dropbox_file_path, "Data", "twitter", "FinalData", "brazil_tweets", "rds", "brazil_tweets_appended_clean.Rds"))
+
+# Tweets Over Time -------------------------------------------------------------
+
+#### Removes RTs
+brazil_tweets_norts <- brazil_tweets %>%
+    filter(!grepl("rt @", full_text))
+    
+#### All Tweets
+brazil_tweets_daysum <- brazil_tweets_norts %>%
+    filter(constant_words %in% T) %>%
+    group_by(date) %>%
+    summarise(N = n(),
+              N_corona = sum(grepl("corona", full_text)),
+              N_coronavirus = sum(grepl("coronavirus", full_text)),
+              N_covid = sum(grep("covid", full_text)), 
+              N_hospital = sum(grepl("hospital", full_text)),
+              N_socialdistance = sum(grepl("distância social", full_text)),
+              N_mort = sum(grepl("mort", full_text)),
+              N_quarentena = sum(grepl("quarentena", full_text)))
+
+#### SUM Words - Long version
+brazil_tweets_daysum_long <- brazil_tweets_daysum %>%
+    dplyr::select(-N) %>% 
+    pivot_longer(
+        cols = starts_with("N_"),
+        names_to = "word",
+        values_to = "count"
+    ) %>% 
+    mutate(
+        word = gsub("N_", "", word)
+    )
+```
+
+# Overall Trends
+
+First, we plot the overall trend for a selected group of words which are: coronavirus, corona, hospital, and quarentena.
+Additionally, we plot in a separate figure the word "covid" given that the total number of tweets that include this word is significantly higher that the first four presented above.
+
+```{r fig.fullwidth = TRUE, fig.width = 9, fig.height = 6, fig.show='hold', cache=TRUE, message=FALSE}
+# Graphs -----------------------------------------------------------------------
+####  Line graph = Corona, Coronavirus, hospital, quarentena
+brazil_tweets_daysum_long %>% 
+    filter(!word %in% c("covid", "socialdistance", "mort")) %>%
+    ggplot(aes(x = date, y = count, color = word)) + 
+    geom_line(size = 1) + 
+    facet_wrap(~word) +
+    scale_y_continuous(label = comma) + 
+    labs(
+        x = "", 
+        y = "Number of tweets",
+        title = "Tweets per day in Brazil - Selected words"
+    ) + 
+    theme_ipsum_rc() + 
+    theme(
+        panel.grid.minor = element_blank(),
+        legend.position = "none"
+    )
+# Line graph = COVID
+brazil_tweets_daysum_long %>% 
+    filter(word == "covid",
+           date < "2020-03-21") %>% # Need to fix when we get the most recent data
+    ggplot(aes(x = date, y = count)) + 
+    geom_line() + 
+    scale_y_continuous(label = comma) + 
+    labs(
+        x = "", 
+        y = "Number of tweets",
+        title = "Tweets per day that include the word 'covid' in Brazil"
+    ) + 
+    theme_ipsum_rc() + 
+    theme(
+        panel.grid.minor = element_blank()
+    )
+
+```
+
+
+# Sentiment Analysis
+
+In terms of sentiment analysis, we make use of the Portuguese lexicon and assign "positive" and "negative" value to each word. Then, we create a dictionary of words that include both Portugese and English words and proceed to perform a brief sentiment analysis.
+
+```{r include = FALSE}
+#### Sentiments   --------------------------------------------------------------
+
+## Load PT lexicon 
+data("sentiLex_lem_PT02")
+
+## combine portuguese and english words 
+words <- get_sentiments("nrc") %>% 
+    mutate(term = word) %>% 
+    bind_rows(sentiLex_lem_PT02) %>% 
+    mutate(sentiment = case_when(polarity == -1 ~ "negative",
+                                 polarity == 1 ~ "positive",
+                                 polarity == 0 ~ "neutral",
+                                 TRUE ~ as.character(sentiment)),
+           word = ifelse(is.na(word), term, word)
+    ) %>% 
+    dplyr::select(word, sentiment)
+
+## Unnest tweets
+unnest_words <- brazil_tweets_norts %>%
+    unnest_tokens(word, full_text)
+
+## Join with words that include sentiments
+tweets_sentiments <- unnest_words %>%
+    right_join(words) %>%
+    filter(!is.na(sentiment),
+           !is.na(date)) 
+
+```
+
+Firstly, we plot tweets per day with negative and positive sentiments.
+
+```{r fig.fullwidth = TRUE, fig.width = 9, fig.height = 6, fig.show='hold', cache=TRUE, message=FALSE}
+## Tweets sentiments gr
+tweets_sentiments %>% 
+    filter(sentiment %in% c("negative", "positive")) %>% 
+    group_by(date) %>% 
+    count(date, sentiment) %>% 
+    ggplot(aes(x = date, y = n, fill = sentiment)) + 
+    geom_bar(stat = "identity") +
+    scale_y_continuous(label = comma) + 
+    labs(
+        x = "", 
+        y = "Number of tweets",
+        color = "Sentiment", 
+        title = "Tweets per day with negative and positive sentiments in Brazil"
+    ) + 
+    theme_ipsum_rc() + 
+    theme(
+        panel.grid.minor = element_blank(),
+        legend.position = "bottom"
+    )
+```
+
+# Most common positive and negative words
+
+Secondly, we plot the top 10 negative and positive words used across all the tweets in the dataset.
+
+```{r include = FALSE}
+## Most common positive and negative words
+sentiments_counts <- tweets_sentiments %>% 
+    filter(sentiment %in% c("negative", "positive")) %>% 
+    count(word, sentiment, sort = TRUE) %>% 
+    ungroup()  
+```
+
+```{r fig.fullwidth = TRUE, fig.width = 9, fig.height = 6, fig.show='hold', cache=TRUE, message=FALSE}
+sentiments_counts %>% 
+    group_by(sentiment) %>% 
+    top_n(10) %>% 
+    ungroup() %>% 
+    mutate(word = reorder(word, n)) %>% 
+    ggplot(aes(word, n, fill = sentiment)) + 
+    geom_col(show.legend = FALSE) + 
+    coord_flip() + 
+    facet_wrap(~sentiment, scales = "free_y") + 
+    scale_y_continuous(label = comma) + 
+    labs(
+        x = "", 
+        y = "Contribution to sentiment",
+        title = "Words that contribute to positive and negative sentiment in Brazil"
+    ) + 
+    theme_ipsum_rc() + 
+    theme(
+        panel.grid.minor = element_blank(),
+        legend.position = "bottom"
+    )
+```
