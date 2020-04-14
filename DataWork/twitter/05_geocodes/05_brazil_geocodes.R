@@ -7,13 +7,17 @@ pacman::p_load(gtrendsR, tidyverse, parallel, pbmcapply, ggplot2, scales, doBy,
                jsonlite, stringr, raster, stringi, lubridate, purrr, lexiconPT,
                tidytext, quanteda, qdap, SentimentAnalysis, sentimentr, ggmap,
                tm, tokenizers, wordcloud, ggwordcloud, ggpubr, hrbrthemes,
-               geojsonsf, sf, broom)
+               geojsonsf, sf, broom, readtext)
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # Keys -----
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-register_google(key = "YOUR KEY")
-has_goog_key() # Should return TRUE
+# Read txt that contains my Google API
+key <- readtext(file.path(github_file_path, "DataWork", "twitter", "passwords.txt"))
+key <- key$text
+    
+register_google(key = key)
+has_google_key() # Should return TRUE
 
 # Temp directory
 temp_dir <- file.path(dropbox_file_path, "Data", "twitter", "RawData", "geo")
