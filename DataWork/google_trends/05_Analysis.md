@@ -26,7 +26,7 @@ trends_df <-
   filter(!is.na(date))
 ```
 
-# Google Trends per state
+# Google Trends Overall
 
 Evolution of symptoms and virus searches
 
@@ -348,7 +348,7 @@ trends_df %>%
   count(keyword, date, hits, state, cases) %>% 
   ggplot() +
   geom_line(aes(date, hits, group = keyword, color = fct_reorder2(keyword, date, hits))) + 
-  geom_line(aes(date, cases)) +
+  geom_line(aes(date, cases, color = "covid-19 cases"), fill = "black", size = 1.5) +
   labs(color = "Keyword") +
   facet_wrap(vars(state), scales = "free") +
   coord_cartesian(ylim = c(0, 100))
@@ -386,12 +386,13 @@ trends_df %>%
   ) %>% 
   ggplot() + 
   geom_line(aes(date, mean_hits, group = categories, color = fct_reorder2(categories, date, mean_hits))) +
-  geom_line(data = sum_cases_date, aes(date, cases_total)) +
-  geom_line(data = sum_cases_date, aes(date, deaths_total)) +
-  ggplot2::annotate("text", label = "Cases", x = as.Date("2020-03-08"), y = 100, size = 4) +
-  ggplot2::annotate("text", label = "Deaths", x = as.Date("2020-04-03"), y = 100, size = 4) +
-  labs(color = "Category") +
-  coord_cartesian(ylim = c(0, 100))
+  geom_line(data = sum_cases_date, aes(date, cases_mean)) +
+  #geom_line(data = sum_cases_date, aes(date, deaths_mean)) +
+  ggplot2::annotate("text", label = "Average Cases", x = as.Date("2020-03-24"), y = 100, size = 4) +
+  #ggplot2::annotate("text", label = "Average Deaths", x = as.Date("2020-03-29"), y = 2, size = 4) +
+  labs(color = "Category", y = "Average hits in Google trends") +
+  coord_cartesian(ylim = c(0, 100)) +
+  theme_light()
 ```
 
 ![](05_Analysis_files/figure-html/unnamed-chunk-19-1.png)<!-- -->
@@ -410,14 +411,31 @@ trends_df %>%
   geom_line(aes(date, cases)) +
   labs(color = "Category", caption = "The black line refers to number of cases") +
   coord_cartesian(ylim = c(0, 100)) + 
-  facet_wrap(vars(state)) +
-  cowplot::theme_minimal_vgrid() 
+  facet_wrap(vars(state)) 
 ```
 
 ![](05_Analysis_files/figure-html/unnamed-chunk-20-1.png)<!-- -->
 
+
+```r
+trends_df %>% 
+  filter(!is.na(categories), state %in% top_5_case_rate, categories != "consequences") %>% 
+  group_by(categories, state, date) %>% 
+  mutate(
+    mean_hits = mean(hits, na.rm = TRUE)
+  ) %>% 
+  ggplot() + 
+  geom_line(aes(date, mean_hits, group = categories, color = fct_reorder2(categories, date, mean_hits))) +
+  geom_line(aes(date, cases)) +
+  labs(color = "Category", caption = "The black line refers to number of cases") +
+  coord_cartesian(ylim = c(0, 100)) + 
+  facet_wrap(vars(state)) +
+  theme_light()
+```
+
+![](05_Analysis_files/figure-html/unnamed-chunk-21-1.png)<!-- -->
+
 - people start to google about the virus and about symptoms around the time when the number of cases in Sao Paulo starts to increase. 
-- the search of those terms in the rest of states increases as well, so these searcehs
 
 
 ```r
@@ -435,7 +453,4 @@ trends_df %>%
   facet_wrap(vars(state))
 ```
 
-![](05_Analysis_files/figure-html/unnamed-chunk-21-1.png)<!-- -->
-
-# TO DOs
-- create dashboard
+![](05_Analysis_files/figure-html/unnamed-chunk-22-1.png)<!-- -->
