@@ -14,8 +14,6 @@ library(gridExtra)
 library(shinydashboard)
 library(dashboardthemes)
 
-setwd(dir = "/Users/wb537287/Documents/GitHub/covid-social-media-analysis/DataWork/google_trends/")
-
 #trends_df <- read.csv(file.path(dropbox_file_path, "Data/google_trends/FinalData/brazil_trends_clean_final.csv"))
 
 #trends_df <- read.csv("/Users/wb537287/Dropbox/COVID Social Media Analysis/Data/google_trends/FinalData/brazil_trends_clean_final.csv")
