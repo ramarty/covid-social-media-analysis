@@ -17,8 +17,8 @@ if(Sys.info()[["user"]] == "robmarty") covid_twitter_github <- "~/Documents/Gith
 
 if (Sys.getenv("USERNAME") == "maximiliano") {
     dropbox_file_path       <- file.path("D:/Dropbox/COVID Social Media Analysis")
-    github_file_path        <- file.path("D:/Documents/RA Jobs/DIME/github/covid-social-media-analysis")
-    covid_twitter_github    <- file.path("D:/Documents/RA Jobs/DIME/github/COVID-19-TweetIDs")
+    github_file_path        <- file.path("D:/Documents/RA Jobs/DIME/github/covid-task-force/covid-social-media-analysis")
+    covid_twitter_github    <- file.path("D:/Documents/RA Jobs/DIME/github/covid-task-force/COVID-19-TweetIDs")
 }
 
 brazil_twitter_figures_path <- file.path(dropbox_file_path, "Data", "twitter", "Outputs", "figures")
