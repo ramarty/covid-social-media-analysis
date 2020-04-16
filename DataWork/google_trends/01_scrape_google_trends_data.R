@@ -16,6 +16,15 @@ brazil_search$search_group <- rep(1:550, each=5)[1:nrow(brazil_search)]
 # Categories ----
 data("categories")
 
+# Iso Codes  ----
+isocodes <- ISO_3166_2
+
+br_isocodes <- isocodes %>% 
+  janitor::clean_names() %>% 
+  filter(str_detect(code, "BR-")) %>% 
+  rename(sub_code = code) %>% 
+  dplyr::select(sub_code, name)
+
 # Scrape Data ------------------------------------------------------------------
 
 ## Initialize dataframe
