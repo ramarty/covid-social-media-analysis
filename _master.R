@@ -51,7 +51,8 @@ if (Sys.getenv("USERNAME") == "maximiliano") {
 #------------------------------------------------------------------------------#
 #   1.2.2. Other paths
 #------------------------------------------------------------------------------#
-brazil_twitter_figures_path <- file.path(dropbox_file_path, "Data", "twitter", "Outputs", "figures")
+brazil_twitter_figures_path     <- file.path(dropbox_file_path, "Data", "twitter", "Outputs", "figures")
+brazil_gmobility_figures_path   <- file.path(dropbox_file_path, "Data", "google_mobility", "Outputs", "figures")
 
 #------------------------------------------------------------------------------#
 # 2. Cleaning ----
