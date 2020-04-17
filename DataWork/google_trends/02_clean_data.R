@@ -1,7 +1,9 @@
 # Clean Google Trends Data
 
+library(dplyr) # had other package conflict so run here
 # Load Data --------------------------------------------------------------------
-trends_df <- readRDS(file.path(dropbox_file_path, "Data/google_trends/RawData/brazil_extract.Rds"))
+comparison_iso <- "BR-SP"
+trends_df <- readRDS(file.path(dropbox_file_path, paste0("Data/google_trends/RawData/brazil_extract_extra_words_compare",comparison_iso,".Rds")))
 
 # Clean Variables --------------------------------------------------------------
 
@@ -14,10 +16,37 @@ trends_df$hits <- trends_df$hits %>% as.numeric()
 # Convert into date format
 trends_df$date <- trends_df$date %>% as.Date()
 
+# Standardize Everything to BR-SP ----------------------------------------------
+trends_df <- trends_df %>%
+  dplyr::group_by(iso_search_group, keyword) %>%
+  dplyr::mutate(scale_var = max(hits) / max(hits[geo == "BR-SP"])) %>%
+  
+  dplyr::ungroup() %>%
+  dplyr::mutate(hits_normalized = hits * scale_var)
+
+## Check standardization
+trends_df %>%
+  
+  # For BR-SP, check standard deviation within the same date and keyword
+  dplyr::filter(geo == "BR-SP") %>%
+  dplyr::group_by(date, keyword) %>%
+  dplyr::summarise(hits_normalized_sd = sd(hits_normalized)) %>%
+  
+  # Check how well certain variables do
+  dplyr::group_by(keyword) %>%
+  dplyr::summarise(hits_normalized_sd_min = min(hits_normalized_sd),
+            hits_normalized_sd_mean = mean(hits_normalized_sd),
+            hits_normalized_sd_max = max(hits_normalized_sd))
+
+## Keep BR-SP only in search group 1
+trends_df <- trends_df %>%
+  filter(!(geo == "BR-SP" & iso_search_group != 1))
+
+
 # Merge with Shapefile ---------------------------------------------------------
 
 # TODO
 
 # Export -----------------------------------------------------------------------
-saveRDS(trends_df, file.path(dropbox_file_path, "Data/google_trends/FinalData/brazil_extract_clean.Rds"))
-write.csv(trends_df, file.path(dropbox_file_path, "Data/google_trends/FinalData/brazil_extract_clean.csv"), row.names = F)
+saveRDS(trends_df, file.path(dropbox_file_path, paste0("Data/google_trends/FinalData/brazil_extract_clean_compare",comparison_iso,".Rds")))
+write.csv(trends_df, file.path(dropbox_file_path, paste0("Data/google_trends/FinalData/brazil_extract_clean_compare",comparison_iso,".csv")), row.names = F)

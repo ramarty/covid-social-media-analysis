@@ -6,6 +6,8 @@
 
 # Grab admin codes to scrape ---------------------------------------------------
 
+# Iso Codes ---
+
 # Iso Codes  ----
 library(ISOcodes)
 
@@ -17,6 +19,9 @@ br_isocodes <- isocodes %>%
          code != "BR-FN") %>% 
   dplyr::rename(sub_code = code) %>% 
   dplyr::select(sub_code, name)
+
+# So can search 4 countries at a time
+br_isocodes$iso_search_group <- rep(1:27, each=4)[1:nrow(br_isocodes)]
 
 comparison_iso <- "BR-SP"
 
@@ -47,22 +52,25 @@ for(term in c("quais são os sintomas do coronavírus",
               "volta brasil")){
   
   ## Scrape for specific localities
-  trends_df <- lapply(1:27, function(i){
+  trends_df <- lapply(unique(br_isocodes$iso_search_group), function(i){
     
     print(i)
     
     tryCatch({  
       out <- gtrends(term, 
                      category = "0",
-                     geo = c(br_isocodes$sub_code[i], comparison_iso),
+                     geo = c(br_isocodes$sub_code[br_isocodes$iso_search_group %in% i], 
+                             comparison_iso) %>%
+                       unique(),
                      time = "today 3-m",
                      onlyInterest=T,
                      low_search_volume=T)
       
-      Sys.sleep(12)
+      #Sys.sleep(1)
       
       out_df <- out$interest_over_time
-      out_df$name <- br_isocodes$name[i]
+      out_df$iso_search_group <- i
+      #out_df$name <- br_isocodes$name[i]
       for(var in names(out_df)) out_df[[var]] <- out_df[[var]] %>% as.character()
       
       return(out_df)
@@ -79,5 +87,5 @@ for(term in c("quais são os sintomas do coronavírus",
 }
 
 # Export -----------------------------------------------------------------------
-saveRDS(trends_df_all, file.path(dropbox_file_path, "Data/google_trends/RawData/brazil_extract_extra_words_compare",comparison_iso,".Rds"))
-write.csv(trends_df_all, file.path(dropbox_file_path, "Data/google_trends/RawData/brazil_extract_extra_words_compare",comparison_iso,".csv"), row.names=F)
+saveRDS(trends_df_all, file.path(dropbox_file_path, paste0("Data/google_trends/RawData/brazil_extract_extra_words_compare",comparison_iso,".Rds")))
+write.csv(trends_df_all, file.path(dropbox_file_path, paste0("Data/google_trends/RawData/brazil_extract_extra_words_compare",comparison_iso,".csv")), row.names=F)
