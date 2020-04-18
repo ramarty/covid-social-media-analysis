@@ -1,0 +1,158 @@
+---
+title: "06_Time_Lags"
+output: html_document
+---
+
+```{r, include = FALSE}
+library(tidyverse)
+library(gridExtra)
+library(lubridate)
+
+#trends_df <- read.csv(file.path(dropbox_file_path, "Data/google_trends/FinalData/brazil_trends_clean_final.csv"))
+
+trends_df <- read.csv("/Users/wb537287/Dropbox/COVID Social Media Analysis/Data/google_trends/FinalData/brazil_trends_clean_final.csv")
+```
+
+```{r}
+trends_df <- trends_df %>% mutate(date = as.Date(date))
+```
+
+We restrict to keywords with at least 1000 observations
+```{r}
+trends_df %>% 
+  count(keyword)
+```
+# Overall picture across keyword
+
+All keywords for all states
+
+```{r}
+trends_df %>% 
+  filter(!is.na(state), !is.na(keyword), !is.na(hits)) %>% 
+  group_by(date, keyword, state) %>% 
+  summarize(
+    weighted_mean_hits = weighted.mean(hits, w = estimate_2018_state)
+  ) %>% 
+  ggplot() +
+  geom_line(aes(date, weighted_mean_hits, group = state, color = state)) +
+  labs(
+    y = "Weighted Average Number of Hits",
+    title = "Average Number of Hits by Keyword Over Time (Symptoms)", 
+    subtitle = "The average is weighted by the number of people in each state"
+  ) +
+  facet_wrap(vars(keyword))
+```
+
+# Selecting main words 
+
+Based on the graph above, we select the main keywords 
+
+```{r}
+# we select a group of keywords
+selected_keywords <- 
+  c("ajuda do coronavírus", "cloroquina", "como tratar o coronavírus", 
+    "coronavirus", "covid", 
+    "Estou com falta de ar", "estou com febre", "febre", 
+    "fique em casa", "medicos", "quais são os sintomas do coronavírus", 
+    "sintomas do coronavirus", "tosse")
+
+main_words_df <- 
+  trends_df %>% 
+  filter(keyword %in% selected_keywords)
+
+# we now filter for those keywords which appear in a majority of states
+
+main_keywords <- 
+  main_words_df %>% 
+  count(keyword) %>% 
+  filter(n > 1500) %>% pull(keyword)
+
+main_words_df <- 
+  trends_df %>% 
+  filter(keyword %in% main_keywords)
+```
+
+
+To begin with, we are going to focus for now on "sintomas do coronavirus" and "tosse", which seem to have sufficient variation yet a clear, increasing trend as well
+
+# We compute the growth rate for cases and deaths of coronavirus
+
+```{r}
+trends_df <- 
+  trends_df %>% 
+  group_by(state, keyword) %>% 
+  mutate(
+    diff_date = as.numeric(date - lag(date)), 
+    diff_growth_cases = cases - lag(cases), 
+    diff_growth_deaths = deaths - lag(deaths), 
+    diff_growth_hits = hits - lag(hits), 
+    growth_rate_cases = (diff_growth_cases/diff_date)*100/lag(cases),
+    growth_rate_deaths = (diff_growth_deaths/diff_date)*100/lag(deaths),
+    growth_rate_hits = (diff_growth_hits/diff_date)*100/lag(hits), 
+    growth_rate_cases = if_else(is.na(growth_rate_cases), 0, growth_rate_cases), 
+    growth_rate_deaths = if_else(is.na(growth_rate_deaths), 0, growth_rate_deaths), 
+    growth_rate_cases = if_else(is.infinite(growth_rate_cases), 100, growth_rate_cases), 
+    growth_rate_deaths = if_else(is.infinite(growth_rate_deaths), 100, growth_rate_deaths), 
+    growth_rate_hits = if_else(is.na(growth_rate_hits), 0, growth_rate_hits), 
+    growth_rate_hits = if_else(is.infinite(growth_rate_hits), 100, growth_rate_hits)
+  ) %>% 
+  ungroup()
+```
+
+We check how the case rate looks like
+
+```{r}
+trends_df %>% 
+  filter(!is.na(categories), keyword %in% main_keywords, !is.na(state)) %>% 
+  group_by(categories, state, date) %>% 
+  mutate(
+    mean_hits = mean(hits, na.rm = TRUE)
+  ) %>% 
+  ggplot() + 
+  geom_line(aes(date, mean_hits, group = categories, color = fct_reorder2(categories, date, mean_hits))) +
+  geom_line(aes(date, growth_rate_cases)) + 
+  labs(color = "Category") +
+  coord_cartesian(ylim = c(0, 100)) + 
+  facet_wrap(vars(state))
+```
+
+We check how the death growth rate looks like
+
+```{r}
+trends_df %>% 
+  filter(!is.na(categories), keyword %in% main_keywords, !is.na(state)) %>% 
+  group_by(categories, state, date) %>% 
+  mutate(
+    mean_hits = mean(hits, na.rm = TRUE)
+  ) %>% 
+  ggplot() + 
+  geom_line(aes(date, mean_hits, group = categories, color = fct_reorder2(categories, date, mean_hits))) +
+  geom_line(aes(date, growth_rate_deaths)) + 
+  labs(color = "Category") +
+  coord_cartesian(ylim = c(0, 100)) + 
+  facet_wrap(vars(state))
+```
+
+```{r}
+trends_df %>% 
+  filter(!is.na(categories), keyword %in% main_keywords, !is.na(state)) %>% 
+  group_by(categories, state, date) %>% 
+  mutate(
+    mean_hits = mean(hits, na.rm = TRUE)
+  ) %>% 
+  ggplot() + 
+  geom_line(aes(date, mean_hits, group = categories, color = fct_reorder2(categories, date, mean_hits))) +
+  geom_line(aes(date, growth_rate_hits)) + 
+  labs(color = "Category") +
+  coord_cartesian(ylim = c(0, 100)) + 
+  facet_wrap(vars(state))
+
+trends_df %>% 
+  count(keyword, state, date, growth_rate_hits, hits)
+```
+
+
+# Time lags
+
+We now compute the difference between these keywords and the maximum in searches
+
