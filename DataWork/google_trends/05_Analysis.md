@@ -19,6 +19,7 @@ output:
 
 
 
+
 ```r
 trends_df <- trends_df %>% mutate(date = as.Date(date))
 trends_df <- 
@@ -128,6 +129,30 @@ consequences
 
 ![](05_Analysis_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
 
+In 1st person
+
+```r
+first_person <- 
+  trends_df %>% 
+  filter(!is.na(state), !is.na(keyword), categories == "in_1st_person", !is.na(hits)) %>% 
+  group_by(date, keyword) %>% 
+  summarize(
+    weighted_mean_hits = weighted.mean(hits, w = estimate_2018_state)
+  ) %>% 
+  ggplot() +
+  geom_line(aes(date, weighted_mean_hits)) +
+  labs(
+    y = "Weighted Average Number of Hits",
+    title = "Average Number of Hits by Keyword Over Time (1st person)", 
+    subtitle = "The average is weighted by the number of people in each state"
+  ) +
+  facet_wrap(vars(keyword))
+
+first_person
+```
+
+![](05_Analysis_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
+
 All in one graph
 
 ```r
@@ -147,7 +172,7 @@ trends_df %>%
   facet_wrap(vars(keyword))
 ```
 
-![](05_Analysis_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
+![](05_Analysis_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
 
 # Covid-19 per state
 
@@ -165,7 +190,7 @@ trends_df %>%
   )
 ```
 
-![](05_Analysis_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
+![](05_Analysis_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
 
 Total number of deaths across states
 
@@ -182,7 +207,7 @@ trends_df %>%
   )
 ```
 
-![](05_Analysis_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
+![](05_Analysis_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
 
 Case rate per state
 
@@ -198,7 +223,7 @@ trends_df %>%
   )
 ```
 
-![](05_Analysis_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
+![](05_Analysis_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
 
 Death rate per state
 
@@ -214,7 +239,7 @@ trends_df %>%
   )
 ```
 
-![](05_Analysis_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
+![](05_Analysis_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
 
 
 # Cumulative figures of covid-19
@@ -237,7 +262,7 @@ trends_df %>%
   facet_wrap(vars(variable), scales = "free")
 ```
 
-![](05_Analysis_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
+![](05_Analysis_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
 
 At the state level
 
@@ -257,7 +282,7 @@ trends_df %>%
   facet_wrap(vars(variable), scales = "free")
 ```
 
-![](05_Analysis_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
+![](05_Analysis_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
 
 # States ordered by death and case rate on April 1st
 
@@ -291,7 +316,7 @@ fatality_per_case_state <-
 grid.arrange(case_rate_per_state, death_rate_per_state, fatality_per_case_state, ncol = 3)
 ```
 
-![](05_Analysis_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
+![](05_Analysis_files/figure-html/unnamed-chunk-15-1.png)<!-- -->
 
 
 ```r
@@ -334,7 +359,7 @@ trends_df %>%
   facet_wrap(vars(keyword))
 ```
 
-![](05_Analysis_files/figure-html/unnamed-chunk-17-1.png)<!-- -->
+![](05_Analysis_files/figure-html/unnamed-chunk-18-1.png)<!-- -->
 
 We now change the focus to the state level, and see the correlations of each keyword with the number of cases
 
@@ -354,7 +379,7 @@ trends_df %>%
   coord_cartesian(ylim = c(0, 100))
 ```
 
-![](05_Analysis_files/figure-html/unnamed-chunk-18-1.png)<!-- -->
+![](05_Analysis_files/figure-html/unnamed-chunk-19-1.png)<!-- -->
 
 - "fique em cassa" (stay at home) becomes popular after the increase in cases of coronavirus takes place.
 - in contrast, the increase in popularity of "coronavirus", "tosse" and "febre" precedes the increase in actual cases. 
@@ -395,7 +420,7 @@ trends_df %>%
   theme_light()
 ```
 
-![](05_Analysis_files/figure-html/unnamed-chunk-19-1.png)<!-- -->
+![](05_Analysis_files/figure-html/unnamed-chunk-20-1.png)<!-- -->
 
 We now look into each of the states
 
@@ -414,7 +439,7 @@ trends_df %>%
   facet_wrap(vars(state)) 
 ```
 
-![](05_Analysis_files/figure-html/unnamed-chunk-20-1.png)<!-- -->
+![](05_Analysis_files/figure-html/unnamed-chunk-21-1.png)<!-- -->
 
 
 ```r
@@ -433,7 +458,7 @@ trends_df %>%
   theme_light()
 ```
 
-![](05_Analysis_files/figure-html/unnamed-chunk-21-1.png)<!-- -->
+![](05_Analysis_files/figure-html/unnamed-chunk-22-1.png)<!-- -->
 
 - people start to google about the virus and about symptoms around the time when the number of cases in Sao Paulo starts to increase. 
 
@@ -453,4 +478,4 @@ trends_df %>%
   facet_wrap(vars(state))
 ```
 
-![](05_Analysis_files/figure-html/unnamed-chunk-22-1.png)<!-- -->
+![](05_Analysis_files/figure-html/unnamed-chunk-23-1.png)<!-- -->
