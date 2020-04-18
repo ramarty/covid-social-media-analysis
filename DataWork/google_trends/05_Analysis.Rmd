@@ -27,6 +27,7 @@ library(gridExtra)
 trends_df <- read.csv("/Users/wb537287/Dropbox/COVID Social Media Analysis/Data/google_trends/FinalData/brazil_trends_clean_final.csv")
 ```
 
+
 ```{r}
 trends_df <- trends_df %>% mutate(date = as.Date(date))
 trends_df <- 
@@ -122,6 +123,27 @@ consequences <-
   facet_wrap(vars(keyword))
 
 consequences
+```
+
+In 1st person
+```{r}
+first_person <- 
+  trends_df %>% 
+  filter(!is.na(state), !is.na(keyword), categories == "in_1st_person", !is.na(hits)) %>% 
+  group_by(date, keyword) %>% 
+  summarize(
+    weighted_mean_hits = weighted.mean(hits, w = estimate_2018_state)
+  ) %>% 
+  ggplot() +
+  geom_line(aes(date, weighted_mean_hits)) +
+  labs(
+    y = "Weighted Average Number of Hits",
+    title = "Average Number of Hits by Keyword Over Time (1st person)", 
+    subtitle = "The average is weighted by the number of people in each state"
+  ) +
+  facet_wrap(vars(keyword))
+
+first_person
 ```
 
 All in one graph
