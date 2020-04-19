@@ -156,3 +156,85 @@ trends_df %>%
 
 We now compute the difference between these keywords and the maximum in searches
 
+We first create variables for time periods  
+```{r}
+trends_df <- 
+  trends_df %>% 
+  mutate(
+    month = month(date), 
+    wday = wday(date, label = TRUE), 
+    week_number = week(date)
+  )
+```
+
+We compute the z-score 
+```{r}
+trends_df <- 
+  trends_df %>%
+   group_by(state, keyword) %>%
+   mutate(
+     hits_feb = mean(hits[month == 2], na.rm=T),
+     hits_feb_sd = sd(hits[month == 2], na.rm=T)
+   ) %>%
+   ungroup()
+    
+min_sd <- min(trends_df$hits_feb_sd[trends_df$hits_feb_sd > 0], na.rm=T)
+
+trends_df$hits_feb_sd[trends_df$hits_feb_sd < min_sd] <- min_sd
+    
+trends_df$zscore <- (trends_df$hits - trends_df$hits_feb) / trends_df$hits_feb_sd
+```
+
+Compute weekly average of zscore, then find the week with the maximum z-score
+```{r}
+trends_df <- 
+  trends_df %>% 
+  group_by(week_number, state, keyword) %>% 
+  mutate(week_zscore = mean(zscore, na.rm = TRUE)) %>% 
+  ungroup()
+
+trends_df <- 
+  trends_df %>% 
+  group_by(state, keyword) %>% 
+  mutate(
+    max_week_zscore = max(week_zscore), 
+    max_week_zscore_bin = if_else(max_week_zscore == week_zscore, 1, 0)
+  ) 
+
+# need to review later if this worked well
+```
+
+Once we have the maximum z-score, we calculate the days that pass between when the z-score and the maximum growth rate of cases for the main keyword (sintomas do coronavirus, tosse) per state
+
+We compute the period of maximum growth rate for each state and keyword
+```{r}
+trends_df <- 
+  trends_df %>% 
+  group_by(state, keyword) %>% 
+  mutate(
+    max_growth_cases = max(growth_rate_cases), 
+    max_growth_cases_bin = if_else(growth_rate_cases == max_growth_cases, 1, 0)
+  )
+```
+
+We now compute the difference between the week of maximum z-score and the week of maximum case growth rate
+
+```{r}
+trends_df %>% 
+  group_by(keyword, state) %>% 
+  mutate(diff_zscore_cases = date[max_growth_cases_bin == 1] - date[max_week_zscore_bin == 1])
+
+trends_df <- 
+  trends_df %>% 
+  group_by(keyword, state) %>% 
+  mutate(days_since_max_zscore = date - date[max_week_zscore_bin == 1]) %>% 
+  ungroup()
+```
+
+We try plotting it
+
+```{r}
+trends_df %>% 
+  
+```
+
