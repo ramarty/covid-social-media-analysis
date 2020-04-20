@@ -167,7 +167,7 @@ trends_df <-
   )
 ```
 
-We compute the z-score 
+We compute the z-score for hits
 ```{r}
 trends_df <- 
   trends_df %>%
@@ -185,7 +185,44 @@ trends_df$hits_feb_sd[trends_df$hits_feb_sd < min_sd] <- min_sd
 trends_df$zscore <- (trends_df$hits - trends_df$hits_feb) / trends_df$hits_feb_sd
 ```
 
-Compute weekly average of zscore, then find the week with the maximum z-score
+Compute weekly average of zscore for hits, then find the week with the maximum z-score
+```{r}
+trends_df <- 
+  trends_df %>% 
+  group_by(week_number, state, keyword) %>% 
+  mutate(week_zscore = mean(zscore, na.rm = TRUE)) %>% 
+  ungroup()
+
+trends_df <- 
+  trends_df %>% 
+  group_by(state, keyword) %>% 
+  mutate(
+    max_week_zscore = max(week_zscore), 
+    max_week_zscore_bin = if_else(max_week_zscore == week_zscore, 1, 0)
+  ) 
+
+# need to review later if this worked well
+```
+
+We compute the z-score for cases
+```{r}
+trends_df <- 
+  trends_df %>%
+   group_by(state, keyword) %>%
+   mutate(
+     hits_feb = mean(hits[month == 2], na.rm=T),
+     hits_feb_sd = sd(hits[month == 2], na.rm=T)
+   ) %>%
+   ungroup()
+    
+min_sd <- min(trends_df$hits_feb_sd[trends_df$hits_feb_sd > 0], na.rm=T)
+
+trends_df$hits_feb_sd[trends_df$hits_feb_sd < min_sd] <- min_sd
+    
+trends_df$zscore <- (trends_df$hits - trends_df$hits_feb) / trends_df$hits_feb_sd
+```
+
+Compute weekly average of zscore for hits, then find the week with the maximum z-score
 ```{r}
 trends_df <- 
   trends_df %>% 
@@ -229,12 +266,24 @@ trends_df <-
   group_by(keyword, state) %>% 
   mutate(days_since_max_zscore = date - date[max_week_zscore_bin == 1]) %>% 
   ungroup()
+
+trends_df %>% 
+  filter(keyword %in% main_keywords) %>% 
+  group_by(state, keyword) %>% 
+  summarize(
+    date_max_week_zscore = mean(date[max_week_zscore_bin == 1]), 
+    date_max_growth_cases = mean(date[max_growth_cases_bin == 1])
+  ) 
+  
 ```
 
 We try plotting it
 
 ```{r}
 trends_df %>% 
-  
+  filter(keyword == "tosse", state == "Alagoas") %>% 
+  group_by(state, keyword) %>% 
+  dplyr::select(date, cases, growth_rate_cases, max_week_zscore)
 ```
 
+## Main question: how to calculate the maximum period of number of cases? If I use a measure like growth rates, then it will always indicate the first days of cases.
