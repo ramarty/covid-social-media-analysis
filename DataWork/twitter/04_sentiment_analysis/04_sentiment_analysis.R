@@ -118,7 +118,7 @@ brazil_tweets <- readRDS(file.path(dropbox_file_path, "Data", "twitter", "FinalD
 
         
 # 4. Text mining
-    # 4.1 Get only text from the tweets
+    # 4.1 Get only text from the tweets 
     tweets_text <- brazil_tweets %>% 
         mutate(
             tweet_id = row_number()
@@ -131,7 +131,7 @@ brazil_tweets <- readRDS(file.path(dropbox_file_path, "Data", "twitter", "FinalD
                              stopwords::stopwords("es"),
                              "t.co")
     
-    stopwords_multilang <- as.data.frame(stopwords_multilang) %>% 
+    stopwords_multilang_df <- as.data.frame(stopwords_multilang) %>% 
         janitor::clean_names() %>% 
         rename(word = stopwords_multilang) %>% 
         mutate(
@@ -142,7 +142,7 @@ brazil_tweets <- readRDS(file.path(dropbox_file_path, "Data", "twitter", "FinalD
     unnest_words <- tweets_text %>%
         unnest_tokens(word, full_text) %>% 
         anti_join(stop_words, by = "word") %>% 
-        anti_join(stopwords_multilang, by = "word") %>% 
+        anti_join(stopwords_multilang_df, by = "word") %>% 
         filter(!word %in% c("rt", "pra", "é", "tá", "sjgtzxmbpv", "vinistupido", "ta", 
                             "vcs", "pq", "aí", "pq", "paulo")) 
     
@@ -193,11 +193,13 @@ brazil_tweets <- readRDS(file.path(dropbox_file_path, "Data", "twitter", "FinalD
         filter(word %in% top_word_cors$item1 |
                    word %in% top_word_cors$item2)
     
+    # Set seed
     set.seed(139196775)
     
+    # Top words by correlation
     top_word_cors %>%
         graph_from_data_frame(vertices = vertices) %>%
-        ggraph() +
+        ggraph(layout = "fr") +
         geom_edge_link() +
         geom_node_point(aes(size = occurences)) +
         geom_node_text(aes(label = name, 
@@ -379,7 +381,7 @@ brazil_tweets <- readRDS(file.path(dropbox_file_path, "Data", "twitter", "FinalD
             filter(grepl(term, full_text)) %>% 
             unnest_tokens(word, full_text) %>% 
             anti_join(stop_words, by = "word") %>% 
-            anti_join(stopwords_multilang, by = "word") %>% 
+            anti_join(stopwords_multilang_df, by = "word") %>% 
             filter(!word %in% c("rt", "pra", "é", "tá", "sjgtzxmbpv", "vinistupido", "ta", 
                                 "vcs", "pq", "aí", "pq", "paulo")) %>% 
             right_join(sentiments) %>% 
@@ -454,12 +456,7 @@ brazil_tweets <- readRDS(file.path(dropbox_file_path, "Data", "twitter", "FinalD
                dpi = 400, height = 6, width = 10)
     }
 
-# Top Words --------------------------------------------------------------------
-    stopwords_multilang <- c(stopwords::stopwords("en"),
-                             stopwords::stopwords("pt"),
-                             stopwords::stopwords("es"),
-                             "t.co")
-    
+# 6. Top Words --------------------------------------------------------------------
     grab_phases_for_wordcloud <- function(brazil_tweets){
         # Function that grabs phrases for a word cloud.
         
@@ -540,52 +537,94 @@ brazil_tweets <- readRDS(file.path(dropbox_file_path, "Data", "twitter", "FinalD
                dpi = 400, height = 10, width = 15)
 
 
+# 7. Relationship between words: n-grams ---------------------------------------
+    #### Bigram
+    tweets_bigrams <- tweets_text %>%
+        unnest_tokens(word, full_text, token = "ngrams", n = 2)
+    
+    tweets_bigrams_separated <- tweets_bigrams %>% 
+        separate(word, c("word1", "word2"), sep = " ")
+    
+    
+    tweets_bigrams_filtered <- tweets_bigrams_separated %>% 
+        filter(!word1 %in% stop_words$word) %>%
+        filter(!word2 %in% stop_words$word) %>% 
+        filter(!word1 %in% stopwords_multilang_df$word) %>%
+        filter(!word2 %in% stopwords_multilang_df$word) %>% 
+        filter(!word1 %in% c("rt", "pra", "é", "tá", "sjgtzxmbpv", "vinistupido", "ta", 
+                            "vcs", "pq", "aí", "pq", "paulo")) %>% 
+        filter(!word2 %in% c("rt", "pra", "é", "tá", "sjgtzxmbpv", "vinistupido", "ta", 
+                            "vcs", "pq", "aí", "pq", "paulo")) 
+    
+    tweets_bigrams_united <- tweets_bigrams_filtered %>% 
+        unite(bigram, word1, word2, sep = " ")
+    
+    ## CORONA: Words preceded by: something
+    corona_words <- tweets_bigrams_separated %>% 
+        filter(word1 == "corona",
+               !word2 %in% c("virus", "beer")) %>% 
+        inner_join(sentiments, by = c(word2 = "word")) %>% 
+        count(word2, sentiment, sort = TRUE)
+    
+    corona_words %>% 
+        filter(!word2 %in% c("lover")) %>% 
+        mutate(value = ifelse(sentiment == "Negative", -1, 1),
+               contribution = n * value) %>% 
+        arrange(desc(abs(contribution))) %>% 
+        head(30) %>% 
+        mutate(word2 = reorder(word2, contribution)) %>% 
+        ggplot(aes(x = word2, y = n * value, fill = sentiment)) +
+        geom_col(show.legend = FALSE) + 
+        coord_flip() + 
+        labs(
+            x = NULL, 
+            y = "Sentiment value times number of occurences",
+            fill = "Sentiment", 
+            title = "Words preceded by \"corona\""
+        ) + 
+        theme_ipsum_rc() + 
+        theme(
+            panel.grid.minor = element_blank(),
+            legend.position = "bottom"
+        )
+    
+    ggsave(filename = file.path(brazil_twitter_figures_path, paste0("tweets_words_preceded_corona.png")), 
+           dpi = 400, height = 6, width = 10)
 
+    ## QUARENTENA, HOSPITAL: Words preceded by: something
+    preceded_words <- tweets_bigrams_separated %>% 
+        filter(word1 %in% c("quarentena", "hospital"), 
+               !word2 %in% c("virus", "beer")) %>% 
+        inner_join(sentiments, by = c(word2 = "word")) %>% 
+        count(word1, word2, sentiment, sort = TRUE)
+    
+    preceded_words %>% 
+        group_by(word1) %>% 
+        top_n(15) %>% 
+        mutate(value = ifelse(sentiment == "Negative", -1, 1),
+               contribution = n * value) %>% 
+        ungroup() %>% 
+        mutate(word2 = reorder_within(word2, contribution, word1),
+               word1 = str_to_title(word1)) %>% 
+        ggplot(aes(x = word2, y = n * value, fill = sentiment)) +
+        geom_col(show.legend = FALSE) + 
+        coord_flip() + 
+        scale_x_reordered() +
+        scale_y_continuous(expand = c(0,0)) +
+        facet_wrap(~word1, scales = "free_y") + 
+        labs(
+            x = NULL, 
+            y = "Sentiment value times number of occurences",
+            fill = "Sentiment", 
+            title = "Top 15 words preceded by:"
+        ) + 
+        theme_ipsum_rc() + 
+        theme(
+            panel.grid.minor = element_blank(),
+            strip.text = element_text(face = "bold"),
+            legend.position = "bottom",
 
-# Animate graph: common words for all periods:
-# # Pendiente
-# top_words_date <- unnest_words %>%
-#     filter(date >= "2020-02-01") %>% 
-#     group_by(date) %>% 
-#     count(word) %>% 
-#     ungroup()
-# 
-# top_words_date %>% 
-#     filter(n >= 1000) %>% 
-#     arrange(date, -n) %>% 
-#     group_by(date) %>% 
-#     mutate(
-#         rank =  rank(n, ties.method = "first")
-#     ) %>%
-#     filter(rank <= 5) %>% 
-#     View()
-#     ggplot(aes(rank, group = word, color = word, fill = word)) +
-#     geom_tile(aes(y = n/2, 
-#                   height = n,
-#                   width = 0.9), alpha = 0.9) +
-#     geom_text(aes(y = 0, label = word), hjust = 1.4) +
-#     coord_flip(clip = "off", expand = FALSE)  +
-#     scale_y_continuous(labels = comma) +
-#     scale_x_reverse() +
-#     guides(color = FALSE, fill = FALSE) +
-#     labs(
-#         x = NULL, 
-#         y = "Count",
-#         color = NULL,
-#         title = "Common words in Tweets in Brazil",
-#         subtitle = "Period: January 21st, 2020 - April 3rd, 2020"
-#     ) + 
-#     theme_ipsum_rc() + 
-#     theme(
-#         plot.title = element_text(hjust = 0, size = 25),
-#         plot.subtitle = element_text(size = 20), 
-#         axis.text.y =  element_blank(), 
-#         axis.text.x =  element_text(size = 16), 
-#         axis.title.x = element_text(size = 16),
-#         axis.ticks.y = element_blank(),
-#         plot.margin = margin(1,1,1,4, "cm"), 
-#         plot.caption = element_text(size = 14)
-#     ) +
-#     transition_states(date, transition_length = 4, state_length = 1) +
-#     ease_aes('cubic-in-out')
-
+        )
+    
+    ggsave(filename = file.path(brazil_twitter_figures_path, paste0("tweets_words_preceded_hos_qua.png")), 
+           dpi = 400, height = 6, width = 10)
