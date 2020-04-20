@@ -4,9 +4,11 @@
 # https://github.com/GeneralMills/pytrends
 # https://support.google.com/trends/answer/4365533?hl=en
 
-# Grab admin codes to scrape ---------------------------------------------------
 
-# Iso Codes ---
+#comparison_iso <- "BR-SP"
+comparison_iso <- "BR-RJ"
+
+# Grab admin codes to scrape ---------------------------------------------------
 
 # Iso Codes  ----
 library(ISOcodes)
@@ -23,7 +25,7 @@ br_isocodes <- isocodes %>%
 # So can search 4 countries at a time
 br_isocodes$iso_search_group <- rep(1:27, each=4)[1:nrow(br_isocodes)]
 
-comparison_iso <- "BR-SP"
+
 
 # Scrape Data ------------------------------------------------------------------
 
@@ -57,6 +59,7 @@ for(term in c("quais são os sintomas do coronavírus",
     print(i)
     
     tryCatch({  
+      
       out <- gtrends(term, 
                      category = "0",
                      geo = c(br_isocodes$sub_code[br_isocodes$iso_search_group %in% i], 
