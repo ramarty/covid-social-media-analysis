@@ -36,11 +36,12 @@ trends_df_extra <-
 
 trends_df_extra <- 
   trends_df_extra %>% 
-  mutate(state = state_en = stringi::stri_trans_general(state, "Latin-ASCII") %>% str_to_upper()) 
+  mutate(name = stringi::stri_trans_general(name, "Latin-ASCII") %>% str_to_upper()) 
 
 # Add extra words to the dataset
 
-trends_df %>% 
+trends_df <- 
+  trends_df %>% 
   bind_rows(trends_df_extra) ## NEEDS TO BE REVIEWED
 
 # Merge admin cases with deaths and pop data---------------------------------------------------------
