@@ -17,9 +17,11 @@ run_codes <- FALSE
 if (!require("pacman")) install.packages("pacman")
 
 pacman::p_load(gtrendsR, tidyverse, parallel, pbmcapply, ggplot2, scales,
-               jsonlite, stringr, raster, stringi, lubridate, purrr, lexiconPT,
-               tidytext, quanteda, qdap, SentimentAnalysis, sentimentr,
-               tm, tokenizers, wordcloud, ggwordcloud, ggpubr, hrbrthemes)
+               widyr, ggraph, igraph, jsonlite, stringr, raster, stringi, 
+               lubridate, purrr, lexiconPT, tidytext, quanteda, qdap, 
+               SentimentAnalysis, sentimentr, patchwork, tm, tokenizers, 
+               wordcloud, ggwordcloud, ggpubr, hrbrthemes)
+
 #------------------------------------------------------------------------------#
 #   1.2. File paths ----
 #------------------------------------------------------------------------------#
@@ -57,7 +59,6 @@ brazil_gmobility_figures_path   <- file.path(dropbox_file_path, "Data", "google_
 #------------------------------------------------------------------------------#
 # 2. Cleaning ----
 #------------------------------------------------------------------------------#
-
 
 #------------------------------------------------------------------------------#
 # 3. Analysis ----
