@@ -3,7 +3,8 @@
 # Load Data --------------------------------------------------------------------
 trends_df <- readRDS(file.path(dropbox_file_path, "Data/google_trends/RawData/brazil_extract_2020-04-10.Rds"))
 trends_df_ms <- readRDS(file.path(dropbox_file_path, "Data/google_trends/RawData/brazil_extract_ms_2020-04-12.Rds"))
-admin_data <- read.dta13(file.path(dropbox_file_path, "Data/brazil_admin_data/admindata.dta"))
+#admin_data <- read.dta13(file.path(dropbox_file_path, "Data/brazil_admin_data/admindata.dta"))
+admin_data <- read.csv(file.path(dropbox_file_path, "Data/brazil_admin_data/brazil_covid19_200419.csv"), encoding = "UTF-8")
 geo_data <- readRDS(file.path(dropbox_file_path, "Data/GADM/RawData/gadm36_BRA_1_sp.rds"))
 state_pop_data <- read.csv(file.path(dropbox_file_path, "Data/city_population/FinalData/brazil_state_pop.csv"))
 trends_df_extra <- readRDS(file.path(dropbox_file_path, "Data/google_trends/RawData/brazil_extract_extra_words.Rds"))
