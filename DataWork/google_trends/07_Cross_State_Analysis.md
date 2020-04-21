@@ -15,11 +15,10 @@ output:
 ---
 
 
-```{r global_options, include=FALSE}
-knitr::opts_chunk$set(fig.width=12, fig.height=8, warning=FALSE, message=FALSE)
-```
 
-```{r}
+
+
+```r
 library(tidyverse)
 library(gridExtra)
 library(lubridate)
@@ -31,7 +30,8 @@ states_df <- read.csv(file.path(dropbox_file_path, "Data/google_trends/FinalData
 
 We focus on the latest date of cases that we have, April 18. The trends data was extracted in April 20, so this is close enough. 
 
-```{r}
+
+```r
 states_df_0418 <- 
   states_df %>% 
   filter(date == "2020-04-18") 
@@ -53,8 +53,11 @@ states_df_0418 %>%
   coord_cartesian(ylim = c(0, 100))
 ```
 
+![](07_Cross_State_Analysis_files/figure-html/unnamed-chunk-2-1.png)<!-- -->
 
-```{r}
+
+
+```r
 states_df_0418 %>%
   filter(!is.na(hits), keyword %in% selected_keywords) %>% 
   ggplot() + 
@@ -62,6 +65,7 @@ states_df_0418 %>%
   geom_smooth(aes(death_rate, hits), method = "lm") + 
   facet_wrap(vars(keyword)) +
   coord_cartesian(ylim = c(0, 100)) 
-
 ```
+
+![](07_Cross_State_Analysis_files/figure-html/unnamed-chunk-3-1.png)<!-- -->
 
