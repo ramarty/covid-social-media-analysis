@@ -431,3 +431,29 @@ trends_df %>%
   coord_cartesian(ylim = c(0, 100)) + 
   facet_wrap(vars(state))
 ```
+
+All keywords for all states
+```{r}
+trends_df %>% 
+  filter(!is.na(state), !is.na(keyword), !is.na(hits)) %>% 
+  group_by(date, keyword, state) %>% 
+  summarize(
+    weighted_mean_hits = weighted.mean(hits, w = estimate_2018_state)
+  ) %>% 
+  ggplot() +
+  geom_line(aes(date, weighted_mean_hits, group = state, color = state)) +
+  labs(
+    y = "Weighted Average Number of Hits",
+    title = "Average Number of Hits by Keyword Over Time (Symptoms)", 
+    subtitle = "The average is weighted by the number of people in each state"
+  ) +
+  facet_wrap(vars(keyword))
+
+main_keywords <- 
+  c("ajuda do coronavírus", "cloroquina", "como tratar o coronavírus", 
+    "coronavirus", "covid", 
+    "Estou com falta de ar", "estou com febre", "febre", 
+    "fique em casa", "medicos", "quais são os sintomas do coronavírus", 
+    "sintomas do coronavirus", "tosse")
+```
+
