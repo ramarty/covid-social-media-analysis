@@ -2,6 +2,8 @@
 title: "COVID Webscraping and Social Media Analysis: Twitter Text Mining"
 author: Rony Rodriguez-Ramirez
 output:
+  tufte::tufte_handout:
+    keep_tex: true
   tufte::tufte_html: default
 ---
 
