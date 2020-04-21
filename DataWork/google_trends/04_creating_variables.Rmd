@@ -1,0 +1,63 @@
+---
+title: "04_creating_variables_data"
+author: Manuel Ramos
+output: html_document
+---
+
+```{r, include = FALSE}
+trends_df <- read.csv(file.path(dropbox_file_path, "Data/google_trends/FinalData/brazil_admin_trends_clean.csv"))
+```
+
+# Cleaning and creation of new variables
+```{r}
+trends_df <- trends_df %>% mutate(date = as.Date(date))
+```
+
+# We create categories for key words
+
+```{r}
+trends_df <- 
+  trends_df %>% 
+  mutate(
+    categories = case_when(
+      keyword %in% 
+        c("abuso", "abuso sexual", "desemprego",  "dívida", "Educação online",
+          "psicologia", "terapia" ) ~ "consequences",
+      keyword %in% 
+        c("cama de hospital", "desinfetantes", "hidroxicloroquina", 
+          "máscara facial", "termômetros", "ventiladores") ~ "resources",
+      keyword %in% 
+        c( "dificuldade ao respirar", "dor nos olhos", "falta de cheiro", 
+           "febre", "febre alta valor","perda de olfato", "tosse",
+           "sintomas do coronavirus") ~ "symptoms",
+      keyword %in% 
+        c("distância social","fique em casa", "lavar as mãos") ~ "prevention", 
+      keyword %in% c("coronavirus", "covid") ~ "virus"
+      )
+  )
+```
+
+# Create new variables: death rate, cases & deaths per 100,000
+
+```{r}
+trends_df <- 
+  trends_df %>% 
+  mutate(
+    case_rate = cases*100000/estimate_2018_state, 
+    death_rate = deaths*100000/estimate_2018_state, 
+    fatalities_per_case = deaths/cases
+  )
+
+trends_df <- 
+  trends_df %>% 
+  mutate(fatalities_per_case = if_else(is.na(fatalities_per_case), 0, fatalities_per_case))
+```
+
+- check NAs for Rondonia and Santa Catalina
+
+- the reason is that we're missing data from trends_df (the data we scraped from google trends does not include this info, so we need to do the scraping again to fix this)
+
+# Saving the data
+```{r, include = FALSE}
+write.csv(trends_df, file.path(dropbox_file_path, "Data/google_trends/FinalData/brazil_trends_clean_final.csv"), row.names = F)
+```

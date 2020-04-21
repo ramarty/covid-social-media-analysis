@@ -1,11 +1,18 @@
 # Clean Google Trends Data
 
-library(dplyr) # had other package conflict so run here
 # Load Data --------------------------------------------------------------------
-#comparison_iso <- "BR-SP"
-comparison_iso <- "BR-RJ"
+trends_df <- readRDS(file.path(dropbox_file_path, "Data/google_trends/RawData/brazil_extract_2020-04-10.Rds"))
+trends_df_ms <- readRDS(file.path(dropbox_file_path, "Data/google_trends/RawData/brazil_extract_ms_2020-04-12.Rds"))
+#admin_data <- read.dta13(file.path(dropbox_file_path, "Data/brazil_admin_data/admindata.dta"))
+admin_data <- read.csv(file.path(dropbox_file_path, "Data/brazil_admin_data/brazil_covid19_200419.csv"), encoding = "UTF-8")
+geo_data <- readRDS(file.path(dropbox_file_path, "Data/GADM/RawData/gadm36_BRA_1_sp.rds"))
+state_pop_data <- read.csv(file.path(dropbox_file_path, "Data/city_population/FinalData/brazil_state_pop.csv"))
+trends_df_extra <- readRDS(file.path(dropbox_file_path, "Data/google_trends/RawData/brazil_extract_extra_words.Rds"))
 
-trends_df <- readRDS(file.path(dropbox_file_path, paste0("Data/google_trends/RawData/brazil_extract_extra_words_compare",comparison_iso,".Rds")))
+# Merge trends_df with trends_df_ms
+trends_df <- 
+  trends_df %>% 
+  bind_rows(trends_df_ms)
 
 # Clean Variables --------------------------------------------------------------
 
@@ -18,39 +25,67 @@ trends_df$hits <- trends_df$hits %>% as.numeric()
 # Convert into date format
 trends_df$date <- trends_df$date %>% as.Date()
 
-# Standardize Everything to BR-SP ----------------------------------------------
-trends_df <- trends_df %>%
-  dplyr::group_by(iso_search_group, keyword) %>%
-  dplyr::mutate(scale_var = max(hits) / max(hits[geo == comparison_iso])) %>%
-  
-  dplyr::ungroup() %>%
-  dplyr::mutate(hits_normalized = hits * scale_var)
 
-## Check standardization
-trends_df %>%
-  
-  # For BR-SP, check standard deviation within the same date and keyword
-  dplyr::filter(geo == comparison_iso) %>%
-  dplyr::group_by(date, keyword) %>%
-  dplyr::summarise(hits_normalized_sd = sd(hits_normalized)) %>%
-  
-  # Check how well certain variables do
-  dplyr::group_by(keyword) %>%
-  dplyr::summarise(hits_normalized_sd_min = min(hits_normalized_sd),
-            hits_normalized_sd_mean = mean(hits_normalized_sd),
-            hits_normalized_sd_max = max(hits_normalized_sd))
+# Clean dataset of extra words
+trends_df_extra <- 
+  trends_df_extra %>% 
+  mutate(
+    date = as.Date(date), 
+    hits = if_else(hits < 1, "0.5", hits), 
+    hits = as.numeric(hits)
+  )
 
-# a <- trends_df[trends_df$geo %in% comparison_iso & trends_df$keyword == "volta brasil",]
+trends_df_extra <- 
+  trends_df_extra %>% 
+  mutate(name = stringi::stri_trans_general(name, "Latin-ASCII") %>% str_to_upper()) 
 
-## Keep BR-SP only in search group 1
-trends_df <- trends_df %>%
-  filter(!(geo == comparison_iso & iso_search_group != 1))
+# Add extra words to the dataset
+
+trends_df <- 
+  trends_df %>% 
+  bind_rows(trends_df_extra) ## NEEDS TO BE REVIEWED
+
+# Merge admin cases with deaths and pop data---------------------------------------------------------
+
+admin_data <- 
+  admin_data %>% 
+  mutate(
+    state_en = stringi::stri_trans_general(state, "Latin-ASCII") %>% str_to_upper(), 
+    date = as.Date(date)
+  ) 
+
+admin_data <- 
+  admin_data %>% 
+  left_join(
+    state_pop_data, 
+    by = c("state" = "State")
+  )
+
+# Merge google trends data with admin data---------------------------------------------------------
+
+trends_admin_df <- 
+  admin_data %>% 
+  full_join(trends_df, by = c("state_en" = "name", "date" = "date"))
 
 
-# Merge with Shapefile ---------------------------------------------------------
+# Merge the data above with Shapefile ---------------------------------------------------------
 
-# TODO
+sf_geo_data <- st_as_sf(geo_data)
+
+sf_geo_data <- 
+  sf_geo_data %>% 
+  mutate(HASC_1 = str_replace(HASC_1, pattern = "[.]", replacement = "-"))
+
+trends_df_geo <- 
+  trends_admin_df %>% 
+  left_join(sf_geo_data, by = c("geo" = "HASC_1"))
 
 # Export -----------------------------------------------------------------------
-saveRDS(trends_df, file.path(dropbox_file_path, paste0("Data/google_trends/FinalData/brazil_extract_clean_compare",comparison_iso,".Rds")))
-write.csv(trends_df, file.path(dropbox_file_path, paste0("Data/google_trends/FinalData/brazil_extract_clean_compare",comparison_iso,".csv")), row.names = F)
+saveRDS(trends_df, file.path(dropbox_file_path, "Data/google_trends/FinalData/brazil_extract_clean.Rds"))
+write.csv(trends_df, file.path(dropbox_file_path, "Data/google_trends/FinalData/brazil_extract_clean.csv"), row.names = F)
+
+saveRDS(trends_admin_df, file.path(dropbox_file_path, "Data/google_trends/FinalData/brazil_admin_trends_clean.Rds"))
+write.csv(trends_admin_df, file.path(dropbox_file_path, "Data/google_trends/FinalData/brazil_admin_trends_clean.csv"), row.names = F)
+
+saveRDS(trends_df_geo, file.path(dropbox_file_path, "Data/google_trends/FinalData/brazil_geo_clean.Rds"))
+write.csv(trends_df_geo, file.path(dropbox_file_path, "Data/google_trends/FinalData/brazil_geo_clean.csv"), row.names = F)
