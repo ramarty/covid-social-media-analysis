@@ -1,0 +1,44 @@
+---
+title: "07_Cross_state_Analysis"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(gridExtra)
+library(lubridate)
+
+#trends_df <- read.csv(file.path(dropbox_file_path, "Data/google_trends/FinalData/brazil_trends_clean_final.csv"))
+
+states_df <- read.csv("/Users/wb537287/Dropbox/COVID Social Media Analysis/Data/google_trends/RawData/brazil_extract_crosstate.csv", encoding = "UTF-8")
+state_pop_data <- read.csv(file.path(dropbox_file_path, "Data/city_population/FinalData/brazil_state_pop.csv"))
+
+states_df %>% 
+  left_join()
+```
+
+```{r}
+states_df %>% 
+  filter(unit_level == "region") %>% 
+  count(keyword)
+
+states_df <- 
+  states_df %>% 
+  filter(unit_level == "region") %>% 
+  mutate(location = str_replace(location, "State of ", "")) %>% 
+  rename(state = location)
+  
+state_df 
+  mutate(
+    state_en = stringi::stri_trans_general(state, "Latin-ASCII") %>% str_to_upper(), 
+    time_extracted = as.Date(date)
+  )
+
+states_df <- 
+  states_df %>% 
+  left_join(
+    state_pop_data, 
+    by = c("state" = "State")
+  )
+```
+
