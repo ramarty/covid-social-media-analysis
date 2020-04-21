@@ -1,6 +1,6 @@
 # Restrict Tweets to Those in Brazil 
 
-# Load Data --------------------------------------------------------------------
+# Make Brazil Regex Search -----------------------------------------------------
 brazil_tweets <- readRDS(file.path(dropbox_file_path, "Data", "twitter", "FinalData", "brazil_tweets", "rds", "brazil_tweets_appended.Rds"))
 brazil_adm3 <- readRDS(file.path(dropbox_file_path, "Data", "GADM", "RawData", "gadm36_BRA_3_sp.rds"))
 
@@ -22,6 +22,15 @@ brazil_tweets$full_text <- brazil_tweets$full_text %>%
   #str_replace_all(stopwords, "") %>% # Remove stop words
   str_squish()
 
+#### Determine Location
+brazil_adm3$NAME_1 <- brazil_adm3$NAME_1 %>% tolower()
+brazil_tweets$name_1 <- ""
+
+for(name_1 in unique(brazil_adm3$NAME_1)){
+  print(name_1)
+  brazil_tweets$name_1[grepl(name_1, brazil_tweets$location)] <- name_1
+}
+
 #### Constant
 terms_restrict <- c("Coronavirus", 
                     "Koronavirus",
@@ -42,34 +51,6 @@ terms_restrict <- c("Coronavirus",
 
 brazil_tweets <- brazil_tweets %>%
   mutate(constant_words = full_text %>% str_detect(terms_restrict))
-
-# Geocoding --------------------------------------------------------------------
-#### Prep GADM names
-brazil_adm3$NAME_1 <- brazil_adm3$NAME_1 %>% tolower()
-brazil_adm3$NAME_2 <- brazil_adm3$NAME_2 %>% tolower()
-brazil_adm3$NAME_3 <- brazil_adm3$NAME_3 %>% tolower()
-
-#### Initialize Variable Names in Tweets
-brazil_tweets$loc_gadm_name_1 <- ""
-brazil_tweets$loc_gadm_name_2 <- ""
-brazil_tweets$loc_gadm_name_3 <- ""
-
-brazil_tweets$tweet_gadm_name_1 <- ""
-brazil_tweets$tweet_gadm_name_2 <- ""
-brazil_tweets$tweet_gadm_name_3 <- ""
-
-for(name_1 in unique(brazil_adm3$NAME_1)){
-  print(name_1)
-  brazil_tweets$loc_gadm_name_1[grepl(name_1, brazil_tweets$location, perl = T, fixed = T)] <- name_1
-  brazil_tweets$tweet_gadm_name_1[grepl(name_1, brazil_tweets$full_text, perl = T, fixed = T)] <- name_1
-}
-
-counter <- 1
-for(name_2 in unique(brazil_adm3$NAME_2)){
-  brazil_tweets$loc_gadm_name_2[grepl(name_2, brazil_tweets$location, perl = T, fixed = T)] <- name_2
-  counter <- counter + 1
-  if((counter %% 10) == 0) print(counter)
-}
 
 # Export -----------------------------------------------------------------------
 saveRDS(brazil_tweets, file.path(dropbox_file_path, "Data", "twitter", "FinalData", "brazil_tweets", "rds", "brazil_tweets_appended_clean.Rds"))

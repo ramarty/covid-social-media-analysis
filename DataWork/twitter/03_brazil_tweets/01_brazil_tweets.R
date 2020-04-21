@@ -41,7 +41,7 @@ brazil_search_wordbounds <- paste0("\\b", brazil_search, "\\b") %>% paste(collap
 brazil_search_nowordbounds <- brazil_search %>% paste(collapse = "|")
 
 # Load Data --------------------------------------------------------------------
-file_names <- list.files(file.path(dropbox_file_path, "Data", "twitter", "RawData", "rds"), pattern = "*.Rds")
+file_names <- list.files(file.path(dropbox_file_path, "Data", "twitter", "RawData", "rds"), pattern = "*.Rds") %>% rev()
 
 temp <- lapply(file_names, function(file_name_i){
   
