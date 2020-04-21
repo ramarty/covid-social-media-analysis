@@ -18,6 +18,9 @@ states_df %>%
   filter(unit_level == "region") %>% 
   count(keyword)
 
+states_df %>% 
+  filter(keyword == "Perdi o olfato")
+
 states_df <- 
   states_df %>% 
   filter(unit_level == "region") %>% 

@@ -23,6 +23,7 @@ knitr::opts_chunk$set(fig.width=12, fig.height=8, warning=FALSE, message=FALSE)
 library(tidyverse)
 library(gridExtra)
 library(lubridate)
+library(ggrepel)
 
 if(Sys.info()[["user"]] == "wb537287") dropbox_file_path <- "/Users/wb537287/Dropbox/COVID Social Media Analysis"
 
@@ -42,8 +43,12 @@ selected_keywords <-
     "Estou com falta de ar", "estou com febre", "febre", 
     "fique em casa", "medicos", "quais são os sintomas do coronavírus", 
     "sintomas do coronavirus", "tosse")
+```
 
 
+# Correlation between keywords and case rate
+
+```{r}
 states_df_0418 %>%
   filter(!is.na(hits), keyword %in% selected_keywords) %>% 
   ggplot() + 
@@ -53,6 +58,7 @@ states_df_0418 %>%
   coord_cartesian(ylim = c(0, 100))
 ```
 
+# Correlation between keywords and death rate
 
 ```{r}
 states_df_0418 %>%
@@ -64,4 +70,84 @@ states_df_0418 %>%
   coord_cartesian(ylim = c(0, 100)) 
 
 ```
+
+# Correlation between average of main keywords and case rate
+ 
+We now explore if the average of tosse, febre and como tratar o coronavirus is a better predictor of cases
+
+```{r}
+main_keywords <- c("como tratar o coronavírus", "febre", "tosse")
+
+states_df_0418 %>%
+  filter(!is.na(hits), keyword %in% main_keywords) %>% 
+  group_by(state) %>%
+  summarize(
+    average_hits = mean(hits, na.rm = TRUE), 
+    case_rate = mean(case_rate, na.rm = TRUE)
+  ) %>% 
+  ggplot() + 
+  geom_point(aes(case_rate, average_hits)) +
+  geom_smooth(aes(case_rate, average_hits), method = "lm") + 
+  geom_label_repel(
+    data = . %>% filter(case_rate > 40 | average_hits > 70), 
+    aes(case_rate, average_hits, label = state), 
+    hjust=0.5, vjust=0.4
+  ) +
+  coord_cartesian(ylim = c(0, 100))
+```
+
+# Correlation between average of main keywords and death rate
+
+```{r}
+main_keywords <- c("como tratar o coronavírus", "febre", "tosse")
+
+states_df_0418 %>%
+  filter(!is.na(hits), keyword %in% main_keywords) %>% 
+  group_by(state) %>%
+  summarize(
+    average_hits = mean(hits, na.rm = TRUE), 
+    death_rate = mean(death_rate, na.rm = TRUE)
+  ) %>% 
+  ggplot() + 
+  geom_point(aes(death_rate, average_hits)) +
+  geom_smooth(aes(death_rate, average_hits), method = "lm") +
+  geom_label_repel(
+    data = . %>% filter(death_rate > 40 | average_hits > 70), 
+    aes(death_rate, average_hits, label = state), 
+    hjust=0.5, vjust=0.4
+  ) +  coord_cartesian(ylim = c(0, 100))
+```
+
+```{r}
+states_df_0418 %>% 
+  group_by(keyword) %>% 
+  summarise(correlation = cor(case_rate, hits)) %>% 
+  filter(!is.na(correlation)) %>% 
+  arrange(desc(correlation))
+```
+ 
+# Focus on "I can't smell" = "Perdi o olfato" 
+
+```{r}
+states_df_0418 %>% 
+  filter(!is.na(hits), keyword == "Perdi o olfato") %>% 
+  ggplot() + 
+  geom_point(aes(case_rate, hits)) +
+  geom_smooth(aes(case_rate, hits), method = "lm") + 
+  ggrepel::geom_label_repel(aes(case_rate, hits, label = state), hjust=0.5, vjust=0.4) +
+  coord_cartesian(ylim = c(0, 100))
+```
+Maranhao has the top number of hits for "Perdi o olfato", yet we don't see such a high case rate there
+
+```{r}
+states_df_0418 %>% 
+  filter(!is.na(hits), keyword == "Perdi o olfato") %>% 
+  ggplot() + 
+  geom_point(aes(death_rate, hits)) +
+  geom_smooth(aes(death_rate, hits), method = "lm") + 
+  ggrepel::geom_label_repel(aes(death_rate, hits, label = state), hjust=0.5, vjust=0.4) +
+  coord_cartesian(ylim = c(0, 100))
+```
+
+In fact, the death rate in Maranhao is still quite low. This might indicate that there could be an increase in cases (and potentially deaths) in such state in the near future
 

@@ -479,3 +479,77 @@ trends_df %>%
 ```
 
 ![](05_Analysis_files/figure-html/unnamed-chunk-23-1.png)<!-- -->
+
+All keywords for all states
+
+```r
+trends_df %>% 
+  filter(!is.na(state), !is.na(keyword), !is.na(hits)) %>% 
+  group_by(date, keyword, state) %>% 
+  summarize(
+    weighted_mean_hits = weighted.mean(hits, w = estimate_2018_state)
+  ) %>% 
+  ggplot() +
+  geom_line(aes(date, weighted_mean_hits, group = state, color = state)) +
+  labs(
+    y = "Weighted Average Number of Hits",
+    title = "Average Number of Hits by Keyword Over Time (Symptoms)", 
+    subtitle = "The average is weighted by the number of people in each state"
+  ) +
+  facet_wrap(vars(keyword))
+```
+
+![](05_Analysis_files/figure-html/unnamed-chunk-24-1.png)<!-- -->
+
+```r
+main_keywords <- 
+  c("ajuda do coronavírus", "cloroquina", "como tratar o coronavírus", 
+    "coronavirus", "covid", 
+    "Estou com falta de ar", "estou com febre", "febre", 
+    "fique em casa", "medicos", "quais são os sintomas do coronavírus", 
+    "sintomas do coronavirus", "tosse")
+```
+
+# Looking into time trends for Maranhao
+
+
+```r
+trends_df %>% 
+  filter(!is.na(state), !is.na(case_rate)) %>% 
+  count(case_rate, date, state) %>% 
+  ggplot() +
+  geom_line(aes(date, case_rate, group = state, color = fct_reorder2(state, date, case_rate))) +
+  geom_line(
+    data = . %>% filter(state == "Maranhão"), 
+    aes(date, case_rate), 
+    size = 2
+  ) + 
+  labs(
+    title = "Case rate per State",
+    color = "State", 
+    subtitle = "Maranhao is highlighted in black"
+  )
+```
+
+![](05_Analysis_files/figure-html/unnamed-chunk-25-1.png)<!-- -->
+
+```r
+trends_df %>% 
+  filter(!is.na(state), !is.na(case_rate)) %>% 
+  count(death_rate, date, state) %>% 
+  ggplot() +
+  geom_line(aes(date, death_rate, group = state, color = fct_reorder2(state, date, death_rate))) +
+  geom_line(
+    data = . %>% filter(state == "Maranhão"), 
+    aes(date, death_rate), 
+    size = 2
+  ) + 
+  labs(
+    title = "Death rate per State",
+    color = "State", 
+    subtitle = "Maranhao is highlighted in black"
+  )
+```
+
+![](05_Analysis_files/figure-html/unnamed-chunk-25-2.png)<!-- -->
+
