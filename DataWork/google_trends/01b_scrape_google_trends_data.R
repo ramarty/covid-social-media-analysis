@@ -5,8 +5,8 @@
 # https://support.google.com/trends/answer/4365533?hl=en
 
 
-#comparison_iso <- "BR-SP"
-comparison_iso <- "BR-RJ"
+comparison_iso <- "BR-SP"
+#comparison_iso <- "BR-RJ"
 
 # Grab admin codes to scrape ---------------------------------------------------
 
@@ -35,6 +35,8 @@ trends_df_all <- data.frame(NULL)
 ## Loop through search terms
 for(term in c("quais são os sintomas do coronavírus",
               "eu tenho coronavírus",
+              "entediado",
+              "estou entediado",
               "Perdi o olfato",
               "Estou com falta de ar",
               "meus olhos doem",
