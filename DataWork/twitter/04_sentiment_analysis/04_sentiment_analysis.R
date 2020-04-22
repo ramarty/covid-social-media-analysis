@@ -3,7 +3,9 @@
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 # 1. Load Data --------------------------------------------------------------------
-brazil_tweets <- readRDS(file.path(dropbox_file_path, "Data", "twitter", "FinalData", "brazil_tweets", "rds", "brazil_tweets_appended_clean.Rds"))
+brazil_tweets <- readRDS(file.path(dropbox_file_path, "Data", "twitter", "FinalData", "brazil_tweets", "rds", "brazil_tweets_appended_clean.Rds")) %>% 
+    filter(!str_detect(location, "indonesia"),
+           lang %in% c("en", "pt", "es"))
 
 # 2. Tweets Over Time -------------------------------------------------------------
 
@@ -116,6 +118,60 @@ brazil_tweets <- readRDS(file.path(dropbox_file_path, "Data", "twitter", "FinalD
         ggsave(filename = file.path(brazil_twitter_figures_path, "tweets_covid.png"), 
                dpi = 400, height = 6, width = 10)
 
+    #### 3.3: All words one graphs
+        #### 3.2.1 
+        brazil_tweets_daysum_long %>% 
+            filter(word != "Socialdistance") %>%
+            ggplot(aes(x = date, y = count, color = rts)) + 
+            geom_line(size = 1) + 
+            geom_vline(xintercept = as.numeric(ymd("2020-02-26")),
+                       linetype = "dashed", colour="black") + 
+            geom_vline(xintercept = as.numeric(ymd("2020-03-17")),
+                       linetype = "dashed", colour="black") + 
+            facet_wrap(~word, scales = "free_y", ncol = 1) +
+            scale_y_continuous(label = comma) + 
+            labs(
+                x = NULL, 
+                y = "# of Tweets",
+                color = NULL,
+                title = "Tweets per day in Brazil that include the word:",
+                caption = "Notes: Vertical dashed lines represents the date of the\n1st confirmed case (Feb, 26th) and 1st death (March, 17th) in Brazil."
+            ) + 
+            theme_ipsum_rc() + 
+            theme(
+                panel.grid.minor = element_blank()
+            )
+        
+        ggsave(filename = file.path(brazil_twitter_figures_path, "tweets_main_words_rts_divided.png"), 
+               dpi = 500, height = 15, width = 10, scale = 0.7)
+        
+        #### 3.2.1 
+        brazil_tweets_daysum_long %>% 
+            filter(word != "Socialdistance") %>%
+            group_by(date, word) %>% 
+            summarise(count = sum(count)) %>% 
+            ggplot(aes(x = date, y = count)) + 
+            geom_line(size = 1) + 
+            geom_vline(xintercept = as.numeric(ymd("2020-02-26")),
+                       linetype = "dashed", colour="black") + 
+            geom_vline(xintercept = as.numeric(ymd("2020-03-17")),
+                       linetype = "dashed", colour="black") + 
+            facet_wrap(~word, scales = "free_y", ncol = 1) +
+            scale_y_continuous(label = comma) + 
+            labs(
+                x = NULL, 
+                y = "# of Tweets",
+                color = NULL,
+                title = "Tweets per day in Brazil that include the word:",
+                caption = "Notes: Vertical dashed lines represents the date of the\n1st confirmed case (Feb, 26th) and 1st death (March, 17th) in Brazil."
+            ) + 
+            theme_ipsum_rc() + 
+            theme(
+                panel.grid.minor = element_blank()
+            )
+        
+        ggsave(filename = file.path(brazil_twitter_figures_path, "tweets_main_words_all.png"), 
+               dpi = 500, height = 15, width = 10, scale = 0.7)
         
 # 4. Text mining
     # 4.1 Get only text from the tweets 
@@ -144,7 +200,16 @@ brazil_tweets <- readRDS(file.path(dropbox_file_path, "Data", "twitter", "FinalD
         anti_join(stop_words, by = "word") %>% 
         anti_join(stopwords_multilang_df, by = "word") %>% 
         filter(!word %in% c("rt", "pra", "é", "tá", "sjgtzxmbpv", "vinistupido", "ta", 
-                            "vcs", "pq", "aí", "pq", "paulo")) 
+                            "vcs", "pq", "aí", "pq", "itu", "1", "2", "3", "4", "5",
+                            "di", "dan")) %>% 
+        # Remove accents in all words for simplicity
+        mutate(
+            word = stri_trans_general(str = word, id = "Latin-ASCII"),
+            word = case_when(word == "19" ~ "covid19", 
+                             word == "covid" ~ "covid19", 
+                             word == "brazil" ~ "brasil", 
+                             TRUE ~ word)
+        )
     
     # 4.4. Top words for the whole period
     top_words <- unnest_words %>%
@@ -153,19 +218,18 @@ brazil_tweets <- readRDS(file.path(dropbox_file_path, "Data", "twitter", "FinalD
         head(20)
     
     # 4.5 Graph: common words
-    top_words %>% 
+
+    top_words %>%
         ggplot(aes(word, n)) +
         geom_col() +
         coord_flip() +
-        scale_y_continuous(label = comma,
-                           breaks = seq(0, 250000, by = 50000),
-                           expand = c(0,0)) + 
+        scale_y_continuous(label = comma) + 
             labs(
                 x = NULL, 
                 y = "Count",
                 color = NULL,
-                title = "Common words in Tweets in Brazil",
-                subtitle = "From January 21st, 2020 to April 3rd, 2020"
+                title = "Top 20 common words in Tweets in Brazil",
+                subtitle = "From January 21st, 2020 to April 10th, 2020"
             ) + 
             theme_ipsum_rc() + 
             theme(
@@ -173,7 +237,7 @@ brazil_tweets <- readRDS(file.path(dropbox_file_path, "Data", "twitter", "FinalD
             )
     
     ggsave(filename = file.path(brazil_twitter_figures_path, "tweets_common_words.png"), 
-           dpi = 400, height = 6, width = 10)  
+           dpi = 400, height = 10, width = 10)  
     
     # 4.6 Correlation across words
     words_filtered <- unnest_words %>%
