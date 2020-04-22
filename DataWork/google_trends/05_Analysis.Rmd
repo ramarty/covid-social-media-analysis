@@ -459,8 +459,9 @@ main_keywords <-
 
 # Looking into time trends for Maranhao
 
-```{r}
+Case rate
 
+```{r}
 trends_df %>% 
   filter(!is.na(state), !is.na(case_rate)) %>% 
   count(case_rate, date, state) %>% 
@@ -476,7 +477,11 @@ trends_df %>%
     color = "State", 
     subtitle = "Maranhao is highlighted in black"
   )
+```
 
+Death rate
+
+```{r}
 trends_df %>% 
   filter(!is.na(state), !is.na(case_rate)) %>% 
   count(death_rate, date, state) %>% 

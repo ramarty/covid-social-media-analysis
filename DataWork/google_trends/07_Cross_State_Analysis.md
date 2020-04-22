@@ -54,9 +54,13 @@ states_df_0418 %>%
   filter(!is.na(hits), keyword %in% selected_keywords) %>% 
   ggplot() + 
   geom_point(aes(case_rate, hits)) +
-  geom_smooth(aes(case_rate, hits), method = "lm") + 
-  facet_wrap(vars(keyword)) + 
-  coord_cartesian(ylim = c(0, 100))
+  geom_smooth(aes(case_rate, hits), method = "lm") +
+  geom_text_repel(
+    data = . %>% filter(hits > 75), 
+    aes(case_rate, hits, label = state), 
+    hjust=0.5, vjust=0.4
+  ) +  
+  facet_wrap(vars(keyword), scales = "free")
 ```
 
 ![](07_Cross_State_Analysis_files/figure-html/unnamed-chunk-3-1.png)<!-- -->
@@ -70,8 +74,7 @@ states_df_0418 %>%
   ggplot() + 
   geom_point(aes(death_rate, hits)) +
   geom_smooth(aes(death_rate, hits), method = "lm") + 
-  facet_wrap(vars(keyword)) +
-  coord_cartesian(ylim = c(0, 100)) 
+  facet_wrap(vars(keyword), scales = "free")
 ```
 
 ![](07_Cross_State_Analysis_files/figure-html/unnamed-chunk-4-1.png)<!-- -->
@@ -98,8 +101,7 @@ states_df_0418 %>%
     data = . %>% filter(case_rate > 40 | average_hits > 70), 
     aes(case_rate, average_hits, label = state), 
     hjust=0.5, vjust=0.4
-  ) +
-  coord_cartesian(ylim = c(0, 100))
+  ) 
 ```
 
 ![](07_Cross_State_Analysis_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
@@ -124,7 +126,7 @@ states_df_0418 %>%
     data = . %>% filter(death_rate > 40 | average_hits > 70), 
     aes(death_rate, average_hits, label = state), 
     hjust=0.5, vjust=0.4
-  ) +  coord_cartesian(ylim = c(0, 100))
+  )
 ```
 
 ![](07_Cross_State_Analysis_files/figure-html/unnamed-chunk-6-1.png)<!-- -->

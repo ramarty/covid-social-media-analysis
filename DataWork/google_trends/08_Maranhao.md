@@ -165,3 +165,116 @@ trends_df %>%
 
 ![](08_Maranhao_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
  
+# Comparison of Maranhao with other states with a high case rate
+
+We calculate the growth rates
+
+```r
+trends_df <- 
+  trends_df %>% 
+  group_by(state, keyword) %>% 
+  mutate(
+    diff_date = as.numeric(date - lag(date)), 
+    diff_growth_cases = cases - lag(cases), 
+    diff_growth_deaths = deaths - lag(deaths), 
+    diff_growth_hits = hits - lag(hits), 
+    growth_rate_cases = (diff_growth_cases/diff_date)*100/lag(cases),
+    growth_rate_deaths = (diff_growth_deaths/diff_date)*100/lag(deaths),
+    growth_rate_hits = (diff_growth_hits/diff_date)*100/lag(hits), 
+    growth_rate_cases = if_else(is.na(growth_rate_cases), 0, growth_rate_cases), 
+    growth_rate_deaths = if_else(is.na(growth_rate_deaths), 0, growth_rate_deaths), 
+    growth_rate_cases = if_else(is.infinite(growth_rate_cases), 100, growth_rate_cases), 
+    growth_rate_deaths = if_else(is.infinite(growth_rate_deaths), 100, growth_rate_deaths), 
+    growth_rate_hits = if_else(is.na(growth_rate_hits), 0, growth_rate_hits), 
+    growth_rate_hits = if_else(is.infinite(growth_rate_hits), 100, growth_rate_hits)
+  ) %>% 
+  ungroup()
+```
+
+We select key words and 8 states with largest case rate (which includes Maranhao)
+
+```r
+main_keywords <- 
+  c("ajuda do coronavírus", "como tratar o coronavírus", "eu tenho coronavírus",
+    "Estou com falta de ar", "estou com febre", "febre", 
+    "quais são os sintomas do coronavírus", "Perdi o olfato", 
+    "sintomas do coronavirus", "tosse")
+
+top_8_case_rate <- 
+  trends_df %>% 
+  filter(date == "2020-04-15", is.na(keyword) | keyword == "coronavirus") %>% 
+  arrange(desc(case_rate)) %>% 
+  head(8) %>% pull(state)
+```
+
+
+
+```r
+trends_df %>% 
+  filter(!is.na(categories), keyword %in% main_keywords, !is.na(state), state %in% top_8_case_rate) %>% 
+  group_by(keyword, state, week = date) %>% 
+  mutate(
+    mean_hits = mean(hits, na.rm = TRUE)
+  ) %>% 
+  ggplot() + 
+  geom_line(aes(date, mean_hits, group = keyword, color = fct_reorder2(keyword, date, mean_hits))) +
+  geom_line(aes(date, growth_rate_cases)) + 
+  labs(color = "Keyword") +
+  coord_cartesian(ylim = c(0, 100)) + 
+  facet_wrap(vars(state)) +
+  labs(
+    y = "Average hits per category", 
+    title = "Growth rate of cases (in black) per state over time in comparison to Google Trends"
+  )
+```
+
+![](08_Maranhao_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
+
+
+
+```r
+trends_df %>% 
+  filter(!is.na(categories), keyword %in% main_keywords, !is.na(state), state == "Maranhão") %>% 
+  group_by(keyword, state, date) %>% 
+  mutate(
+    mean_hits = mean(hits, na.rm = TRUE)
+  ) %>% 
+  ggplot() + 
+  geom_line(aes(date, mean_hits, group = keyword, color = fct_reorder2(keyword, date, mean_hits))) +
+  geom_line(aes(date, growth_rate_cases)) + 
+  labs(color = "Keyword") +
+  coord_cartesian(ylim = c(0, 100)) + 
+  facet_wrap(vars(state)) +
+  labs(
+    y = "Average hits per category", 
+    title = "Growth rate of cases (in black) per state over time in comparison to Google Trends"
+  )
+```
+
+![](08_Maranhao_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
+
+At the weekly level
+
+
+```r
+trends_df %>% 
+  filter(!is.na(categories), keyword %in% main_keywords, !is.na(state), state %in% top_8_case_rate) %>% 
+  mutate(week_number = week(date)) %>% 
+  group_by(keyword, state, week_number) %>% 
+  mutate(
+    mean_hits = mean(hits, na.rm = TRUE)
+  ) %>% 
+  ggplot() + 
+  geom_line(aes(date, mean_hits, group = keyword, color = fct_reorder2(keyword, date, mean_hits))) +
+  geom_line(aes(date, growth_rate_cases)) + 
+  labs(color = "Keyword") +
+  coord_cartesian(ylim = c(0, 100)) + 
+  facet_wrap(vars(state)) +
+  labs(
+    y = "Average hits per category", 
+    title = "Growth rate of cases (in black) per state over time in comparison to Google Trends"
+  )
+```
+
+![](08_Maranhao_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
+
