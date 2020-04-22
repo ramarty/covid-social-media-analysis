@@ -86,6 +86,23 @@ search_df %>%
 
 ![](08_Maranhao_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
 
+## Comparing Maranhao to Sao Paulo, Rio de Janeiro 
+
+
+```r
+search_df %>% 
+  filter(geo %in% c("BR-MA", "BR-RJ", "BR-SP"), !is.na(hits)) %>% 
+  group_by(keyword, geo, date) %>% 
+  summarize(mean_hits = mean(hits, na.rm = TRUE)) %>% 
+  ggplot(aes(date, mean_hits, group = 1)) + 
+  geom_point(aes(group = geo, color = geo)) + 
+  geom_line(aes(group = geo, color = geo)) + 
+  facet_wrap(vars(keyword))
+```
+
+![](08_Maranhao_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
+
+
 # We now use the data for Maranhao relative to its own time trends (instead of relative to Rio de Janeiro)
 
 Cleaning and creation of new variables
@@ -143,7 +160,7 @@ trends_df %>%
   facet_wrap(vars(keyword)) 
 ```
 
-![](08_Maranhao_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
+![](08_Maranhao_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
 
 ## Evolution of key categories v. cases for Maranhao  
 
@@ -163,7 +180,7 @@ trends_df %>%
   labs(subtitle = "The black line represents overall cases")
 ```
 
-![](08_Maranhao_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
+![](08_Maranhao_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
  
 # Comparison of Maranhao with other states with a high case rate
 
@@ -228,7 +245,7 @@ trends_df %>%
   )
 ```
 
-![](08_Maranhao_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
+![](08_Maranhao_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
 
 
 
@@ -251,7 +268,7 @@ trends_df %>%
   )
 ```
 
-![](08_Maranhao_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
+![](08_Maranhao_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
 
 At the weekly level
 
@@ -276,5 +293,5 @@ trends_df %>%
   )
 ```
 
-![](08_Maranhao_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
+![](08_Maranhao_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
 
