@@ -65,6 +65,26 @@ states_df_0418 %>%
 
 ![](07_Cross_State_Analysis_files/figure-html/unnamed-chunk-3-1.png)<!-- -->
 
+## Only for main words
+
+
+```r
+states_df_0418 %>%
+  filter(!is.na(hits), keyword %in% c("febre", "tosse", "como tratar o coronavírus")) %>% 
+  ggplot() + 
+  geom_point(aes(case_rate, hits)) +
+  geom_smooth(aes(case_rate, hits), method = "lm") +
+  geom_text_repel(
+    data = . %>% filter(hits > 85), 
+    aes(case_rate, hits, label = state), 
+    hjust=0.5, vjust=0.4
+  ) +  
+  facet_wrap(vars(keyword), scales = "free")
+```
+
+![](07_Cross_State_Analysis_files/figure-html/unnamed-chunk-4-1.png)<!-- -->
+
+
 # Correlation between keywords and death rate
 
 
@@ -77,7 +97,7 @@ states_df_0418 %>%
   facet_wrap(vars(keyword), scales = "free")
 ```
 
-![](07_Cross_State_Analysis_files/figure-html/unnamed-chunk-4-1.png)<!-- -->
+![](07_Cross_State_Analysis_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
 
 # Correlation between average of main keywords and case rate
  
@@ -104,7 +124,7 @@ states_df_0418 %>%
   ) 
 ```
 
-![](07_Cross_State_Analysis_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
+![](07_Cross_State_Analysis_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
 
 # Correlation between average of main keywords and death rate
 
@@ -129,7 +149,7 @@ states_df_0418 %>%
   )
 ```
 
-![](07_Cross_State_Analysis_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
+![](07_Cross_State_Analysis_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
 
 
 ```r
@@ -175,7 +195,7 @@ states_df_0418 %>%
   coord_cartesian(ylim = c(0, 100))
 ```
 
-![](07_Cross_State_Analysis_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
+![](07_Cross_State_Analysis_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
 Maranhao has the top number of hits for "Perdi o olfato", yet we don't see such a high case rate there
 
 
@@ -189,7 +209,7 @@ states_df_0418 %>%
   coord_cartesian(ylim = c(0, 100))
 ```
 
-![](07_Cross_State_Analysis_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
+![](07_Cross_State_Analysis_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
 
 In fact, the death rate in Maranhao is still quite low. This might indicate that there could be an increase in cases (and potentially deaths) in such state in the near future
 

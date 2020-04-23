@@ -62,6 +62,23 @@ states_df_0418 %>%
   facet_wrap(vars(keyword), scales = "free")
 ```
 
+## Only for main words
+
+```{r}
+states_df_0418 %>%
+  filter(!is.na(hits), keyword %in% c("febre", "tosse", "como tratar o coronavírus")) %>% 
+  ggplot() + 
+  geom_point(aes(case_rate, hits)) +
+  geom_smooth(aes(case_rate, hits), method = "lm") +
+  geom_text_repel(
+    data = . %>% filter(hits > 85), 
+    aes(case_rate, hits, label = state), 
+    hjust=0.5, vjust=0.4
+  ) +  
+  facet_wrap(vars(keyword), scales = "free")
+```
+
+
 # Correlation between keywords and death rate
 
 ```{r}
