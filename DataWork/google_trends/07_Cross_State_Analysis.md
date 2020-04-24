@@ -79,7 +79,8 @@ states_df_0418 %>%
     aes(case_rate, hits, label = state), 
     hjust=0.5, vjust=0.4
   ) +  
-  facet_wrap(vars(keyword), scales = "free")
+  facet_wrap(vars(keyword), scales = "free") + 
+  theme_light()
 ```
 
 ![](07_Cross_State_Analysis_files/figure-html/unnamed-chunk-4-1.png)<!-- -->
@@ -121,7 +122,8 @@ states_df_0418 %>%
     data = . %>% filter(case_rate > 40 | average_hits > 70), 
     aes(case_rate, average_hits, label = state), 
     hjust=0.5, vjust=0.4
-  ) 
+  ) + 
+  theme_light()
 ```
 
 ![](07_Cross_State_Analysis_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
@@ -146,7 +148,8 @@ states_df_0418 %>%
     data = . %>% filter(death_rate > 40 | average_hits > 70), 
     aes(death_rate, average_hits, label = state), 
     hjust=0.5, vjust=0.4
-  )
+  ) + 
+  theme_light()
 ```
 
 ![](07_Cross_State_Analysis_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
@@ -192,7 +195,8 @@ states_df_0418 %>%
   geom_point(aes(case_rate, hits)) +
   geom_smooth(aes(case_rate, hits), method = "lm") + 
   ggrepel::geom_label_repel(aes(case_rate, hits, label = state), hjust=0.5, vjust=0.4) +
-  coord_cartesian(ylim = c(0, 100))
+  coord_cartesian(ylim = c(0, 100)) + 
+  theme_light()
 ```
 
 ![](07_Cross_State_Analysis_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
@@ -206,7 +210,8 @@ states_df_0418 %>%
   geom_point(aes(death_rate, hits)) +
   geom_smooth(aes(death_rate, hits), method = "lm") + 
   ggrepel::geom_label_repel(aes(death_rate, hits, label = state), hjust=0.5, vjust=0.4) +
-  coord_cartesian(ylim = c(0, 100))
+  coord_cartesian(ylim = c(0, 100)) + 
+  theme_light()
 ```
 
 ![](07_Cross_State_Analysis_files/figure-html/unnamed-chunk-10-1.png)<!-- -->

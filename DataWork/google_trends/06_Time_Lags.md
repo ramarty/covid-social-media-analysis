@@ -161,6 +161,114 @@ trends_df %>%
 
 ![](06_Time_Lags_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
 
+## Reducing number of states (1:10)
+
+
+```r
+first_10_states <- 
+  trends_df %>% 
+  count(state) %>% 
+  head(10) %>% pull(state)
+
+trends_df %>% 
+  filter(!is.na(categories), keyword %in% main_keywords, !is.na(state), state %in% first_10_states, categories %in% c("virus", "symptoms", "in_1st_person")) %>% 
+  group_by(categories, state, date) %>% 
+  mutate(
+    mean_hits = mean(hits, na.rm = TRUE), 
+    mean_growth_rate_cases = mean(growth_rate_cases, na.rm = TRUE)
+  ) %>% 
+  ggplot() + 
+  geom_line(aes(date, mean_hits, group = categories, color = fct_reorder2(categories, date, mean_hits))) +
+  geom_line(aes(date, mean_growth_rate_cases)) + 
+  labs(color = "Category") +
+  coord_cartesian(ylim = c(0, 100)) + 
+  facet_wrap(vars(state)) +
+  labs(
+    y = "Average hits per category", 
+    title = "Growth rate of deaths (in black) per state over time in comparison to Google Trends"
+  ) + 
+  theme_light()
+```
+
+![](06_Time_Lags_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
+
+
+```r
+trends_df %>% 
+  filter(!is.na(categories), keyword %in% main_keywords, !is.na(state), state %in% first_10_states, categories %in% c("resources", "prevention")) %>% 
+  group_by(categories, state, date) %>% 
+  mutate(
+    mean_hits = mean(hits, na.rm = TRUE), 
+    mean_growth_rate_cases = mean(growth_rate_cases, na.rm = TRUE)
+  ) %>% 
+  ggplot() + 
+  geom_line(aes(date, mean_hits, group = categories, color = fct_reorder2(categories, date, mean_hits))) +
+  geom_line(aes(date, mean_growth_rate_cases)) + 
+  labs(color = "Category") +
+  coord_cartesian(ylim = c(0, 100)) + 
+  facet_wrap(vars(state)) +
+  labs(
+    y = "Average hits per category", 
+    title = "Growth rate of deaths (in black) per state over time in comparison to Google Trends"
+  ) + 
+  theme_light()
+```
+
+![](06_Time_Lags_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
+
+
+## Average of all states
+
+### For symptoms, virus and 1st person
+
+
+```r
+trends_df %>% 
+  filter(!is.na(categories), categories %in% c("virus", "symptoms", "in_1st_person"), keyword %in% main_keywords, !is.na(state)) %>% 
+  group_by(categories, date) %>% 
+  summarize(
+    mean_hits = mean(hits, na.rm = TRUE), 
+    mean_growth_rate_cases = mean(growth_rate_cases)
+  ) %>% 
+  ggplot() + 
+  geom_line(aes(date, mean_hits, group = categories, color = fct_reorder2(categories, date, mean_hits))) +
+  geom_line(aes(date, mean_growth_rate_cases, group = 1)) + 
+  labs(color = "Category") +
+  labs(
+    y = "Average hits per category", 
+    title = "Average growth rate of cases (in black) in comparison to Google Trends over time"
+  ) + 
+  coord_cartesian(ylim = c(0, 100)) +
+  theme_light()
+```
+
+![](06_Time_Lags_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
+
+
+## For prevention and resources
+
+```r
+trends_df %>% 
+  filter(!is.na(categories), categories %in% c("prevention", "resources"), keyword %in% main_keywords, !is.na(state)) %>% 
+  group_by(categories, date) %>% 
+  summarize(
+    mean_hits = mean(hits, na.rm = TRUE), 
+    mean_growth_rate_cases = mean(growth_rate_cases)
+  ) %>% 
+  ggplot() + 
+  geom_line(aes(date, mean_hits, group = categories, color = fct_reorder2(categories, date, mean_hits))) +
+  geom_line(aes(date, mean_growth_rate_cases, group = 1)) + 
+  labs(color = "Category") +
+  labs(
+    y = "Average hits per category", 
+    title = "Average growth rate of cases (in black) in comparison to Google Trends over time"
+  ) + 
+  coord_cartesian(ylim = c(0, 100)) +
+  theme_light()
+```
+
+![](06_Time_Lags_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
+
 # Time lags
 
 We now compute the difference between these keywords and the maximum in searches
@@ -237,11 +345,11 @@ We now compute the difference between the week of maximum z-score and the week o
 
 
 ```r
-trends_df <- 
-  trends_df %>% 
-  group_by(keyword, state) %>% 
-  mutate(days_since_max_zscore = date - date[max_week_zscore_bin == 1]) %>% 
-  ungroup()
+#trends_df <- 
+#  trends_df %>% 
+#  group_by(keyword, state) %>% 
+#  mutate(days_since_max_zscore = date - date[max_week_zscore_bin == 1]) %>% 
+#  ungroup()
 ```
 
 We plot a histogram of the difference in number of days between large increase in hits v. covid-19 cases
@@ -269,7 +377,7 @@ trends_df %>%
   )
 ```
 
-![](06_Time_Lags_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
+![](06_Time_Lags_files/figure-html/unnamed-chunk-17-1.png)<!-- -->
 
 
 We now switch the approach to a simpler one, and potentially more reliable one. 
@@ -344,7 +452,7 @@ trends_df %>%
   )
 ```
 
-![](06_Time_Lags_files/figure-html/unnamed-chunk-15-1.png)<!-- -->
+![](06_Time_Lags_files/figure-html/unnamed-chunk-19-1.png)<!-- -->
 
 ## Graph of hits v. 100 cases 
 
@@ -372,7 +480,34 @@ trends_df %>%
   )
 ```
 
-![](06_Time_Lags_files/figure-html/unnamed-chunk-16-1.png)<!-- -->
+![](06_Time_Lags_files/figure-html/unnamed-chunk-20-1.png)<!-- -->
+
+
+With a focus on key words
+
+
+```r
+trends_df %>% 
+  filter(keyword %in% c("febre", "tosse", "como tratar o coronavírus", "Estou com falta de ar", "eu tenho coronavírus")) %>% 
+  group_by(state, keyword) %>% 
+  summarize(
+    date_max_week_zscore = mean(date[max_week_zscore_bin == 1])
+  ) %>% 
+  left_join(beyond_100_dates %>% rename(date_100_cases = date), by = "state") %>% 
+  mutate(date_cases_minus_hits = date_max_week_zscore - date_100_cases) %>% 
+  ggplot() + 
+  geom_histogram(aes(date_cases_minus_hits)) +
+  geom_vline(aes(xintercept = 0), linetype = "dashed", color = "red") + 
+  facet_wrap(vars(keyword)) +
+  labs(
+    x = "Date of max hits - date after surpassing 100 cases", 
+    y = "Number of states in Brazil",
+    title = "Difference in number of days between sudden increase in hits and covid-19 cases", 
+    subtitle = "In most states, the peak in Google searches comes around \na similar time or right before the increase in cases"
+  )
+```
+
+![](06_Time_Lags_files/figure-html/unnamed-chunk-21-1.png)<!-- -->
 
 ## Graph of hits v. 10 deaths 
 
@@ -381,7 +516,7 @@ We compute the difference in days between the date with the largest zscore (for 
 
 ```r
 trends_df %>% 
-  filter(keyword %in% main_keywords) %>% 
+  filter(keyword %in% c("febre", "tosse", "como tratar o coronavírus", "Perdi o olfato")) %>% 
   group_by(state, keyword) %>% 
   summarize(
     date_max_week_zscore = mean(date[max_week_zscore_bin == 1])
@@ -398,4 +533,4 @@ trends_df %>%
     title = "Difference in number of days between sudden increase in hits and covid-19 deaths"   )
 ```
 
-![](06_Time_Lags_files/figure-html/unnamed-chunk-17-1.png)<!-- -->
+![](06_Time_Lags_files/figure-html/unnamed-chunk-22-1.png)<!-- -->

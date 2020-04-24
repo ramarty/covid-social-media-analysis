@@ -16,7 +16,7 @@ output:
 
 
 ```{r global_options, include=FALSE}
-knitr::opts_chunk$set(fig.width=12, fig.height=8, warning=FALSE, message=FALSE)
+knitr::opts_chunk$set(fig.width=14, fig.height=10, warning=FALSE, message=FALSE)
 ```
 
 ```{r}
@@ -75,7 +75,8 @@ states_df_0418 %>%
     aes(case_rate, hits, label = state), 
     hjust=0.5, vjust=0.4
   ) +  
-  facet_wrap(vars(keyword), scales = "free")
+  facet_wrap(vars(keyword), scales = "free") + 
+  theme_light()
 ```
 
 
@@ -112,7 +113,8 @@ states_df_0418 %>%
     data = . %>% filter(case_rate > 40 | average_hits > 70), 
     aes(case_rate, average_hits, label = state), 
     hjust=0.5, vjust=0.4
-  ) 
+  ) + 
+  theme_light()
 ```
 
 # Correlation between average of main keywords and death rate
@@ -134,7 +136,8 @@ states_df_0418 %>%
     data = . %>% filter(death_rate > 40 | average_hits > 70), 
     aes(death_rate, average_hits, label = state), 
     hjust=0.5, vjust=0.4
-  )
+  ) + 
+  theme_light()
 ```
 
 ```{r}
@@ -154,7 +157,8 @@ states_df_0418 %>%
   geom_point(aes(case_rate, hits)) +
   geom_smooth(aes(case_rate, hits), method = "lm") + 
   ggrepel::geom_label_repel(aes(case_rate, hits, label = state), hjust=0.5, vjust=0.4) +
-  coord_cartesian(ylim = c(0, 100))
+  coord_cartesian(ylim = c(0, 100)) + 
+  theme_light()
 ```
 Maranhao has the top number of hits for "Perdi o olfato", yet we don't see such a high case rate there
 
@@ -165,7 +169,8 @@ states_df_0418 %>%
   geom_point(aes(death_rate, hits)) +
   geom_smooth(aes(death_rate, hits), method = "lm") + 
   ggrepel::geom_label_repel(aes(death_rate, hits, label = state), hjust=0.5, vjust=0.4) +
-  coord_cartesian(ylim = c(0, 100))
+  coord_cartesian(ylim = c(0, 100)) + 
+  theme_light()
 ```
 
 In fact, the death rate in Maranhao is still quite low. This might indicate that there could be an increase in cases (and potentially deaths) in such state in the near future

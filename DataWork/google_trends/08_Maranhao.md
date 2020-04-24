@@ -102,6 +102,85 @@ search_df %>%
 
 ![](08_Maranhao_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
 
+# Same analysis but reducing the number of words
+
+
+
+```r
+reduced_keywords <- c("como tratar o coronavírus", "Estou com falta de ar", "febre", "eu tenho coronavírus", "tosse")
+
+search_df %>% 
+  filter(keyword %in% reduced_keywords) %>% 
+  group_by(geo, keyword, date) %>% 
+  summarize(mean_hits = mean(hits, na.rm = TRUE)) %>% 
+  ggplot(aes(date, mean_hits)) + 
+  geom_point(aes(group = geo, color = geo)) + 
+  geom_line(aes(group = geo, color = geo)) + 
+  geom_point(data = . %>% filter(geo == "BR-MA"), aes(date, mean_hits, group = 1), color = "black", size = 1.5) +
+  geom_line(data = . %>% filter(geo == "BR-MA"), aes(date, mean_hits, group = 1), color = "black", size = 1.5) +
+  facet_wrap(vars(keyword)) + 
+  labs(
+    subtitle = "Maranhao is highlighted in black"
+  )
+```
+
+![](08_Maranhao_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
+
+## Maranhao in comparison to the average of all states
+
+
+```r
+reduced_keywords <- c("como tratar o coronavírus", "Estou com falta de ar", "febre", "eu tenho coronavírus", "tosse")
+
+search_df %>% 
+  filter(keyword %in% reduced_keywords) %>% 
+  group_by(keyword, date) %>% 
+  summarize(mean_hits = mean(hits, na.rm = TRUE)) %>% 
+  ggplot(aes(date, mean_hits, group = 1, color = "Average of all")) + 
+  geom_point() + 
+  geom_line() + 
+  geom_point(data = search_df %>% filter(geo == "BR-MA", keyword %in% reduced_keywords), aes(date, hits, group = 1, color = "Maranhao")) +
+  geom_line(data = search_df %>% filter(geo == "BR-MA", keyword %in% reduced_keywords), aes(date, hits, group = 1, color = "Maranhao")) +
+  facet_wrap(vars(keyword)) + 
+  labs(color = "State")
+```
+
+![](08_Maranhao_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
+
+
+## Maranhao only
+
+
+```r
+search_df %>% 
+  filter(geo %in% c("BR-MA", "BR-RJ", "BR-SP"), !is.na(hits), keyword %in% reduced_keywords) %>% 
+  group_by(keyword, geo, date) %>% 
+  summarize(mean_hits = mean(hits, na.rm = TRUE)) %>% 
+  ggplot(aes(date, mean_hits, group = 1)) + 
+  geom_point(aes(group = geo, color = geo)) + 
+  geom_line(aes(group = geo, color = geo)) + 
+  facet_wrap(vars(keyword))
+```
+
+![](08_Maranhao_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
+
+## Comparing Maranhao to Sao Paulo, Rio de Janeiro 
+
+
+```r
+search_df %>% 
+  filter(geo %in% c("BR-MA", "BR-RJ", "BR-SP"), !is.na(hits)) %>% 
+  group_by(keyword, geo, date) %>% 
+  summarize(mean_hits = mean(hits, na.rm = TRUE)) %>% 
+  ggplot(aes(date, mean_hits, group = 1)) + 
+  geom_point(aes(group = geo, color = geo)) + 
+  geom_line(aes(group = geo, color = geo)) + 
+  facet_wrap(vars(keyword))
+```
+
+![](08_Maranhao_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
+
+
 
 # We now use the data for Maranhao relative to its own time trends (instead of relative to Rio de Janeiro)
 
@@ -160,7 +239,7 @@ trends_df %>%
   facet_wrap(vars(keyword)) 
 ```
 
-![](08_Maranhao_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
+![](08_Maranhao_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
 
 ## Evolution of key categories v. cases for Maranhao  
 
@@ -180,7 +259,7 @@ trends_df %>%
   labs(subtitle = "The black line represents overall cases")
 ```
 
-![](08_Maranhao_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
+![](08_Maranhao_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
  
 # Comparison of Maranhao with other states with a high case rate
 
@@ -245,7 +324,7 @@ trends_df %>%
   )
 ```
 
-![](08_Maranhao_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
+![](08_Maranhao_files/figure-html/unnamed-chunk-16-1.png)<!-- -->
 
 
 
@@ -268,7 +347,7 @@ trends_df %>%
   )
 ```
 
-![](08_Maranhao_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
+![](08_Maranhao_files/figure-html/unnamed-chunk-17-1.png)<!-- -->
 
 At the weekly level
 
@@ -293,5 +372,5 @@ trends_df %>%
   )
 ```
 
-![](08_Maranhao_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
+![](08_Maranhao_files/figure-html/unnamed-chunk-18-1.png)<!-- -->
 
