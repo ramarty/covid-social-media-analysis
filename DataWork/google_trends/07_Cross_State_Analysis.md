@@ -80,6 +80,7 @@ states_df_0418 %>%
     hjust=0.5, vjust=0.4
   ) +  
   facet_wrap(vars(keyword), scales = "free") + 
+  labs(x = "Cases per 100,000 people", y = "# Hits in Google searches") +
   theme_light()
 ```
 
@@ -123,6 +124,7 @@ states_df_0418 %>%
     aes(case_rate, average_hits, label = state), 
     hjust=0.5, vjust=0.4
   ) + 
+  labs(x = "Cases per 100,000 people", y = "# Hits in Google searches") +
   theme_light()
 ```
 
@@ -196,6 +198,7 @@ states_df_0418 %>%
   geom_smooth(aes(case_rate, hits), method = "lm") + 
   ggrepel::geom_label_repel(aes(case_rate, hits, label = state), hjust=0.5, vjust=0.4) +
   coord_cartesian(ylim = c(0, 100)) + 
+  labs(x = "Cases per 100,000 people", y = "# Hits in Google searches") +
   theme_light()
 ```
 
@@ -217,4 +220,5 @@ states_df_0418 %>%
 ![](07_Cross_State_Analysis_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
 
 In fact, the death rate in Maranhao is still quite low. This might indicate that there could be an increase in cases (and potentially deaths) in such state in the near future
+
 
