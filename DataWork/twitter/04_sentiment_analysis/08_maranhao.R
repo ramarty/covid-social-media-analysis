@@ -7,6 +7,15 @@ brazil_tweets <- readRDS(file.path(dropbox_file_path, "Data", "twitter", "FinalD
     filter(!str_detect(location, "indonesia"),
            lang %in% c("en", "pt", "es"))
 
+covid <- read.csv(file.path(dropbox_file_path, "Data", "brazil_admin_data", "brazil_covid19_200419.csv"),
+                  encoding = "UTF-8")
+
+covid_maranhao <- covid %>% 
+    filter(state == "Maranhão") %>% 
+    mutate(
+        date = ymd(date)
+    )
+
 # 2. Text mining ---------------------------------------------------------------
     # 2.1 Get only text from the tweets 
     tweets_text <- brazil_tweets %>% 
@@ -109,7 +118,7 @@ brazil_tweets <- readRDS(file.path(dropbox_file_path, "Data", "twitter", "FinalD
     # Top words by correlations
     top_word_cors  <- words_filtered %>% 
         pairwise_cor(word, tweet_id, sort = TRUE) %>% 
-        head(200)
+        head(150)
     
     # Verticies for the graph
     vertices <- occurences %>%
@@ -150,8 +159,8 @@ brazil_tweets <- readRDS(file.path(dropbox_file_path, "Data", "twitter", "FinalD
            dpi = 400, height = 6, width = 10) 
     
     
-# 4. Sentiments   --------------------------------------------------------------
-    ## 4.1. Load PT lexicon from the lexiconPT Package
+# 5. Sentiments   --------------------------------------------------------------
+    ## 5.1. Load PT lexicon from the lexiconPT Package
     data("sentiLex_lem_PT02") 
     
     # Combine portuguese and english words 
@@ -170,13 +179,13 @@ brazil_tweets <- readRDS(file.path(dropbox_file_path, "Data", "twitter", "FinalD
             sentiment = str_to_title(sentiment)
         )
             
-    ## Join with words that include sentiments
+    # 5.2 Join with words that include sentiments
     tweets_sentiments <- unnest_words %>%
         filter(!word %in% c("virus")) %>% 
         right_join(sentiments) %>% 
         filter(!is.na(date)) 
     
-    ## Differences: Positive and negative words
+    # 5.3 Differences: Positive and negative words
     tweets_sentiments %>% 
         group_by(date, sentiment) %>% 
         tally() %>% 
@@ -190,14 +199,20 @@ brazil_tweets <- readRDS(file.path(dropbox_file_path, "Data", "twitter", "FinalD
             diff = positive - negative
         ) %>% 
         ggplot(aes(x = date, y = diff)) + 
-        geom_line() + 
+        geom_line(color = "red") + 
+        geom_vline(xintercept = ymd("2020-03-21"),
+                   linetype = "dashed", colour = "black") + 
+        geom_vline(xintercept = ymd("2020-03-26"),
+                   linetype = "dashed", colour = "black") + 
+        geom_vline(xintercept = ymd("2020-04-06"),
+                   linetype = "dashed", colour = "black") + 
         labs(
             x = NULL, 
-            y = "Differences positives - negatives words",
+            y = "Positives - negatives words",
             fill = "Sentiment", 
             title = "Positive and negative words differences in Maranhão, Brazil",
             subtitle = "Jan 21 - Apr 10",
-            caption = "Notes: No data for the date: 2/23/2020"
+            caption = "Notes: Black dotted lines represents 1st case, 10th, case and 100th case confirmed in Maranhão."
         ) + 
         theme_ipsum_rc() + 
         theme(
@@ -205,12 +220,21 @@ brazil_tweets <- readRDS(file.path(dropbox_file_path, "Data", "twitter", "FinalD
             legend.position = "bottom"
         )
     
-    ## Tweets sentiments gr
+    ggsave(filename = file.path(brazil_twitter_figures_path, "maranhao_tweets_positive_ninus_negative.png"), 
+           dpi = 400, height = 6, width = 10)
+    
+    # 5.4 Tweets sentiments graph
     tweets_sentiments %>% 
         group_by(date) %>% 
         count(date, sentiment) %>% 
         ggplot(aes(x = date, y = n, fill = sentiment)) + 
         geom_bar(stat = "identity", width = 1) +
+        geom_vline(xintercept = ymd("2020-03-21"),
+                   linetype = "dashed", colour = "black") + 
+        geom_vline(xintercept = ymd("2020-03-26"),
+                   linetype = "dashed", colour = "black") + 
+        geom_vline(xintercept = ymd("2020-04-06"),
+                   linetype = "dashed", colour = "black") + 
         scale_y_continuous(label = comma) + 
         labs(
             x = "", 
@@ -218,7 +242,7 @@ brazil_tweets <- readRDS(file.path(dropbox_file_path, "Data", "twitter", "FinalD
             fill = "Sentiment", 
             title = "Negative and positive sentiments in Maranhão, Brazil",
             subtitle = "Jan 21 - Apr 10",
-            caption = "Notes: No data for the date: 2/23/2020"
+            caption = "Notes: Black dotted lines represents 1st case, 10th, case and 100th case confirmed in Maranhão."
         ) + 
         theme_ipsum_rc() + 
         theme(
@@ -229,12 +253,11 @@ brazil_tweets <- readRDS(file.path(dropbox_file_path, "Data", "twitter", "FinalD
     ggsave(filename = file.path(brazil_twitter_figures_path, "maranhao_tweets_sentiments.png"), 
            dpi = 400, height = 6, width = 10)
     
-    ## Most common positive and negative words
+    # 5.5 Most common positive and negative words
     sentiments_counts <- tweets_sentiments %>% 
         count(word, sentiment, sort = TRUE) %>% 
         ungroup()  
 
-    ## No "Virus" word
     sentiments_counts %>% 
         filter(!word %in% c("virus", "confirmed", "positivo", "president", "top", "rico", "vao", "usar", "saber", "evitar")) %>% 
         group_by(sentiment) %>% 
@@ -247,7 +270,7 @@ brazil_tweets <- readRDS(file.path(dropbox_file_path, "Data", "twitter", "FinalD
         facet_wrap(~sentiment, scales = "free_y") + 
         scale_y_continuous(label = comma) + 
         labs(
-            x = "", 
+            x = NULL, 
             y = "Contribution to sentiment",
             title = "Most common positive and negative words in tweets from Brazil"
         ) + 
@@ -257,292 +280,29 @@ brazil_tweets <- readRDS(file.path(dropbox_file_path, "Data", "twitter", "FinalD
             legend.position = "bottom"
         )
     
-    ggsave(filename = file.path(brazil_twitter_figures_path, "maranhao_tweets_top10_negative_positive_no_virus.png"), 
+    ggsave(filename = file.path(brazil_twitter_figures_path, "maranhao_tweets_top10_negative_positive.png"), 
            dpi = 400, height = 6, width = 10)
 
-# 5. Sentiments with specific words  ----------------------------------------------------------
-    # 5.1 List of words
-    hashtags <- c("isolamento|isolation",
-                  "coronavirus|corona|covid19",
-                  "vaipassar|vai passar",
-                  "confinamento|lockdown",
-                  "euficoemcasa|stayathome|stay at home|eu fico em casa|ficar em casa",
-                  "sus",
-                  "quarentena|quarantine",
-                  "medicos|medicas|enfermeiros|enfermeiras|frontline workers|linha da frente",
-                  "mascara|mask",
-                  "renda basica|renda básica",
-                  "ventiladores|ventilators")
-    
-    # 5.2 Filter tweets with a specific hashtag
-    # Create empty frame
-    ht_dfs <- data.frame()
-    
-    # Loop
-    for(term in hashtags){
-        print(term)
-        
-        ht_df <- tweets_text %>% 
-            filter(grepl(term, full_text)) %>% 
-            unnest_tokens(word, full_text) %>% 
-            anti_join(stop_words, by = "word") %>% 
-            anti_join(stopwords_multilang_df, by = "word") %>% 
-            filter(!word %in% c("rt", "pra", "é", "tá", "sjgtzxmbpv", "vinistupido", "ta", 
-                                "vcs", "pq", "aí", "pq", "paulo")) %>% 
-            right_join(sentiments) %>% 
-            filter(!is.na(date)) %>% 
-            mutate(
-                variable = paste0(term)
-            )
-        
-        ht_dfs <- bind_rows(ht_dfs, ht_df)
-    }
-    
-    # Clean the new dataframe
-    ht_dfs <- ht_dfs %>% 
-        mutate(
-            variable = case_when(variable == "isolamento|isolation"~"isolamento", 
-                                 variable == "coronavirus|corona|covid19" ~ "coronavirus",
-                                 variable == "quarentena|quarantine" ~ "quarentena",
-                                 variable == "vaipassar|vai passar" ~ "vai passar",
-                                 variable == "confinamento|lockdown" ~ "confinamento", 
-                                 variable == "euficoemcasa|stayathome|stay at home|eu fico em casa|ficar em casa" ~ "eu fico em casa",
-                                 variable == "medicos|medicas|enfermeiros|enfermeiras|frontline workers|linha da frente" ~ "medicos",
-                                 variable == "mascara|mask" ~ "mascara",
-                                 variable == "renda basica|renda básica" ~ "renda basica",
-                                 variable == "ventiladores|ventilators" ~ "ventiladores",
-                                 TRUE ~ variable)
-        )
-    
-    # 5.3 Figures
-    # Coronavirus, isolamento, and quarentena
-    ht_dfs %>% 
-        filter(variable %in% c("coronavirus", "isolamento", "quarentena")) %>%
-        mutate(
-            variable = str_to_title(variable)
-        ) %>% 
-        group_by(date, variable) %>% 
-        count(date, sentiment) %>% 
-        ggplot(aes(x = date, y = n, fill = sentiment)) + 
-        geom_bar(stat = "identity", width = 1) +
-        scale_y_continuous(label = comma) + 
-        facet_wrap(~variable, scales = "free", nrow = 1) + 
+# 6. Total number of tweets ----------------------------------------------------
+    tweets_text %>%
+        # Filter location: Maranhão
+        filter(str_detect(location, "maranhao|maranhão")) %>% 
+        group_by(date, rts) %>%
+        tally() %>% 
+        ggplot(aes(x = date, y = n, color = rts)) + 
+        geom_line(size = 1) +
         labs(
-            x = "", 
-            y = "Number of words",
-            fill = "Sentiment", 
-            title = "Negative and positive sentiments in Brazil that included the word:",
-            subtitle = "Jan 21 - Apr 10",
-            caption = "Notes: No data for the date: 2/23/2020"
+            x = NULL, 
+            y = "Frequency",
+            color = NULL, 
+            title = "Number of tweets per day with location 'Maranhão' in the dataset",
+            subtitle = "Total: RTs = 1676, No RTs = 701"
         ) + 
         theme_ipsum_rc() + 
         theme(
             panel.grid.minor = element_blank(),
             legend.position = "bottom"
         )
-    
-    ggsave(filename = file.path(brazil_twitter_figures_path, "tweets_sentiments_corona_isolamento_quarentena.png"), 
-           dpi = 400, height = 6, width = 12)
-    
-    # Renda basica, mascara, ventiladores.
-    ht_dfs %>% 
-        filter(variable %in% c("renda basica", "mascara", "ventiladores")) %>%
-        mutate(
-            variable = str_to_title(variable)
-        ) %>% 
-        group_by(date, variable) %>% 
-        count(date, sentiment) %>% 
-        ggplot(aes(x = date, y = n, fill = sentiment)) + 
-        geom_bar(stat = "identity", width = 1) +
-        scale_y_continuous(label = comma) + 
-        facet_wrap(~variable, scales = "free_y", nrow = 1) + 
-        labs(
-            x = "", 
-            y = "Number of tweets",
-            fill = "Sentiment", 
-            title = "Tweets per day with negative and positive sentiments in Brazil that included the word:"
-        ) + 
-        theme_ipsum_rc() + 
-        theme(
-            panel.grid.minor = element_blank(),
-            legend.position = "bottom"
-        )
-    
-    ggsave(filename = file.path(brazil_twitter_figures_path, "tweets_sentiments_mascara_renda_ventiladores.png"), 
-           dpi = 400, height = 6, width = 12)
-    
-    
-    # Frontline workers ---------------
-    frontline <- tweets_text %>% 
-        mutate(
-            # All words to lower case
-            user = str_to_lower(user_description),
-            # Remove accents
-            user = stri_trans_general(str = user, id = "Latin-ASCII")
-        ) %>% 
-        dplyr::select(tweet_id, text, user, date)
-    
-    # words related to frontline workers    
-    frontline_words <- c("enfermeiro|enfermeira|medico|medica|doctor|doctora|nurse|frontline|frontline workers|linha da frente")
-    
-    # Filter those tweets with 
-    frontline_tweets <- frontline %>% 
-        filter(str_detect(user, frontline_words)) 
-    
-    frontline_text <- frontline_tweets %>%  
-        unnest_tokens(word, text) %>% 
-        anti_join(stop_words, by = "word") %>% 
-        anti_join(stopwords_multilang_df, by = "word") %>% 
-        filter(!word %in% c("rt", "pra", "é", "tá", "sjgtzxmbpv", "vinistupido", "ta", 
-                            "vcs", "pq", "aí", "pq", "itu", "1", "2", "3", "4", "5",
-                            "di", "dan")) %>% 
-        right_join(sentiments) %>% 
-        filter(!is.na(date)) 
-    
-    frontline_text %>% 
-        group_by(date) %>% 
-        count(date, sentiment) %>% 
-        ggplot(aes(x = date, y = n, fill = sentiment)) + 
-        geom_bar(stat = "identity") +
-        scale_y_continuous(label = comma) + 
-        labs(
-            x = "", 
-            y = "Number of tweets",
-            fill = "Sentiment", 
-            title = "Tweets from Frontline workers in Brazil: negative and positive sentiments",
-            subtitle = "No data for the date: 2/23/2020"
-        ) + 
-        theme_ipsum_rc() + 
-        theme(
-            panel.grid.minor = element_blank(),
-            legend.position = "bottom"
-        )
-    
-    ggsave(filename = file.path(brazil_twitter_figures_path, "tweets_frontline_workers_sentiments.png"), 
-           dpi = 400, height = 6, width = 12)
-    
-    
-    # List of hashtags
-    hashtags <- c("isolamento|isolation",
-                  "euficoemcasa|stayathome|stay at home|eu fico em casa|ficar em casa",
-                  "sus",
-                  "quarentena|quarantine",
-                  "mascara|mask",
-                  "cama de hospital|hospital|emergencia",
-                  "ventiladores|ventilators")
-    
-    # Filter tweets with a specific hashtag
-    ht_dfs <- data.frame()
-    
-    for(term in hashtags){
-        print(term)
-        
-        ht_df <- frontline_tweets %>% 
-            filter(str_detect(text, term)) %>% 
-            unnest_tokens(word, text) %>% 
-            anti_join(stop_words, by = "word") %>% 
-            anti_join(stopwords_multilang_df, by = "word") %>% 
-            filter(!word %in% c("rt", "pra", "é", "tá", "sjgtzxmbpv", "vinistupido", "ta", 
-                                "vcs", "pq", "aí", "pq", "itu", "1", "2", "3", "4", "5",
-                                "di", "dan")) %>% 
-            right_join(sentiments) %>% 
-            filter(!is.na(date)) %>% 
-            mutate(
-                variable = paste0(term)
-            )
-        
-        ht_dfs <- bind_rows(ht_dfs, ht_df)
-    }
-    
-    ht_dfs <- ht_dfs %>% 
-        mutate(
-            variable = case_when(variable == "mascara|mask" ~ "mascara",
-                                 variable == "isolamento|isolation" ~ "isolamento",
-                                 variable == "quarentena|quarantine" ~ "quarentena",
-                                 variable == "euficoemcasa|stayathome|stay at home|eu fico em casa|ficar em casa" ~ "eu fico em casa",
-                                 variable == "cama de hospital|hospital|emergencia" ~ "hospital", 
-                                 variable == "ventiladores|ventilators" ~ "ventiladores",
-                                 TRUE ~ variable)
-        )
-    
-    ht_dfs %>% 
-        filter(variable %in% c("mascara", "ventiladores")) %>%
-        mutate(
-            variable = str_to_title(variable)
-        ) %>% 
-        group_by(date, variable) %>% 
-        count(date, sentiment) %>% 
-        ggplot(aes(x = date, y = n, fill = sentiment)) + 
-        geom_bar(stat = "identity", width = 1) +
-        facet_wrap(~variable, scales = "free_y") + 
-        labs(
-            x = "", 
-            y = "Number of words",
-            fill = "Sentiment", 
-            title = "Negative and positive sentiments in Brazil from frontline workers that included the word:",
-            subtitle = "Jan 21 - Apr 10",
-            caption = "Notes: No data for the date: 2/23/2020\nMascara=mascara, máscara, mask\nVentiladores=ventiladores,ventilators"
-        ) + 
-        theme_ipsum_rc() + 
-        theme(
-            panel.grid.minor = element_blank(),
-            legend.position = "bottom"
-        )
-    
-    ggsave(filename = file.path(brazil_twitter_figures_path, "tweets_frontline_workers_sentiments_mask_ventiladores.png"), 
-           dpi = 400, height = 6, width = 12)
-    
-    ht_dfs %>% 
-        filter(variable %in% c("mascara", "hospital", "ventiladores")) %>%
-        mutate(
-            variable = str_to_title(variable)
-        ) %>% 
-        group_by(date, variable) %>% 
-        count(date, sentiment) %>% 
-        ggplot(aes(x = date, y = n, fill = sentiment)) + 
-        geom_bar(stat = "identity", width = 1) +
-        facet_wrap(~variable, scales = "free_y") + 
-        labs(
-            x = "", 
-            y = "Number of words",
-            fill = "Sentiment", 
-            title = "Negative and positive sentiments in Brazil from frontline workers that included the word:",
-            subtitle = "Jan 21 - Apr 10",
-            caption = "Notes: No data for the date: 2/23/2020\nMascara=mascara, máscara, mask\nVentiladores=ventiladores,ventilators\nHospital=cama de hospital, hospital, emergencia"
-        ) + 
-        theme_ipsum_rc() + 
-        theme(
-            panel.grid.minor = element_blank(),
-            legend.position = "bottom"
-        )
-    
-    ggsave(filename = file.path(brazil_twitter_figures_path, "tweets_frontline_workers_sentiments_mask_hospital_ventiladores.png"), 
-           dpi = 400, height = 6, width = 12)
-    
-    ht_dfs %>% 
-        filter(variable %in% c("quarentena", "isolamento", "eu fico em casa")) %>%
-        mutate(
-            variable = str_to_title(variable)
-        ) %>% 
-        group_by(date, variable) %>% 
-        count(date, sentiment) %>% 
-        ggplot(aes(x = date, y = n, fill = sentiment)) + 
-        geom_bar(stat = "identity", width = 1) +
-        facet_wrap(~variable, scales = "free_y") + 
-        labs(
-            x = "", 
-            y = "Number of words",
-            fill = "Sentiment", 
-            title = "Negative and positive sentiments in Brazil from frontline workers that included the word:",
-            subtitle = "Jan 21 - Apr 10",
-            caption = "Notes: No data for the date: 2/23/2020\nQuarentena=quarentena, quarentine\nIsolamento=isolamento, isolation\nEu fico em casa = euficoemcasa, stayathome, stay at home, eu fico em casa, ficar em casa"
-        ) + 
-        theme_ipsum_rc() + 
-        theme(
-            panel.grid.minor = element_blank(),
-            legend.position = "bottom"
-        )
-    
-    ggsave(filename = file.path(brazil_twitter_figures_path, "tweets_frontline_workers_sentiments_quarentena_iso_casa.png"), 
-           dpi = 400, height = 6, width = 12)
-    
+
+ggsave(filename = file.path(brazil_twitter_figures_path, "maranhao_total_tweets.png"), 
+           dpi = 400, height = 6, width = 10)
