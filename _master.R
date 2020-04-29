@@ -20,7 +20,7 @@ pacman::p_load(gtrendsR, tidyverse, parallel, pbmcapply, ggplot2, scales,
                widyr, ggraph, igraph, jsonlite, stringr, raster, stringi, 
                lubridate, purrr, lexiconPT, tidytext, quanteda, qdap, 
                SentimentAnalysis, sentimentr, patchwork, tm, tokenizers, 
-               wordcloud, ggwordcloud, ggpubr, hrbrthemes)
+               wordcloud, ggwordcloud, ggpubr, hrbrthemes, covdata)
 
 #------------------------------------------------------------------------------#
 #   1.2. File paths ----
@@ -63,3 +63,4 @@ brazil_gmobility_figures_path   <- file.path(dropbox_file_path, "Data", "google_
 #------------------------------------------------------------------------------#
 # 3. Analysis ----
 #------------------------------------------------------------------------------#
+
