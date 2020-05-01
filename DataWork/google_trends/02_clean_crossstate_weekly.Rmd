@@ -19,7 +19,7 @@ admin_data <- read.csv(file.path(dropbox_file_path, "Data/brazil_admin_data/braz
 
 weekly_df <- 
   list.files(weekly_cross_dir, full.names = TRUE, pattern = "*.csv") %>% 
-  map_dfr(read_csv) 
+  map_dfr(read.csv, encoding = "UTF-8")
 ```
 
 Clean dates var
@@ -69,6 +69,23 @@ weekly_admin_df <-
   weekly_df %>% 
   left_join(admin_data, by = "state") %>% 
   rename(date_covid = date)
+```
+
+
+# Create new variables: death rate, cases & deaths per 100,000
+
+```{r}
+weekly_admin_df <- 
+  weekly_admin_df %>% 
+  mutate(
+    case_rate = cases*100000/estimate_2018_state, 
+    death_rate = deaths*100000/estimate_2018_state, 
+    fatalities_per_case = deaths/cases
+  )
+
+weekly_admin_df <- 
+  weekly_admin_df %>% 
+  mutate(fatalities_per_case = if_else(is.na(fatalities_per_case), 0, fatalities_per_case))
 ```
 
 Save data
