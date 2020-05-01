@@ -1,0 +1,84 @@
+---
+title: "01_Cleaning_Cross_State_Weekly"
+output: html_document
+---
+
+
+```{r}
+if(Sys.info()[["user"]] == "wb537287") dropbox_file_path <- "/Users/wb537287/Dropbox/COVID Social Media Analysis/"
+
+library(tidyverse)
+library(gridExtra)
+library(lubridate)
+library(readstata13)
+library(tidylog)
+
+weekly_cross_dir <- file.path(dropbox_file_path, "Data/google_trends/RawData/cross_state_weekly/")
+state_pop_data <- read.csv(file.path(dropbox_file_path, "Data/city_population/FinalData/brazil_state_pop.csv"))
+admin_data <- read.csv(file.path(dropbox_file_path, "Data/brazil_admin_data/brazil_covid19_200419.csv"), encoding = "UTF-8")
+
+weekly_df <- 
+  list.files(weekly_cross_dir, full.names = TRUE, pattern = "*.csv") %>% 
+  map_dfr(read_csv) 
+```
+
+Clean dates var
+```{r}
+#create var for beginning and ending of the week
+weekly_df <- 
+  weekly_df %>% 
+  separate(dates, into = c("date_beg", "date_end"), sep = " ") %>% 
+  mutate_at(vars(date_beg, date_end), as.Date)
+```
+
+clean name of the state
+```{r}
+weekly_df <- 
+  weekly_df %>% 
+  filter(unit_level == "region") %>% 
+  mutate(state = str_remove(location, "State of "))
+```
+
+create intermediate date
+```{r}
+weekly_df <- 
+  weekly_df %>% 
+  mutate(date_interm = date_end - 3)
+```
+
+Merging admin data and population data
+```{r}
+admin_data <- 
+  admin_data %>% 
+  mutate(
+    state_en = stringi::stri_trans_general(state, "Latin-ASCII") %>% str_to_upper(), 
+    date = as.Date(date)
+  ) 
+
+admin_data <- 
+  admin_data %>% 
+  left_join(
+    state_pop_data, 
+    by = c("state" = "State")
+  )
+```
+
+Now merging the weekly data of cross state trends with the admin + population data
+```{r}
+weekly_admin_df <- 
+  weekly_df %>% 
+  left_join(admin_data, by = "state") %>% 
+  rename(date_covid = date)
+```
+
+Save data
+```{r}
+#data of weekly cases
+write.csv(weekly_df, file.path(dropbox_file_path, "Data/google_trends/FinalData/brazil_crossstates_weekly.csv"))
+write_rds(weekly_df, file.path(dropbox_file_path, "Data/google_trends/FinalData/brazil_crossstates_weekly.rds"))
+
+#data of weekly cases merged with data of pop + admin cases
+write.csv(weekly_admin_df, file.path(dropbox_file_path, "Data/google_trends/FinalData/brazil_crossstates_weekly_admin.csv"))
+write_rds(weekly_admin_df, file.path(dropbox_file_path, "Data/google_trends/FinalData/brazil_crossstates_weekly_admin.rds"))
+```
+
