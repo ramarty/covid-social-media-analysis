@@ -12,6 +12,13 @@ brazil_search$id <- 1:nrow(brazil_search)
 search_terms <- c(
   "tosse",
   "febre",
+  "cansaço",
+  "dificuldade ao respirar",
+  "perda de olfato",
+  "dor nos olhos",
+  "coronavirus", 
+  "covid",
+  "corona",
   "quais são os sintomas do coronavírus",
   "eu tenho coronavírus",
   "perdi o olfato",
@@ -23,8 +30,8 @@ search_terms <- c(
 
 # Within for loop, date got converted to numeric - so make character here.
 start_dates <- seq("2020-01-01" %>% as.Date(), 
-                   "2020-04-21" %>% as.Date(), 
-                   by="week") %>%
+                   "2020-05-04" %>% as.Date(), 
+                   by=2) %>%
   as.character()
 
 # Scraping ---------------------------------------------------------------------
@@ -32,7 +39,7 @@ for(start_date_i in start_dates){
   
   print(paste(start_date_i, "------------------------------------------------"))
   
-  end_date_i <- as.Date(start_date_i) + 6
+  end_date_i <- as.Date(start_date_i) + 1
   search_dates <- paste(start_date_i, end_date_i)
   
   results_df <- lapply(search_terms, 
