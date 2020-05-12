@@ -1,0 +1,158 @@
+---
+title: "01_Cleaning_Cross_State_Bidaily"
+output: html_document
+---
+
+
+```{r}
+if(Sys.info()[["user"]] == "wb537287") dropbox_file_path <- "/Users/wb537287/Dropbox/COVID Social Media Analysis/"
+
+library(tidyverse)
+library(gridExtra)
+library(lubridate)
+library(readstata13)
+library(tidylog)
+
+weekly_cross_dir <- file.path(dropbox_file_path, "Data/google_trends/RawData/cross_state_bidaily/")
+state_pop_data <- read.csv(file.path(dropbox_file_path, "Data/city_population/FinalData/brazil_state_pop.csv"))
+admin_data <- read.csv(file.path(dropbox_file_path, "Data/brazil_admin_data/brazil_covid19_200419.csv"), encoding = "UTF-8")
+
+weekly_df <- 
+  list.files(weekly_cross_dir, full.names = TRUE, pattern = "*.csv") %>% 
+  map_dfr(read.csv, encoding = "UTF-8")
+```
+
+Clean dates var
+```{r}
+#create var for beginning and ending of the week
+weekly_df <- 
+  weekly_df %>% 
+  separate(dates, into = c("date_beg", "date_end"), sep = " ") %>% 
+  mutate_at(vars(date_beg, date_end), as.Date)
+```
+
+clean name of the state
+```{r}
+weekly_df <- 
+  weekly_df %>% 
+  filter(unit_level == "region") %>% 
+  mutate(state = str_remove(location, "State of "))
+```
+
+Merging admin data and population data
+
+```{r}
+admin_data <- 
+  admin_data %>% 
+  mutate(
+    state_en = stringi::stri_trans_general(state, "Latin-ASCII") %>% str_to_upper(), 
+    date = as.Date(date)
+  ) 
+
+admin_data <- 
+  admin_data %>% 
+  left_join(
+    state_pop_data, 
+    by = c("state" = "State")
+  )
+```
+
+# Create new variables: death rate, cases & deaths per 100,000
+
+```{r}
+admin_data <- 
+  admin_data %>% 
+  mutate(
+    case_rate = cases*100000/estimate_2018_state, 
+    death_rate = deaths*100000/estimate_2018_state, 
+    fatalities_per_case = deaths/cases
+  )
+
+admin_data <- 
+  admin_data %>% 
+  mutate(fatalities_per_case = if_else(is.na(fatalities_per_case), 0, fatalities_per_case))
+```
+
+# Create new variables for growth rate of cases and deaths 
+
+```{r}
+admin_data <- 
+  admin_data %>%
+  group_by(state) %>% 
+  mutate(
+    diff_date = as.numeric(date - lag(date)), 
+    diff_growth_cases = cases - lag(cases), 
+    diff_growth_deaths = deaths - lag(deaths), 
+    growth_rate_cases = (diff_growth_cases/diff_date)*100/lag(cases),
+    growth_rate_deaths = (diff_growth_deaths/diff_date)*100/lag(deaths),
+    growth_rate_cases = if_else(is.na(growth_rate_cases), 0, growth_rate_cases), 
+    growth_rate_deaths = if_else(is.na(growth_rate_deaths), 0, growth_rate_deaths), 
+    growth_rate_cases = if_else(is.infinite(growth_rate_cases), 100, growth_rate_cases), 
+    growth_rate_deaths = if_else(is.infinite(growth_rate_deaths), 100, growth_rate_deaths), 
+  ) %>% 
+  ungroup()
+```
+
+#Merging admin data and searches data
+
+Now merging the weekly data of cross state trends with the admin + population data.
+
+We have data on: 
+- searches over a 2-day period 
+- cases/deaths at a daily level
+
+In order to merge them, we take the first day of the searches, and merge it with the daily admin data. In other words, we keep the date for the 1st of the 2-day period. We complete the date_beg variable so that we can merge it with all the days in the admin data.
+
+```{r}
+weekly_df <-
+  weekly_df %>%
+  mutate(date_beg = as.Date(date_beg)) %>%
+  complete(date_beg = seq.Date(min(date_beg), max(date_beg), by="day"))
+
+weekly_admin_df <-
+  weekly_df %>%
+  full_join(admin_data, by = c("state" = "state", "date_beg" = "date"))
+
+## AN ALTERNATIVE APPROACH 
+# we first merge the datasets after the date when the admin data is complete
+# weekly_admin_df <- 
+#   admin_data %>% 
+#   left_join(weekly_df, by = c("state" = "state", "date" = "date_beg")) 
+```
+
+
+# We create categories for key words
+
+For now, we are assigning all other words to 1st person. There is an issue with the encoding that we will have to review for better accuracy of assigning categories. 
+```{r}
+weekly_admin_df <- 
+  weekly_admin_df %>% 
+  mutate(
+    categories = case_when(
+      keyword %in% 
+        c( "dificuldade ao respirar", "dor nos olhos", "falta de cheiro", 
+           "febre", "febre alta valor","perda de olfato", "tosse",
+           "sintomas do coronavirus", "teste de coronavírus", "cansaço") ~ "symptoms",
+      keyword %in% 
+        c("coronavirus", "covid", "ajuda do coronavírus", "corona") ~ "virus", 
+      keyword %in% 
+        c("como tratar o coronavírus", "estou com falta de ar",
+        "estou com febre", "Eu fico em casa", "eu tenho coronavírus",
+        "Perdi o olfato", "quais são os sintomas do coronavírus"
+        ) ~ "in_1st_person", 
+      TRUE ~ "in_1st_person"
+      )
+  )
+```
+
+Save data
+```{r}
+#data of weekly cases
+write.csv(weekly_df, file.path(dropbox_file_path, "Data/google_trends/FinalData/brazil_crossstates_bidaily.csv"))
+write_rds(weekly_df, file.path(dropbox_file_path, "Data/google_trends/FinalData/brazil_crossstates_bidaily.rds"))
+
+#data of weekly cases merged with data of pop + admin cases
+write.csv(weekly_admin_df, file.path(dropbox_file_path, "Data/google_trends/FinalData/brazil_crossstates_bidaily_admin.csv"))
+write_rds(weekly_admin_df, file.path(dropbox_file_path, "Data/google_trends/FinalData/brazil_crossstates_bidaily_admin.rds"))
+```
+
