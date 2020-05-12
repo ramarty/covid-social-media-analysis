@@ -16,6 +16,11 @@ library(tidylog)
 weekly_cross_dir <- file.path(dropbox_file_path, "Data/google_trends/RawData/cross_state_bidaily/")
 state_pop_data <- read.csv(file.path(dropbox_file_path, "Data/city_population/FinalData/brazil_state_pop.csv"))
 admin_data <- read.csv(file.path(dropbox_file_path, "Data/brazil_admin_data/brazil_covid19_200419.csv"), encoding = "UTF-8")
+brazil_level_data <- 
+  read.csv(
+    file.path(dropbox_file_path, "Data/google_trends/RawData/brazil_country_extract_2020-05-11.csv"), 
+    encoding = "UTF-8"
+  )
 
 weekly_df <- 
   list.files(weekly_cross_dir, full.names = TRUE, pattern = "*.csv") %>% 
@@ -144,6 +149,53 @@ weekly_admin_df <-
       )
   )
 ```
+
+We merge the data with the Brazil country-level data, so that we can calculate then the relative value across states and over time
+
+we only need the hits at the national level by date and keyword (we can remove the rest of the columns). 
+
+We do the following: 
+- merge the variable hits from the national level with the rest of our data at the state level. Call this hits_national
+- then divide the variable 
+
+
+```{r}
+brazil_level_data <- 
+  brazil_level_data %>% 
+  dplyr::select(date, hits, keyword) %>% 
+  rename(hits_national = hits)
+  
+brazil_level_data <- 
+  brazil_level_data %>% 
+  mutate(date = as.Date(date))
+
+weekly_admin_df <- 
+  weekly_admin_df %>% 
+  left_join(
+    brazil_level_data, 
+    by = c("date_beg" = "date", "keyword")
+  )
+
+weekly_admin_df %>% 
+  mutate(
+    hits_national = if_else(hits_national == "<1", 0.5, hits_national)
+  )
+
+    hits_national = if_else(hits_national == 0, 0.1, hits_national)
+
+weekly_admin_df %>% 
+  mutate
+    hits_national = as.character(hits_national),
+    hits_national = if_else(hits_national == "<1", 0.5, hits_national)
+  )
+
+    hits_national = if_else(hits_national == 0, 0.1, hits_national) 
+  ) %>% 
+  count(hits_national)
+
+    hits_national = if_else(hits_national == "<1", 0.5, hits_national))
+```
+
 
 Save data
 ```{r}
