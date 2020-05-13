@@ -156,7 +156,7 @@ we only need the hits at the national level by date and keyword (we can remove t
 
 We do the following: 
 - merge the variable hits from the national level with the rest of our data at the state level. Call this hits_national
-- then divide the variable 
+- then divide the variable hits by hits_national (adding 1 to the denominator, hits_national, to prevent values being greater than 100)
 
 
 ```{r}
@@ -176,26 +176,26 @@ weekly_admin_df <-
     by = c("date_beg" = "date", "keyword")
   )
 
-weekly_admin_df %>% 
+weekly_admin_df <- 
+  weekly_admin_df %>% 
   mutate(
-    hits_national = if_else(hits_national == "<1", 0.5, hits_national)
-  )
-
-    hits_national = if_else(hits_national == 0, 0.1, hits_national)
-
-weekly_admin_df %>% 
-  mutate
     hits_national = as.character(hits_national),
-    hits_national = if_else(hits_national == "<1", 0.5, hits_national)
-  )
+    hits_national = if_else(hits_national == "<1", "0.5", hits_national) %>% as.numeric
+  ) 
 
-    hits_national = if_else(hits_national == 0, 0.1, hits_national) 
-  ) %>% 
-  count(hits_national)
-
-    hits_national = if_else(hits_national == "<1", 0.5, hits_national))
 ```
 
+*Issue: since keywords for states only show up every 2 days (because we did a bidaily scraping), then when we do the merge with hits_national, hits_national only shows up every 2 days as well.
+
+```{r}
+wweekly_admin_df <- 
+  weekly_admin_df %>% 
+  mutate(
+    relative_hits = hits / (hits_national + 1)
+  )
+```
+
+* This creates a large number of NA values though - something to take into account
 
 Save data
 ```{r}

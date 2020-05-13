@@ -14,29 +14,14 @@ output:
     number_sections: true
 ---
 
-```{r global_options, include=FALSE}
-knitr::opts_chunk$set(fig.width=12, fig.height=10, size = 10, background = "light", warning=FALSE, message=FALSE)
-```
-
-```{r, include = FALSE}
-if(Sys.info()[["user"]] == "wb537287") dropbox_file_path <- "/Users/wb537287/Dropbox/COVID Social Media Analysis/"
-
-library(tidyverse)
-library(gridExtra)
-library(lubridate)
-library(readstata13)
-library(ggrepel)
-
-sjPlot::set_theme(base = theme_light())
 
 
-#admin data of cases and deaths
-data <- read.csv(file.path(dropbox_file_path, "Data/google_trends/FinalData/brazil_crossstates_bidaily_admin.csv"))
-```
+
 
 
 convert dates variables in dates
-```{r}
+
+```r
 data <- 
   data %>% 
   mutate(
@@ -46,7 +31,8 @@ data <-
 ```
 We subset the data to leave only the dates with matches between searches and cases 
 
-```{r}
+
+```r
 dates_match <- 
   data %>%
   count(date_beg) %>% 
@@ -61,7 +47,8 @@ df_match <-
 # We start by adding graphs for every day available
 
 ## Plotting the figure for the keyword febre
-```{r}
+
+```r
 df_match %>% 
   filter(date_beg > "2020-02-29", date_end < "2020-04-20", keyword == "tosse") %>%  
   group_by(date_beg, state) %>% 
@@ -83,9 +70,12 @@ df_match %>%
   )
 ```
 
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-4-1.png)<!-- -->
+
 # Doing the same graph, but including now "tosse", "febre", and "como tratar o coronavirus"
 
-```{r}
+
+```r
 df_match %>% 
   filter(keyword %in% c("febre", "tosse", "como tratar o coronav<ed>rus"), date_beg > "2020-02-29", date_end < "2020-04-20",) %>% 
   group_by(date_beg, state) %>% 
@@ -106,10 +96,13 @@ df_match %>%
     caption = "Keywords used: 'febre', 'tosse', and 'como tratar o coronavirus'"
   )
 ```
+
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
  
 # Same graph but using all keywords extracted
 
-```{r}
+
+```r
 df_match %>% 
   filter(date_beg > "2020-02-29", date_end < "2020-04-20") %>% 
   group_by(date_beg, state) %>% 
@@ -131,10 +124,13 @@ df_match %>%
   )
 ```
 
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
+
 
 # Which are the states with the largest case rate on April 18th?
 
-```{r}
+
+```r
 data %>% 
   filter(date_beg == "2020-04-18") %>% 
   count(case_rate, state) %>% 
@@ -149,9 +145,12 @@ data %>%
   )
 ```
 
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
+
 # Which are the states with the largest death rate on April 18th?
 
-```{r}
+
+```r
 data %>% 
   filter(date_beg == "2020-04-18") %>% 
   count(death_rate, state) %>% 
@@ -166,11 +165,14 @@ data %>%
   )
 ```
 
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
+
 
 # we now compute the averages at the weekly level 
 
 ## Using all keywords
-```{r}
+
+```r
 df_match %>% 
   filter(date_beg > "2020-02-29", date_end < "2020-04-20") %>% 
   group_by(date_beg, state) %>% 
@@ -190,12 +192,14 @@ df_match %>%
   labs(
     caption = "Keywords used: 'febre', 'tosse', and 'como tratar o coronavirus'"
   )
-
 ```
+
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
 
 # Plotting the keyword "I can't smell"
 
-```{r}
+
+```r
 df_match %>% 
   filter(date_beg > "2020-03-18", date_beg < "2020-04-20", keyword == "perdi o olfato", !is.na(date_beg)) %>% 
   group_by(date_beg, state) %>% 
@@ -213,13 +217,10 @@ df_match %>%
   labs(
     caption = "Keywords used: 'Perdi o olfato'"
   )
-
 ```
 
-# Next steps: 
-## Do weekly averages (each week in a facet)
-## Show growth rate (and grouped by key category)
-## Update admin data 
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
+
 
 # METHODOLOGICAL ASPECTS: 
 1. Average of key words + admin cases. 
