@@ -15,7 +15,8 @@ library(tidylog)
 
 weekly_cross_dir <- file.path(dropbox_file_path, "Data/google_trends/RawData/cross_state_bidaily/")
 state_pop_data <- read.csv(file.path(dropbox_file_path, "Data/city_population/FinalData/brazil_state_pop.csv"))
-admin_data <- read.csv(file.path(dropbox_file_path, "Data/brazil_admin_data/brazil_covid19_200419.csv"), encoding = "UTF-8")
+#admin_data <- read.csv(file.path(dropbox_file_path, "Data/brazil_admin_data/brazil_covid19_200419.csv"), encoding = "UTF-8")
+admin_data <- read.csv(file.path(dropbox_file_path, "Data/brazil_admin_data/brazil_covid19_200513.csv"), encoding = "UTF-8")
 brazil_level_data <- 
   read.csv(
     file.path(dropbox_file_path, "Data/google_trends/RawData/brazil_country_extract_2020-05-11.csv"), 
@@ -188,7 +189,7 @@ weekly_admin_df <-
 *Issue: since keywords for states only show up every 2 days (because we did a bidaily scraping), then when we do the merge with hits_national, hits_national only shows up every 2 days as well.
 
 ```{r}
-wweekly_admin_df <- 
+weekly_admin_df <- 
   weekly_admin_df %>% 
   mutate(
     relative_hits = hits / (hits_national + 1)
