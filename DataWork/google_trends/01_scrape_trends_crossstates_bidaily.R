@@ -30,7 +30,7 @@ search_terms <- c(
 
 # Within for loop, date got converted to numeric - so make character here.
 start_dates <- seq("2020-01-01" %>% as.Date(), 
-                   "2020-05-04" %>% as.Date(), 
+                   "2020-05-18" %>% as.Date(), 
                    by=2) %>%
   as.character()
 
