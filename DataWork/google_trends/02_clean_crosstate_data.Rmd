@@ -3,46 +3,71 @@ title: "02_Clean_Merge_Cross_States"
 output: html_document
 ---
 
+#Intro and importing data 
+
+This file cleans the data of covid-19 cases and google searches across states in Brazil.
+It then creates new variables that will be useful in the analysis. 
+
 ```{r}
+#load libraries
 library(tidyverse)
 library(gridExtra)
 library(lubridate)
 
-states_df <- read.csv(file.path(dropbox_file_path,"Data/google_trends/RawData/brazil_extract_crosstate.csv"), encoding = "UTF-8")
-state_pop_data <- read.csv(file.path(dropbox_file_path, "Data/city_population/FinalData/brazil_state_pop.csv"))
-admin_data <- read.csv(file.path(dropbox_file_path, "Data/brazil_admin_data/brazil_covid19_200419.csv"), encoding = "UTF-8")
+#user's file patt
+if(Sys.info()[["user"]] == "wb537287") dropbox_file_path <- "/Users/wb537287/Dropbox/COVID Social Media Analysis"
+if(Sys.info()[["user"]] == "manuelramos") dropbox_file_path <- "~/Dropbox/COVID Social Media Analysis"
+
+#import datasets
+
+#google searches data
+states_df <-
+  read.csv(file.path(dropbox_file_path,"Data/google_trends/RawData/brazil_extract_crosstate.csv"), encoding = "UTF-8")
+
+#population data of Brazil
+state_pop_data <-  
+  read.csv(file.path(dropbox_file_path, "Data/city_population/FinalData/brazil_state_pop.csv"))
+
+#admin cases of covid-19
+admin_data <- 
+  read.csv(file.path(dropbox_file_path, "Data/brazil_admin_data/brazil_covid19_200419.csv"), encoding = "UTF-8")
 ```
 
+#Cleaning 
+
+We clean the state name and create a new variable for it, "location"
 ```{r}
-states_df %>% 
-  filter(unit_level == "region") %>% 
-  count(keyword)
-
-states_df %>% 
-  filter(keyword == "Perdi o olfato")
-
 states_df <- 
   states_df %>% 
   filter(unit_level == "region") %>% 
   mutate(location = str_replace(location, "State of ", "")) %>% 
   rename(state = location)
+```
 
-#removing accents
+
+We create the english version of state names by removing accents. This is the variable "state_en"
+```{r}
 states_df <-   
   states_df %>% 
   mutate(state_en = stringi::stri_trans_general(state, "Latin-ASCII") %>% str_to_upper())
 ```
 
 
-
+We put it in the same form as the population data (english and capitalized) to facilitate the merge. 
+We also convert the date var into a date format
 ```{r}
 admin_data <- 
   admin_data %>% 
   mutate(
     state_en = stringi::stri_trans_general(state, "Latin-ASCII") %>% str_to_upper(), 
     date = as.Date(date)
-  ) 
+  )
+```
 
+#Merge
+
+We merge the admin data with the population data 
+```{r}
 admin_data <- 
   admin_data %>% 
   left_join(
@@ -52,7 +77,7 @@ admin_data <-
 ```
 
 
-
+We also merge it with the google searches data
 ```{r}
 states_admin_df <- 
   states_df %>% 
@@ -62,8 +87,9 @@ states_admin_df <-
   )
 ```
 
-# We create categories for key words
+#We create categories for key words
 
+We create 5 main categories: consequences, resources, symptoms, prevention, virus, and 1st person searches (self)
 ```{r}
 states_admin_df <- 
   states_admin_df %>% 
@@ -93,8 +119,9 @@ states_admin_df <-
   )
 ```
 
-# Create new variables: death rate, cases & deaths per 100,000
+#Create new variables: death rate, cases & deaths per 100,000
 
+We create variables for case rate, death rate, and case fatality
 ```{r}
 states_admin_df <- 
   states_admin_df %>% 
@@ -103,13 +130,16 @@ states_admin_df <-
     death_rate = deaths*100000/estimate_2018_state, 
     fatalities_per_case = deaths/cases
   )
+```
 
+We remove na's with 0 for the case fatality
+```{r}
 states_admin_df <- 
   states_admin_df %>% 
   mutate(fatalities_per_case = if_else(is.na(fatalities_per_case), 0, fatalities_per_case))
 ```
 
-Export
+#Export the cleaned data 
 
 ```{r}
 saveRDS(states_admin_df, file.path(dropbox_file_path, "Data/google_trends/FinalData/brazil_crosstates_clean.Rds"))
