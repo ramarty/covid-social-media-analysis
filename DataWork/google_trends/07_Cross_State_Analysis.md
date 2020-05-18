@@ -19,27 +19,36 @@ output:
 
 
 ```r
+#load libraries 
 library(tidyverse)
 library(gridExtra)
 library(lubridate)
 library(ggrepel)
 
+#load user
 if(Sys.info()[["user"]] == "wb537287") dropbox_file_path <- "/Users/wb537287/Dropbox/COVID Social Media Analysis"
 
+#import data
 states_df <- read.csv(file.path(dropbox_file_path, "Data/google_trends/FinalData/brazil_crosstates_clean.csv"))
 ```
 
-We focus on the latest date of cases that we have, April 18. The trends data was extracted in April 20, so this is close enough. 
+We focus on the latest date of cases that we have, April 18, to do cross-sectional analysis. 
+The trends data was extracted in April 20, so this is close enough. 
 
 
 ```r
+#keep only data from April 18
 states_df_0418 <- 
   states_df %>% 
-  filter(date == "2020-04-18") 
+  filter(date == "2020-04-18")
+```
 
+We create a dataframe of selected keywords to plot the most relevant ones 
+
+```r
 selected_keywords <- 
   c("ajuda do coronavírus", "cloroquina", "como tratar o coronavírus", 
-    "coronavirus", "covid", 
+    "coronavirus", "covid", "Perdi o olfato",
     "Estou com falta de ar", "estou com febre", "febre", 
     "fique em casa", "medicos", "quais são os sintomas do coronavírus", 
     "sintomas do coronavirus", "tosse")
@@ -63,9 +72,9 @@ states_df_0418 %>%
   facet_wrap(vars(keyword), scales = "free")
 ```
 
-![](07_Cross_State_Analysis_files/figure-html/unnamed-chunk-3-1.png)<!-- -->
+![](07_Cross_State_Analysis_files/figure-html/unnamed-chunk-4-1.png)<!-- -->
 
-## Only for main words
+## Only for 3 main words (fever, cough, how to treat the virus)
 
 
 ```r
@@ -84,10 +93,10 @@ states_df_0418 %>%
   theme_light()
 ```
 
-![](07_Cross_State_Analysis_files/figure-html/unnamed-chunk-4-1.png)<!-- -->
+![](07_Cross_State_Analysis_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
 
 
-# Correlation between keywords and death rate
+# Correlation between keyword searches and death rate
 
 
 ```r
@@ -99,7 +108,7 @@ states_df_0418 %>%
   facet_wrap(vars(keyword), scales = "free")
 ```
 
-![](07_Cross_State_Analysis_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
+![](07_Cross_State_Analysis_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
 
 # Correlation between average of main keywords and case rate
  
@@ -128,9 +137,9 @@ states_df_0418 %>%
   theme_light()
 ```
 
-![](07_Cross_State_Analysis_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
+![](07_Cross_State_Analysis_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
 
-# Correlation between average of main keywords and death rate
+# Correlation between average of 3 main keywords and death rate
 
 
 ```r
@@ -154,7 +163,9 @@ states_df_0418 %>%
   theme_light()
 ```
 
-![](07_Cross_State_Analysis_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
+![](07_Cross_State_Analysis_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
+
+# We create a correlation table to see which words are more positively and negatively correlated with case rates
 
 
 ```r
@@ -187,7 +198,7 @@ states_df_0418 %>%
 ## 16 médico                                  -0.284
 ```
  
-# Focus on "I can't smell" = "Perdi o olfato" 
+# Focus on "I can't smell" = "Perdi o olfato"  
 
 
 ```r
@@ -202,9 +213,10 @@ states_df_0418 %>%
   theme_light()
 ```
 
-![](07_Cross_State_Analysis_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
-Maranhao has the top number of hits for "Perdi o olfato", yet we don't see such a high case rate there
+![](07_Cross_State_Analysis_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
+- Maranhao has the top number of hits for "Perdi o olfato", yet we don't see such a high case rate there
 
+#
 
 ```r
 states_df_0418 %>% 
@@ -217,7 +229,7 @@ states_df_0418 %>%
   theme_light()
 ```
 
-![](07_Cross_State_Analysis_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
+![](07_Cross_State_Analysis_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
 
 In fact, the death rate in Maranhao is still quite low. This might indicate that there could be an increase in cases (and potentially deaths) in such state in the near future
 

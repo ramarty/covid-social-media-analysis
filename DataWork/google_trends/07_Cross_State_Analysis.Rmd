@@ -20,26 +20,34 @@ knitr::opts_chunk$set(fig.width=14, fig.height=10, warning=FALSE, message=FALSE)
 ```
 
 ```{r}
+#load libraries 
 library(tidyverse)
 library(gridExtra)
 library(lubridate)
 library(ggrepel)
 
+#load user
 if(Sys.info()[["user"]] == "wb537287") dropbox_file_path <- "/Users/wb537287/Dropbox/COVID Social Media Analysis"
 
+#import data
 states_df <- read.csv(file.path(dropbox_file_path, "Data/google_trends/FinalData/brazil_crosstates_clean.csv"))
 ```
 
-We focus on the latest date of cases that we have, April 18. The trends data was extracted in April 20, so this is close enough. 
+We focus on the latest date of cases that we have, April 18, to do cross-sectional analysis. 
+The trends data was extracted in April 20, so this is close enough. 
 
 ```{r}
+#keep only data from April 18
 states_df_0418 <- 
   states_df %>% 
-  filter(date == "2020-04-18") 
+  filter(date == "2020-04-18")
+```
 
+We create a dataframe of selected keywords to plot the most relevant ones 
+```{r}
 selected_keywords <- 
   c("ajuda do coronavírus", "cloroquina", "como tratar o coronavírus", 
-    "coronavirus", "covid", 
+    "coronavirus", "covid", "Perdi o olfato",
     "Estou com falta de ar", "estou com febre", "febre", 
     "fique em casa", "medicos", "quais são os sintomas do coronavírus", 
     "sintomas do coronavirus", "tosse")
@@ -62,7 +70,7 @@ states_df_0418 %>%
   facet_wrap(vars(keyword), scales = "free")
 ```
 
-## Only for main words
+## Only for 3 main words (fever, cough, how to treat the virus)
 
 ```{r}
 states_df_0418 %>%
@@ -81,7 +89,7 @@ states_df_0418 %>%
 ```
 
 
-# Correlation between keywords and death rate
+# Correlation between keyword searches and death rate
 
 ```{r}
 states_df_0418 %>%
@@ -119,7 +127,7 @@ states_df_0418 %>%
   theme_light()
 ```
 
-# Correlation between average of main keywords and death rate
+# Correlation between average of 3 main keywords and death rate
 
 ```{r}
 main_keywords <- c("como tratar o coronavírus", "febre", "tosse")
@@ -142,6 +150,8 @@ states_df_0418 %>%
   theme_light()
 ```
 
+# We create a correlation table to see which words are more positively and negatively correlated with case rates
+
 ```{r}
 states_df_0418 %>% 
   group_by(keyword) %>% 
@@ -150,7 +160,9 @@ states_df_0418 %>%
   arrange(desc(correlation))
 ```
  
-# Focus on "I can't smell" = "Perdi o olfato" 
+# Focus on "I can't smell" = "Perdi o olfato"  
+
+## Case rate against searches for I can't smell
 
 ```{r}
 states_df_0418 %>% 
@@ -163,7 +175,9 @@ states_df_0418 %>%
   labs(x = "Cases per 100,000 people", y = "# Hits in Google searches") +
   theme_light()
 ```
-Maranhao has the top number of hits for "Perdi o olfato", yet we don't see such a high case rate there
+- Maranhao has the top number of hits for "Perdi o olfato", yet we don't see such a high case rate there
+
+## Death rate against searches for I can't smell
 
 ```{r}
 states_df_0418 %>% 
