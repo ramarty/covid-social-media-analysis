@@ -5,3 +5,8 @@ getData('GADM', country='BRA', level=0)
 getData('GADM', country='BRA', level=1)
 getData('GADM', country='BRA', level=2)
 getData('GADM', country='BRA', level=3)
+
+getData('GADM', country='USA', level=0)
+getData('GADM', country='USA', level=1)
+getData('GADM', country='USA', level=2)
+

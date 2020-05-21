@@ -6,7 +6,7 @@
 source(file.path("~/Documents/Github/covid-social-media-analysis", "_master.R"))
 
 # If file already cleaned, replace. Do this when change output.
-REPLACE_CLEANED <- T
+REPLACE_CLEANED <- F
 
 #### Create list of tweet json files
 json_files <- lapply(c("2020-01", "2020-02", "2020-03", "2020-04"), function(yyyy_mm){

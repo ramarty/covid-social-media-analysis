@@ -43,6 +43,9 @@ terms_restrict <- c("Coronavirus",
 brazil_tweets <- brazil_tweets %>%
   mutate(constant_words = full_text %>% str_detect(terms_restrict))
 
+# Further Restrict Tweets ------------------------------------------------------
+brazil_tweets <- brazil_tweets[brazil_tweets$lang %in% c("pt", "es", "en",)]
+
 # Geocoding --------------------------------------------------------------------
 #### Prep GADM names
 brazil_adm3$NAME_1 <- brazil_adm3$NAME_1 %>% tolower()
