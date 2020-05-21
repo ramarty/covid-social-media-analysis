@@ -69,6 +69,30 @@ top_6_states_cases <-
   head(6) %>% pull(state)
 ```
 
+Find states that show up under "I can't smell"
+
+```r
+states_cant_smell <-  
+  df_match %>% 
+  filter(keyword == "perdi o olfato") %>% 
+  filter(!is.na(hits)) %>% 
+  count(state) %>%
+  pull(state)
+```
+
+Find the date in which the state first shows under "I can't smell"
+
+```r
+states_cant_smell_date <- 
+  df_match %>% 
+  filter(keyword == "perdi o olfato", state %in% states_cant_smell) %>% 
+  filter(!is.na(hits), date_beg > "2020-03-01") %>% 
+  group_by(state) %>% 
+  summarize(
+    first_date_cant_smell = min(date_beg)
+  )
+```
+
 
 # We start by adding graphs for every day available
 
@@ -76,7 +100,7 @@ top_6_states_cases <-
 
 ```r
 df_match %>% 
-  filter(date_beg > "2020-02-29", date_end < "2020-04-30", keyword == "tosse") %>%  
+  filter(date_beg > "2020-02-29", keyword == "tosse") %>%  
   group_by(date_beg, state) %>% 
   summarize(
     mean_hits = mean(hits, na.rm = TRUE), 
@@ -96,14 +120,14 @@ df_match %>%
   )
 ```
 
-![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
 
 ## Doing the same graph, but including now "tosse", "febre", and "como tratar o coronavirus"
 
 
 ```r
 df_match %>% 
-  filter(keyword %in% c("febre", "tosse", "como tratar o coronav<ed>rus"), date_beg > "2020-02-29", date_end < "2020-04-30",) %>% 
+  filter(keyword %in% c("febre", "tosse", "como tratar o coronav<ed>rus"), date_beg > "2020-02-29") %>% 
   group_by(date_beg, state) %>% 
   summarize(
     mean_hits = mean(hits, na.rm = TRUE), 
@@ -123,14 +147,14 @@ df_match %>%
   )
 ```
 
-![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-7-1.png)<!-- -->
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
  
 ## Same graph but using all keywords extracted
 
 
 ```r
 df_match %>% 
-  filter(date_beg > "2020-02-29", date_end < "2020-04-30") %>% 
+  filter(date_beg > "2020-02-29") %>% 
   group_by(date_beg, state) %>% 
   summarize(
     mean_hits = mean(hits, na.rm = TRUE), 
@@ -150,7 +174,7 @@ df_match %>%
   )
 ```
 
-![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-8-1.png)<!-- -->
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
 
 
 # Which are the states with the largest case rate on April 18th?
@@ -171,7 +195,7 @@ data %>%
   )
 ```
 
-![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
 
 # Which are the states with the largest death rate on April 18th?
 
@@ -191,7 +215,7 @@ data %>%
   )
 ```
 
-![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
 
 
 # We now compute the averages at the weekly level 
@@ -200,7 +224,7 @@ data %>%
 
 ```r
 df_match %>% 
-  filter(date_beg > "2020-02-29", date_end < "2020-04-30") %>% 
+  filter(date_beg > "2020-02-29") %>% 
   group_by(state, week_number) %>% 
   summarize(
     mean_hits = mean(hits, na.rm = TRUE), 
@@ -220,14 +244,14 @@ df_match %>%
   )
 ```
 
-![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
 
 # Plotting the keyword "I can't smell"
 
 
 ```r
 df_match %>% 
-  filter(date_beg > "2020-03-18", date_beg < "2020-04-30", keyword == "perdi o olfato", !is.na(date_beg)) %>% 
+  filter(date_beg > "2020-03-18", keyword == "perdi o olfato", !is.na(date_beg)) %>% 
   group_by(date_beg, state) %>% 
   summarize(
     mean_hits = mean(hits, na.rm = TRUE), 
@@ -245,7 +269,7 @@ df_match %>%
   )
 ```
 
-![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
 
 # Graph using growth rate (and grouped by key category)
 
@@ -254,7 +278,7 @@ df_match %>%
 
 ```r
 df_match %>% 
-  filter(date_beg > "2020-02-29", date_end < "2020-04-30") %>% 
+  filter(date_beg > "2020-02-29") %>% 
   group_by(state, week_number) %>% 
   summarize(
     mean_hits = mean(hits, na.rm = TRUE), 
@@ -274,14 +298,14 @@ df_match %>%
   )
 ```
 
-![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-15-1.png)<!-- -->
 
 ## Growth rate and symptoms
 
 
 ```r
 df_match %>% 
-  filter(date_beg > "2020-02-29", date_end < "2020-04-30", categories == "symptoms") %>% 
+  filter(date_beg > "2020-02-29", categories == "symptoms") %>% 
   group_by(state, week_number) %>% 
   summarize(
     mean_hits = mean(hits, na.rm = TRUE), 
@@ -301,7 +325,7 @@ df_match %>%
   )
 ```
 
-![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-16-1.png)<!-- -->
 
 ## Growth rate and 1st person
 
@@ -314,14 +338,14 @@ df_match %>% count(categories)
 ## # A tibble: 3 x 2
 ##   categories        n
 ##   <fct>         <int>
-## 1 in_1st_person 13421
-## 2 symptoms       8370
-## 3 virus          5022
+## 1 in_1st_person 15157
+## 2 symptoms       9450
+## 3 virus          5670
 ```
 
 ```r
 df_match %>% 
-  filter(date_beg > "2020-02-29", date_end < "2020-04-30", categories == "in_1st_person") %>% 
+  filter(date_beg > "2020-02-29", categories == "in_1st_person") %>% 
   group_by(state, week_number) %>% 
   summarize(
     mean_hits = mean(hits, na.rm = TRUE), 
@@ -341,14 +365,14 @@ df_match %>%
   )
 ```
 
-![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-15-1.png)<!-- -->
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-17-1.png)<!-- -->
 
 ## Growth rate and virus
 
 
 ```r
 df_match %>% 
-  filter(date_beg > "2020-02-29", date_end < "2020-04-30", categories == "virus") %>% 
+  filter(date_beg > "2020-02-29", categories == "virus") %>% 
   group_by(state, week_number) %>% 
   summarize(
     mean_hits = mean(hits, na.rm = TRUE), 
@@ -368,14 +392,14 @@ df_match %>%
   )
 ```
 
-![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-16-1.png)<!-- -->
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-18-1.png)<!-- -->
 
 # Growth rate and relative hits averaged at the weekly level
 
 
 ```r
 df_match %>% 
-  filter(date_beg > "2020-02-29", date_end < "2020-04-30") %>% 
+  filter(date_beg > "2020-02-29") %>% 
   group_by(state, week_number) %>% 
   summarize(
     relative_hits = mean(hits, na.rm = TRUE), 
@@ -395,12 +419,105 @@ df_match %>%
   )
 ```
 
-![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-17-1.png)<!-- -->
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-19-1.png)<!-- -->
+
+
+# Case rate and death rate per state
+
+## Case rate: Highlighting the states that show up under I can't smell at any point
+
+```r
+df_match %>% 
+  filter(!is.na(state), !is.na(case_rate)) %>% 
+  count(case_rate, date_beg, state) %>% 
+  ggplot() +
+  geom_line(aes(date_beg, case_rate, group = state, color = fct_reorder2(state, date_beg, case_rate))) +
+  geom_line(
+    data = . %>% filter(state %in% states_cant_smell),
+    aes(date_beg, case_rate, group = state, color = fct_reorder2(state, date_beg, case_rate)), size = 2) +
+  labs(
+    title = "Case rate per State",
+    color = "State"
+  )
+```
+
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-20-1.png)<!-- -->
+
+## Death rate: Highlighting the states that show up under I can't smell at any point
+
+```r
+df_match %>% 
+  filter(!is.na(state), !is.na(death_rate)) %>% 
+  count(death_rate, date_beg, state) %>% 
+  ggplot() +
+  geom_line(aes(date_beg, death_rate, group = state, color = fct_reorder2(state, date_beg, death_rate))) +
+  geom_line(
+    data = . %>% filter(state %in% states_cant_smell),
+    aes(date_beg, death_rate, group = state, color = fct_reorder2(state, date_beg, death_rate)), size = 2) +
+  labs(
+    title = "Death rate per State",
+    color = "State"
+  )
+```
+
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-21-1.png)<!-- -->
+
+## Date of showing up "I can't smell"
+
+
+```r
+df_match %>% 
+  filter(!is.na(state), !is.na(death_rate), state %in% states_cant_smell) %>% 
+  count(death_rate, date_beg, state) %>% 
+  ggplot() +
+  geom_line(aes(date_beg, death_rate, group = state, color = fct_reorder2(state, date_beg, death_rate))) +
+  geom_vline(
+    data = states_cant_smell_date, 
+    aes(xintercept = first_date_cant_smell, group = state, color = state)
+  ) +
+  geom_label_repel(
+    data = states_cant_smell_date, 
+    aes(first_date_cant_smell, y = 80, label = state), 
+    hjust=0.5, vjust=0.4
+  ) + 
+  labs(
+    title = "Death rate per State",
+    color = "State"
+  )
+```
+
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-22-1.png)<!-- -->
+
+## Same but using logarithmic scale
+
+```r
+df_match %>% 
+  filter(!is.na(state), !is.na(death_rate), state %in% states_cant_smell) %>% 
+  count(death_rate, date_beg, state) %>% 
+  ggplot() +
+  geom_line(aes(date_beg, death_rate, group = state, color = fct_reorder2(state, date_beg, death_rate))) +
+  geom_vline(
+    data = states_cant_smell_date, 
+    aes(xintercept = first_date_cant_smell)
+  ) +
+  geom_label_repel(
+    data = states_cant_smell_date, 
+    aes(first_date_cant_smell, y = 80, label = state), 
+    hjust=0.5, vjust=0.4
+  ) + 
+  labs(
+    title = "Death rate per State",
+    color = "State"
+  ) +
+  scale_y_log10()
+```
+
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-23-1.png)<!-- -->
+
 
 # Next steps: 
 
 - Add states curves in a couple of graphs. See if there is variation in growth rates across states
-- Update admin data with more recent info
 - check why we have missing data for relative hits + how to deal with it
 
 

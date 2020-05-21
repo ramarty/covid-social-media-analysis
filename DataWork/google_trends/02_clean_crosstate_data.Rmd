@@ -14,11 +14,11 @@ library(tidyverse)
 library(gridExtra)
 library(lubridate)
 
-#user's file patt
+#user's file path
 if(Sys.info()[["user"]] == "wb537287") dropbox_file_path <- "/Users/wb537287/Dropbox/COVID Social Media Analysis"
 if(Sys.info()[["user"]] == "manuelramos") dropbox_file_path <- "~/Dropbox/COVID Social Media Analysis"
 
-#import datasets
+##import datasets
 
 #google searches data
 states_df <-
@@ -119,7 +119,7 @@ states_admin_df <-
   )
 ```
 
-#Create new variables: death rate, cases & deaths per 100,000
+#Create new variables: case rate, death rate, and case fatality
 
 We create variables for case rate, death rate, and case fatality
 ```{r}
