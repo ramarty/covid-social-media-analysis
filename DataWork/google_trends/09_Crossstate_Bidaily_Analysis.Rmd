@@ -27,6 +27,7 @@ library(gridExtra)
 library(lubridate)
 library(readstata13)
 library(ggrepel)
+library(ggalluvial)
 
 sjPlot::set_theme(base = theme_light())
 
@@ -107,7 +108,67 @@ states_cant_smell_date <-
     first_date_cant_smell = min(date_beg)
   )
 
+# Add a ranking
+states_cant_smell_date <- 
+  states_cant_smell_date %>% 
+  arrange(first_date_cant_smell) %>% 
+  mutate(ranking_cant_smell = rank(first_date_cant_smell))
 ```
+
+Find the date in which each state has its first death, then its 5th or more deaths, then its 20th or more deaths
+
+```{r}
+date_first_death <- 
+  df_match %>% 
+  filter(keyword == "tosse") %>%
+  mutate(deaths_positive = if_else(deaths > 0, 1L, 0L)) %>% 
+  filter(deaths_positive == 1L) %>% 
+  group_by(state) %>% 
+  summarize(
+    first_date_death = min(date_beg)
+  ) %>% 
+  mutate(ranking_death_1 = rank(first_date_death))
+
+# Now with 5 deaths
+date_5_deaths <- 
+  df_match %>% 
+  filter(keyword == "tosse") %>%
+  mutate(deaths_5 = if_else(deaths > 5, 1L, 0L)) %>% 
+  filter(deaths_5 == 1L) %>% 
+  group_by(state) %>% 
+  summarize(
+    date_death_5 = min(date_beg)
+  ) %>% 
+  mutate(ranking_death_5 = rank(date_death_5))
+
+# Now with 20 deaths
+date_20_deaths <- 
+  df_match %>% 
+  filter(keyword == "tosse") %>%
+  mutate(deaths_20 = if_else(deaths > 20, 1L, 0L)) %>% 
+  filter(deaths_20 == 1L) %>% 
+  group_by(state) %>% 
+  summarize(
+    date_death_20 = min(date_beg)
+  ) %>% 
+  mutate(ranking_death_20 = rank(date_death_20))
+```
+
+Find the date in which each state has a death rate greater or equal to 1
+
+```{r}
+date_1_death_rate <- 
+  df_match %>% 
+  filter(keyword == "tosse") %>%
+  mutate(death_rate_positive = if_else(death_rate > 1, 1L, 0L)) %>% 
+  filter(death_rate_positive == 1L) %>% 
+  group_by(state) %>% 
+  summarize(
+    date_death_rate_positive = min(date_beg)
+  ) %>% 
+  mutate(ranking_death_rate = rank(date_death_rate_positive))
+```
+
 
 
 # We start by adding graphs for every day available
@@ -470,6 +531,67 @@ df_match %>%
     color = "State"
   ) +
   scale_y_log10()
+```
+
+
+# Alluvial plot
+
+There are 2 datasets we want to compare, which were computed at the beginning: states_cant_smell_date, date_5_deaths. 
+States_cant_smell_date: includes the first date in which a state shows up under "I can't smell", and a ranking of all states
+date_5_deaths: includes the first date in which a state has 5 deaths, and a ranking of all states
+
+We first need to merge them by state
+
+```{r}
+date_5_deaths %>% 
+  left_join(states_cant_smell_date, by = "state")
+```
+
+Merging data frame of death rate 1 with data frame of cant smell
+```{r}
+df_dr_1_cant_smell <- 
+  date_1_death_rate %>% 
+  left_join(states_cant_smell_date, by = "state") %>% 
+  arrange(ranking_death_rate)
+
+#converting dates to factor
+df_dr_1_cant_smell <- 
+  df_dr_1_cant_smell %>% 
+  group_by(state) %>% 
+  mutate_at(vars(first_date_cant_smell, date_death_rate_positive), ~factor(., ordered = TRUE)) %>%
+  arrange(first_date_cant_smell, date_death_rate_positive) 
+```
+
+We now use it for an alluvial plot
+
+```{r}
+df_dr_1_cant_smell %>%
+  mutate_at(vars(first_date_cant_smell, date_death_rate_positive), ~factor(., ordered = TRUE)) %>%
+  arrange(ranking_cant_smell, ranking_death_rate) %>% 
+  ggplot(aes(axis1 = first_date_cant_smell, axis2 = date_death_rate_positive, fill = state)) +
+  geom_alluvium() +
+  geom_stratum(width = 1/12, fill = "black", color = "grey") +
+  geom_label(stat = "stratum", infer.label = TRUE) 
+
+df_dr_1_cant_smell %>%
+  mutate_at(vars(first_date_cant_smell, date_death_rate_positive), ~factor(., ordered = TRUE)) %>%
+  arrange(first_date_cant_smell, date_death_rate_positive) %>% 
+  #filter(!is.na(ranking_cant_smell)) %>% 
+  ggplot(aes(axis1 = fct_rev(first_date_cant_smell), axis2 = fct_rev(date_death_rate_positive), fill = state)) +
+  geom_alluvium() +
+  geom_stratum(width = 1/12, fill = "black", color = "grey") +
+  geom_label(stat = "stratum", infer.label = TRUE) +
+  scale_x_discrete(limits = c("first_date_cant_smell", "date_death_rate_positive"), expand = c(.05, .05)) +
+  ggtitle("Date of appearance in 'I can't smell' v. date of death rate > 1, by state")
+
+df_dr_1_cant_smell %>% 
+  ggplot(aes(axis1 = fct_rev(first_date_cant_smell), axis2 = fct_rev(date_death_rate_positive), fill = state)) +
+  geom_alluvium() +
+  geom_stratum(width = 1/12, fill = "black", color = "grey") +
+  geom_label(stat = "stratum", infer.label = TRUE) +
+  scale_x_discrete(limits = c("first_date_cant_smell", "date_death_rate_positive"), expand = c(.05, .05)) +
+  ggtitle("Date of appearance in 'I can't smell' v. date of death rate > 1, by state")
+
 ```
 
 
