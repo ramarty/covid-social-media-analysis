@@ -204,7 +204,7 @@ df_match %>%
     aes(case_rate, mean_hits, label = state), 
     hjust=0.5, vjust=0.4
   ) + 
-  facet_wrap(vars(date_beg), scales = "free") +
+  facet_wrap(vars(date_beg), scales = "free_x") +
   labs(
     caption = "Keywords used: 'febre', 'tosse', and 'como tratar o coronavirus'"
   )
@@ -231,7 +231,7 @@ df_match %>%
     aes(case_rate, mean_hits, label = state), 
     hjust=0.5, vjust=0.4
   ) + 
-  facet_wrap(vars(date_beg), scales = "free") +
+  facet_wrap(vars(date_beg), scales = "free_x") +
   labs(
     caption = "Keywords used: 'febre', 'tosse', and 'como tratar o coronavirus'"
   )
@@ -240,19 +240,19 @@ df_match %>%
 ![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
 
 
-# Which are the states with the largest case rate on April 18th?
+# Which are the states with the largest case rate on May 18th?
 
 
 ```r
 data %>% 
-  filter(date_beg == "2020-04-30") %>% 
+  filter(date_beg == "2020-05-18") %>% 
   count(case_rate, state) %>% 
   arrange(desc(case_rate)) %>% 
   ggplot()+ 
   geom_col(aes(fct_reorder(state, case_rate), case_rate)) +
   coord_flip() + 
   labs(
-    title = "States ordered by case rate on April 18th, 2020", 
+    title = "States ordered by case rate on May 18th, 2020", 
     x = "State", 
     y = "Cases per 100,000 people"
   )
@@ -260,19 +260,19 @@ data %>%
 
 ![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
 
-# Which are the states with the largest death rate on April 18th?
+# Which are the states with the largest death rate on May 18th?
 
 
 ```r
 data %>% 
-  filter(date_beg == "2020-04-30") %>% 
+  filter(date_beg == "2020-05-18") %>% 
   count(death_rate, state) %>% 
   arrange(desc(death_rate)) %>% 
   ggplot()+ 
   geom_col(aes(fct_reorder(state, death_rate), death_rate)) +
   coord_flip() + 
   labs(
-    title = "States ordered by death rate on April 18th, 2020", 
+    title = "States ordered by death rate on May 18th, 2020", 
     x = "State", 
     y = "Deaths per 100,000 people"
   )
@@ -282,6 +282,33 @@ data %>%
 
 
 # We now compute the averages at the weekly level 
+
+## Using 3 main keywords: "febre", "tosse", and como tratar o coronavirus"
+
+
+```r
+df_match %>% 
+  filter(keyword %in% c("febre", "tosse", "como tratar o coronav<ed>rus"), date_beg > "2020-02-29") %>% 
+  group_by(state, week_number) %>% 
+  summarize(
+    mean_hits = mean(hits, na.rm = TRUE), 
+    case_rate = mean(case_rate, na.rm = TRUE)
+  ) %>% 
+  ggplot() + 
+  geom_point(aes(case_rate, mean_hits)) + 
+  geom_smooth(aes(case_rate, mean_hits), method = "lm") + 
+  geom_text_repel(
+    data = . %>% filter(mean_hits > 75), 
+    aes(case_rate, mean_hits, label = state), 
+    hjust=0.5, vjust=0.4
+  ) + 
+  facet_wrap(vars(week_number), scales = "free_x") +
+  labs(
+    caption = "Keywords used: 'febre', 'tosse', and 'como tratar o coronavirus'"
+  )
+```
+
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-15-1.png)<!-- -->
 
 ## Using all keywords
 
@@ -301,13 +328,13 @@ df_match %>%
     aes(case_rate, mean_hits, label = state), 
     hjust=0.5, vjust=0.4
   ) + 
-  facet_wrap(vars(week_number), scales = "free") +
+  facet_wrap(vars(week_number), scales = "free_x") +
   labs(
     caption = "Keywords used: All"
   )
 ```
 
-![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-15-1.png)<!-- -->
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-16-1.png)<!-- -->
 
 # Plotting the keyword "I can't smell"
 
@@ -332,7 +359,7 @@ df_match %>%
   )
 ```
 
-![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-16-1.png)<!-- -->
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-17-1.png)<!-- -->
 
 # Graph using growth rate (and grouped by key category)
 
@@ -361,7 +388,7 @@ df_match %>%
   )
 ```
 
-![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-17-1.png)<!-- -->
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-18-1.png)<!-- -->
 
 ## Growth rate and symptoms
 
@@ -388,7 +415,7 @@ df_match %>%
   )
 ```
 
-![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-18-1.png)<!-- -->
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-19-1.png)<!-- -->
 
 ## Growth rate and 1st person
 
@@ -428,7 +455,7 @@ df_match %>%
   )
 ```
 
-![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-19-1.png)<!-- -->
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-20-1.png)<!-- -->
 
 ## Growth rate and virus
 
@@ -455,7 +482,7 @@ df_match %>%
   )
 ```
 
-![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-20-1.png)<!-- -->
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-21-1.png)<!-- -->
 
 # Growth rate and relative hits averaged at the weekly level
 
@@ -482,7 +509,7 @@ df_match %>%
   )
 ```
 
-![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-21-1.png)<!-- -->
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-22-1.png)<!-- -->
 
 
 # Case rate and death rate per state
@@ -504,7 +531,7 @@ df_match %>%
   )
 ```
 
-![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-22-1.png)<!-- -->
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-23-1.png)<!-- -->
 
 ## Death rate: Highlighting the states that show up under I can't smell at any point
 
@@ -523,7 +550,7 @@ df_match %>%
   )
 ```
 
-![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-23-1.png)<!-- -->
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-24-1.png)<!-- -->
 
 ## Date of showing up "I can't smell"
 
@@ -549,7 +576,7 @@ df_match %>%
   )
 ```
 
-![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-24-1.png)<!-- -->
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-25-1.png)<!-- -->
 
 ## Same but using logarithmic scale (legend ordered by the first time the state shows in the data)
 
@@ -575,7 +602,7 @@ df_match %>%
   scale_y_log10()
 ```
 
-![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-25-1.png)<!-- -->
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-26-1.png)<!-- -->
 
 
 # Alluvial plot
@@ -616,6 +643,13 @@ df_dr_1_cant_smell <-
   date_1_death_rate %>% 
   left_join(states_cant_smell_date, by = "state") %>% 
   arrange(ranking_death_rate)
+
+#converting dates to factor
+df_dr_1_cant_smell <- 
+  df_dr_1_cant_smell %>% 
+  group_by(state) %>% 
+  mutate_at(vars(first_date_cant_smell, date_death_rate_positive), ~factor(., ordered = TRUE)) %>%
+  arrange(first_date_cant_smell, date_death_rate_positive) 
 ```
 
 We now use it for an alluvial plot
@@ -631,7 +665,7 @@ df_dr_1_cant_smell %>%
   geom_label(stat = "stratum", infer.label = TRUE) 
 ```
 
-![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-28-1.png)<!-- -->
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-29-1.png)<!-- -->
 
 ```r
 df_dr_1_cant_smell %>%
@@ -646,15 +680,10 @@ df_dr_1_cant_smell %>%
   ggtitle("Date of appearance in 'I can't smell' v. date of death rate > 1, by state")
 ```
 
-![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-28-2.png)<!-- -->
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-29-2.png)<!-- -->
 
 ```r
 df_dr_1_cant_smell %>% 
-  group_by(state) %>% 
-  complete(first_date_cant_smell) %>% 
-  mutate_at(vars(first_date_cant_smell, date_death_rate_positive), ~factor(., ordered = TRUE)) %>%
-  arrange(first_date_cant_smell, date_death_rate_positive) %>% 
-  #filter(!is.na(ranking_cant_smell)) %>% 
   ggplot(aes(axis1 = fct_rev(first_date_cant_smell), axis2 = fct_rev(date_death_rate_positive), fill = state)) +
   geom_alluvium() +
   geom_stratum(width = 1/12, fill = "black", color = "grey") +
@@ -663,7 +692,12 @@ df_dr_1_cant_smell %>%
   ggtitle("Date of appearance in 'I can't smell' v. date of death rate > 1, by state")
 ```
 
-![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-28-3.png)<!-- -->
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-29-3.png)<!-- -->
+
+```r
+df_dr_1_cant_smell %>% 
+  write.csv(file.path(dropbox_file_path, "/Data_WB_Global/Brazil_cross_state/df_dr_1_cant_smell.csv"))
+```
 
 
 # Next steps: 

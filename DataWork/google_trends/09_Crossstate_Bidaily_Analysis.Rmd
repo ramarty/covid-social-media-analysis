@@ -214,7 +214,7 @@ df_match %>%
     aes(case_rate, mean_hits, label = state), 
     hjust=0.5, vjust=0.4
   ) + 
-  facet_wrap(vars(date_beg), scales = "free") +
+  facet_wrap(vars(date_beg), scales = "free_x") +
   labs(
     caption = "Keywords used: 'febre', 'tosse', and 'como tratar o coronavirus'"
   )
@@ -238,42 +238,42 @@ df_match %>%
     aes(case_rate, mean_hits, label = state), 
     hjust=0.5, vjust=0.4
   ) + 
-  facet_wrap(vars(date_beg), scales = "free") +
+  facet_wrap(vars(date_beg), scales = "free_x") +
   labs(
     caption = "Keywords used: 'febre', 'tosse', and 'como tratar o coronavirus'"
   )
 ```
 
 
-# Which are the states with the largest case rate on April 18th?
+# Which are the states with the largest case rate on May 18th?
 
 ```{r}
 data %>% 
-  filter(date_beg == "2020-04-30") %>% 
+  filter(date_beg == "2020-05-18") %>% 
   count(case_rate, state) %>% 
   arrange(desc(case_rate)) %>% 
   ggplot()+ 
   geom_col(aes(fct_reorder(state, case_rate), case_rate)) +
   coord_flip() + 
   labs(
-    title = "States ordered by case rate on April 18th, 2020", 
+    title = "States ordered by case rate on May 18th, 2020", 
     x = "State", 
     y = "Cases per 100,000 people"
   )
 ```
 
-# Which are the states with the largest death rate on April 18th?
+# Which are the states with the largest death rate on May 18th?
 
 ```{r}
 data %>% 
-  filter(date_beg == "2020-04-30") %>% 
+  filter(date_beg == "2020-05-18") %>% 
   count(death_rate, state) %>% 
   arrange(desc(death_rate)) %>% 
   ggplot()+ 
   geom_col(aes(fct_reorder(state, death_rate), death_rate)) +
   coord_flip() + 
   labs(
-    title = "States ordered by death rate on April 18th, 2020", 
+    title = "States ordered by death rate on May 18th, 2020", 
     x = "State", 
     y = "Deaths per 100,000 people"
   )
@@ -281,6 +281,31 @@ data %>%
 
 
 # We now compute the averages at the weekly level 
+
+## Using 3 main keywords: "febre", "tosse", and como tratar o coronavirus"
+
+```{r}
+df_match %>% 
+  filter(keyword %in% c("febre", "tosse", "como tratar o coronav<ed>rus"), date_beg > "2020-02-29") %>% 
+  group_by(state, week_number) %>% 
+  summarize(
+    mean_hits = mean(hits, na.rm = TRUE), 
+    case_rate = mean(case_rate, na.rm = TRUE)
+  ) %>% 
+  ggplot() + 
+  geom_point(aes(case_rate, mean_hits)) + 
+  geom_smooth(aes(case_rate, mean_hits), method = "lm") + 
+  geom_text_repel(
+    data = . %>% filter(mean_hits > 75), 
+    aes(case_rate, mean_hits, label = state), 
+    hjust=0.5, vjust=0.4
+  ) + 
+  facet_wrap(vars(week_number), scales = "free_x") +
+  labs(
+    caption = "Keywords used: 'febre', 'tosse', and 'como tratar o coronavirus'"
+  )
+
+```
 
 ## Using all keywords
 ```{r}
@@ -299,7 +324,7 @@ df_match %>%
     aes(case_rate, mean_hits, label = state), 
     hjust=0.5, vjust=0.4
   ) + 
-  facet_wrap(vars(week_number), scales = "free") +
+  facet_wrap(vars(week_number), scales = "free_x") +
   labs(
     caption = "Keywords used: All"
   )
@@ -591,6 +616,9 @@ df_dr_1_cant_smell %>%
   geom_label(stat = "stratum", infer.label = TRUE) +
   scale_x_discrete(limits = c("first_date_cant_smell", "date_death_rate_positive"), expand = c(.05, .05)) +
   ggtitle("Date of appearance in 'I can't smell' v. date of death rate > 1, by state")
+
+df_dr_1_cant_smell %>% 
+  write.csv(file.path(dropbox_file_path, "/Data_WB_Global/Brazil_cross_state/df_dr_1_cant_smell.csv"))
 
 ```
 
