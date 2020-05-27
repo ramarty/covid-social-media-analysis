@@ -155,6 +155,10 @@ date_1_death_rate <-
   mutate(ranking_death_rate = rank(date_death_rate_positive))
 ```
 
+Find the difference in days between 
+
+
+
 
 
 # We start by adding graphs for every day available
@@ -183,7 +187,7 @@ df_match %>%
   )
 ```
 
-![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
 
 ## Doing the same graph, but including now "tosse", "febre", and "como tratar o coronavirus"
 
@@ -210,7 +214,7 @@ df_match %>%
   )
 ```
 
-![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
  
 ## Same graph but using all keywords extracted
 
@@ -237,7 +241,7 @@ df_match %>%
   )
 ```
 
-![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
 
 
 # Which are the states with the largest case rate on May 18th?
@@ -258,7 +262,7 @@ data %>%
   )
 ```
 
-![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
 
 # Which are the states with the largest death rate on May 18th?
 
@@ -278,7 +282,7 @@ data %>%
   )
 ```
 
-![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-15-1.png)<!-- -->
 
 
 # We now compute the averages at the weekly level 
@@ -308,7 +312,7 @@ df_match %>%
   )
 ```
 
-![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-15-1.png)<!-- -->
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-16-1.png)<!-- -->
 
 ## Using all keywords
 
@@ -334,7 +338,7 @@ df_match %>%
   )
 ```
 
-![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-16-1.png)<!-- -->
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-17-1.png)<!-- -->
 
 # Plotting the keyword "I can't smell"
 
@@ -359,7 +363,7 @@ df_match %>%
   )
 ```
 
-![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-17-1.png)<!-- -->
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-18-1.png)<!-- -->
 
 # Graph using growth rate (and grouped by key category)
 
@@ -388,7 +392,7 @@ df_match %>%
   )
 ```
 
-![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-18-1.png)<!-- -->
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-19-1.png)<!-- -->
 
 ## Growth rate and symptoms
 
@@ -415,7 +419,7 @@ df_match %>%
   )
 ```
 
-![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-19-1.png)<!-- -->
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-20-1.png)<!-- -->
 
 ## Growth rate and 1st person
 
@@ -455,7 +459,7 @@ df_match %>%
   )
 ```
 
-![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-20-1.png)<!-- -->
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-21-1.png)<!-- -->
 
 ## Growth rate and virus
 
@@ -482,7 +486,7 @@ df_match %>%
   )
 ```
 
-![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-21-1.png)<!-- -->
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-22-1.png)<!-- -->
 
 # Growth rate and relative hits averaged at the weekly level
 
@@ -509,7 +513,7 @@ df_match %>%
   )
 ```
 
-![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-22-1.png)<!-- -->
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-23-1.png)<!-- -->
 
 
 # Case rate and death rate per state
@@ -531,7 +535,7 @@ df_match %>%
   )
 ```
 
-![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-23-1.png)<!-- -->
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-24-1.png)<!-- -->
 
 ## Death rate: Highlighting the states that show up under I can't smell at any point
 
@@ -550,7 +554,7 @@ df_match %>%
   )
 ```
 
-![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-24-1.png)<!-- -->
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-25-1.png)<!-- -->
 
 ## Date of showing up "I can't smell"
 
@@ -576,7 +580,7 @@ df_match %>%
   )
 ```
 
-![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-25-1.png)<!-- -->
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-26-1.png)<!-- -->
 
 ## Same but using logarithmic scale (legend ordered by the first time the state shows in the data)
 
@@ -602,7 +606,7 @@ df_match %>%
   scale_y_log10()
 ```
 
-![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-26-1.png)<!-- -->
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-27-1.png)<!-- -->
 
 
 # Alluvial plot
@@ -665,7 +669,7 @@ df_dr_1_cant_smell %>%
   geom_label(stat = "stratum", infer.label = TRUE) 
 ```
 
-![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-29-1.png)<!-- -->
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-30-1.png)<!-- -->
 
 ```r
 df_dr_1_cant_smell %>%
@@ -680,24 +684,121 @@ df_dr_1_cant_smell %>%
   ggtitle("Date of appearance in 'I can't smell' v. date of death rate > 1, by state")
 ```
 
-![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-29-2.png)<!-- -->
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-30-2.png)<!-- -->
+
+
+```r
+df_dr_1_cant_smell <- 
+  df_dr_1_cant_smell %>% 
+  mutate_at(vars(first_date_cant_smell, date_death_rate_positive), as.Date) %>% 
+  mutate(diff_smell_death = first_date_cant_smell - date_death_rate_positive)
+
+df_dr_1_cant_smell <- 
+  df_dr_1_cant_smell %>% 
+  mutate(cant_smell_state = if_else(!is.na(first_date_cant_smell), 1L, 0L))
+```
+
 
 ```r
 df_dr_1_cant_smell %>% 
-  ggplot(aes(axis1 = fct_rev(first_date_cant_smell), axis2 = fct_rev(date_death_rate_positive), fill = state)) +
-  geom_alluvium() +
-  geom_stratum(width = 1/12, fill = "black", color = "grey") +
-  geom_label(stat = "stratum", infer.label = TRUE) +
-  scale_x_discrete(limits = c("first_date_cant_smell", "date_death_rate_positive"), expand = c(.05, .05)) +
-  ggtitle("Date of appearance in 'I can't smell' v. date of death rate > 1, by state")
+  ggplot() +
+  geom_segment(
+    aes(
+      x = first_date_cant_smell, 
+      y = 0, 
+      xend = date_death_rate_positive, 
+      yend =  diff_smell_death)
+  ) +
+  geom_point(
+    aes(
+      x = date_death_rate_positive, 
+      y = diff_smell_death, 
+      color = "Can't smell"
+    )
+  ) + 
+  geom_point(
+    data = . %>% filter(is.na(first_date_cant_smell)),
+    aes(
+      x = date_death_rate_positive,
+      y = 0L, 
+      color = "No can't smell"
+    )
+  )
 ```
 
-![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-29-3.png)<!-- -->
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-32-1.png)<!-- -->
+
+
 
 ```r
 df_dr_1_cant_smell %>% 
-  write.csv(file.path(dropbox_file_path, "/Data_WB_Global/Brazil_cross_state/df_dr_1_cant_smell.csv"))
+  ggplot() +
+  geom_segment(
+    aes(
+      x = date_death_rate_positive, 
+      y = 0, 
+      xend = first_date_cant_smell, 
+      yend =  diff_smell_death)
+  ) +
+  geom_point(
+    aes(
+      x = first_date_cant_smell, 
+      y = diff_smell_death, 
+      color = "Can't smell"
+    )
+  ) + 
+  geom_point(
+    data = . %>% filter(is.na(first_date_cant_smell)),
+    aes(
+      x = date_death_rate_positive,
+      y = 0L, 
+      color = "No can't smell"
+    )
+  ) + 
+  ggplot2::annotate(
+    "label", 
+    x = as.Date("2020-03-27"), 
+    y = -18, 
+    label = "First date\n 'I can't smell'"
+  ) + 
+  labs(
+    color = "State category"
+  )
 ```
+
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-33-1.png)<!-- -->
+
+```r
+?annotate()
+```
+
+## Graph attempt - 2 date columns
+
+
+```r
+df_dr_1_cant_smell
+```
+
+```
+## # A tibble: 26 x 7
+## # Groups:   state [26]
+##    state date_death_rate~ ranking_death_r~ first_date_cant~ ranking_cant_sm~
+##    <fct> <date>                      <dbl> <date>                      <dbl>
+##  1 São ~ 2020-04-08                    2   2020-03-13                    1  
+##  2 Amaz~ 2020-04-08                    2   2020-03-27                    2  
+##  3 Ceará 2020-04-08                    2   2020-03-29                    3.5
+##  4 Rio ~ 2020-04-12                    5.5 2020-03-29                    3.5
+##  5 Pern~ 2020-04-10                    4   2020-04-08                    5  
+##  6 Mara~ 2020-04-12                    5.5 2020-04-16                    6.5
+##  7 Pará  2020-04-24                   16   2020-04-16                    6.5
+##  8 Bahia 2020-04-24                   16   2020-04-26                    8  
+##  9 Para~ 2020-04-14                    7.5 2020-04-28                    9  
+## 10 Alag~ 2020-04-20                   13   2020-04-30                   10  
+## # ... with 16 more rows, and 2 more variables: diff_smell_death <drtn>,
+## #   cant_smell_state <int>
+```
+
+
 
 
 # Next steps: 

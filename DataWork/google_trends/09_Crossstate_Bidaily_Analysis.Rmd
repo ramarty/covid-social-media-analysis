@@ -169,6 +169,12 @@ date_1_death_rate <-
   mutate(ranking_death_rate = rank(date_death_rate_positive))
 ```
 
+Find the difference in days between 
+
+```{r}
+
+```
+
 
 
 # We start by adding graphs for every day available
@@ -609,18 +615,92 @@ df_dr_1_cant_smell %>%
   scale_x_discrete(limits = c("first_date_cant_smell", "date_death_rate_positive"), expand = c(.05, .05)) +
   ggtitle("Date of appearance in 'I can't smell' v. date of death rate > 1, by state")
 
-df_dr_1_cant_smell %>% 
-  ggplot(aes(axis1 = fct_rev(first_date_cant_smell), axis2 = fct_rev(date_death_rate_positive), fill = state)) +
-  geom_alluvium() +
-  geom_stratum(width = 1/12, fill = "black", color = "grey") +
-  geom_label(stat = "stratum", infer.label = TRUE) +
-  scale_x_discrete(limits = c("first_date_cant_smell", "date_death_rate_positive"), expand = c(.05, .05)) +
-  ggtitle("Date of appearance in 'I can't smell' v. date of death rate > 1, by state")
-
-df_dr_1_cant_smell %>% 
-  write.csv(file.path(dropbox_file_path, "/Data_WB_Global/Brazil_cross_state/df_dr_1_cant_smell.csv"))
-
 ```
+
+```{r}
+df_dr_1_cant_smell <- 
+  df_dr_1_cant_smell %>% 
+  mutate_at(vars(first_date_cant_smell, date_death_rate_positive), as.Date) %>% 
+  mutate(diff_smell_death = first_date_cant_smell - date_death_rate_positive)
+
+df_dr_1_cant_smell <- 
+  df_dr_1_cant_smell %>% 
+  mutate(cant_smell_state = if_else(!is.na(first_date_cant_smell), 1L, 0L))
+```
+
+```{r}
+df_dr_1_cant_smell %>% 
+  ggplot() +
+  geom_segment(
+    aes(
+      x = first_date_cant_smell, 
+      y = 0, 
+      xend = date_death_rate_positive, 
+      yend =  diff_smell_death)
+  ) +
+  geom_point(
+    aes(
+      x = date_death_rate_positive, 
+      y = diff_smell_death, 
+      color = "Can't smell"
+    )
+  ) + 
+  geom_point(
+    data = . %>% filter(is.na(first_date_cant_smell)),
+    aes(
+      x = date_death_rate_positive,
+      y = 0L, 
+      color = "No can't smell"
+    )
+  )
+```
+
+
+```{r}
+df_dr_1_cant_smell %>% 
+  ggplot() +
+  geom_segment(
+    aes(
+      x = date_death_rate_positive, 
+      y = 0, 
+      xend = first_date_cant_smell, 
+      yend =  diff_smell_death)
+  ) +
+  geom_point(
+    aes(
+      x = first_date_cant_smell, 
+      y = diff_smell_death, 
+      color = "Can't smell"
+    )
+  ) + 
+  geom_point(
+    data = . %>% filter(is.na(first_date_cant_smell)),
+    aes(
+      x = date_death_rate_positive,
+      y = 0L, 
+      color = "No can't smell"
+    )
+  ) + 
+  ggplot2::annotate(
+    "label", 
+    x = as.Date("2020-03-27"), 
+    y = -18, 
+    label = "First date\n 'I can't smell'"
+  ) + 
+  labs(
+    color = "State category"
+  )
+
+?annotate()
+```
+
+## Graph attempt - 2 date columns
+
+```{r}
+df_dr_1_cant_smell
+```
+
+
 
 
 # Next steps: 
