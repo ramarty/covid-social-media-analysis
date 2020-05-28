@@ -340,6 +340,40 @@ df_match %>%
 
 ![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-17-1.png)<!-- -->
 
+## 3 words, 3 weeks
+
+
+```r
+df_match %>% 
+  filter(
+    keyword %in% c("febre", "tosse", "como tratar o coronav<ed>rus"), 
+    date_beg > "2020-02-29", 
+    week_number %in% c(11, 16, 20)
+  ) %>% 
+  group_by(state, week_number) %>% 
+  summarize(
+    mean_hits = mean(hits, na.rm = TRUE), 
+    case_rate = mean(case_rate, na.rm = TRUE)
+  ) %>% 
+  ggplot() + 
+  geom_point(aes(case_rate, mean_hits)) + 
+  geom_smooth(aes(case_rate, mean_hits), method = "lm") + 
+  geom_text_repel(
+    data = . %>% filter(mean_hits > 72), 
+    aes(case_rate, mean_hits, label = state), 
+    hjust=0.5, vjust=0.4
+  ) + 
+  facet_wrap(vars(week_number), scales = "free_x") +
+  labs(
+    y = "Average number of Google hits",
+    x = "Cases per 100,000 people",
+    caption = "Keywords used: 'febre', 'tosse', and 'como tratar o coronavirus'"
+  )
+```
+
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-18-1.png)<!-- -->
+
+
 # Plotting the keyword "I can't smell"
 
 
@@ -363,7 +397,7 @@ df_match %>%
   )
 ```
 
-![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-18-1.png)<!-- -->
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-19-1.png)<!-- -->
 
 # Graph using growth rate (and grouped by key category)
 
@@ -392,7 +426,7 @@ df_match %>%
   )
 ```
 
-![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-19-1.png)<!-- -->
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-20-1.png)<!-- -->
 
 ## Growth rate and symptoms
 
@@ -419,7 +453,7 @@ df_match %>%
   )
 ```
 
-![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-20-1.png)<!-- -->
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-21-1.png)<!-- -->
 
 ## Growth rate and 1st person
 
@@ -459,7 +493,7 @@ df_match %>%
   )
 ```
 
-![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-21-1.png)<!-- -->
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-22-1.png)<!-- -->
 
 ## Growth rate and virus
 
@@ -486,7 +520,7 @@ df_match %>%
   )
 ```
 
-![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-22-1.png)<!-- -->
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-23-1.png)<!-- -->
 
 # Growth rate and relative hits averaged at the weekly level
 
@@ -513,7 +547,7 @@ df_match %>%
   )
 ```
 
-![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-23-1.png)<!-- -->
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-24-1.png)<!-- -->
 
 
 # Case rate and death rate per state
@@ -535,7 +569,7 @@ df_match %>%
   )
 ```
 
-![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-24-1.png)<!-- -->
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-25-1.png)<!-- -->
 
 ## Death rate: Highlighting the states that show up under I can't smell at any point
 
@@ -554,7 +588,7 @@ df_match %>%
   )
 ```
 
-![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-25-1.png)<!-- -->
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-26-1.png)<!-- -->
 
 ## Date of showing up "I can't smell"
 
@@ -580,7 +614,7 @@ df_match %>%
   )
 ```
 
-![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-26-1.png)<!-- -->
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-27-1.png)<!-- -->
 
 ## Same but using logarithmic scale (legend ordered by the first time the state shows in the data)
 
@@ -606,7 +640,7 @@ df_match %>%
   scale_y_log10()
 ```
 
-![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-27-1.png)<!-- -->
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-28-1.png)<!-- -->
 
 
 # Alluvial plot
@@ -669,7 +703,7 @@ df_dr_1_cant_smell %>%
   geom_label(stat = "stratum", infer.label = TRUE) 
 ```
 
-![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-30-1.png)<!-- -->
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-31-1.png)<!-- -->
 
 ```r
 df_dr_1_cant_smell %>%
@@ -684,7 +718,7 @@ df_dr_1_cant_smell %>%
   ggtitle("Date of appearance in 'I can't smell' v. date of death rate > 1, by state")
 ```
 
-![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-30-2.png)<!-- -->
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-31-2.png)<!-- -->
 
 
 ```r
@@ -726,7 +760,7 @@ df_dr_1_cant_smell %>%
   )
 ```
 
-![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-32-1.png)<!-- -->
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-33-1.png)<!-- -->
 
 
 
@@ -766,7 +800,7 @@ df_dr_1_cant_smell %>%
   )
 ```
 
-![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-33-1.png)<!-- -->
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-34-1.png)<!-- -->
 
 ```r
 ?annotate()
@@ -798,6 +832,28 @@ df_dr_1_cant_smell
 ## #   cant_smell_state <int>
 ```
 
+
+## Graph of current death rate distinguishing by date of I can't smell
+
+
+```r
+data %>% 
+  left_join(states_cant_smell_date, by = "state") %>% 
+  mutate(cant_smell_appears = if_else(!is.na(first_date_cant_smell), 1L, 0L) %>% as.character()) %>% 
+  filter(date_beg == "2020-05-18", !is.na(death_rate)) %>% 
+  count(deaths, state, cant_smell_appears) %>% 
+  arrange(desc(deaths)) %>% 
+  ggplot()+ 
+  geom_col(aes(fct_reorder(state, deaths), deaths, fill = cant_smell_appears)) +
+  coord_flip() + 
+  labs(
+    title = "States ordered by deaths on May 18th, 2020", 
+    x = "State", 
+    y = "Deaths per 100,000 people"
+  )
+```
+
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-36-1.png)<!-- -->
 
 
 

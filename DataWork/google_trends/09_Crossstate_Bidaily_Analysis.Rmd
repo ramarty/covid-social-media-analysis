@@ -337,6 +337,37 @@ df_match %>%
 
 ```
 
+## 3 words, 3 weeks
+
+```{r}
+df_match %>% 
+  filter(
+    keyword %in% c("febre", "tosse", "como tratar o coronav<ed>rus"), 
+    date_beg > "2020-02-29", 
+    week_number %in% c(11, 16, 20)
+  ) %>% 
+  group_by(state, week_number) %>% 
+  summarize(
+    mean_hits = mean(hits, na.rm = TRUE), 
+    case_rate = mean(case_rate, na.rm = TRUE)
+  ) %>% 
+  ggplot() + 
+  geom_point(aes(case_rate, mean_hits)) + 
+  geom_smooth(aes(case_rate, mean_hits), method = "lm") + 
+  geom_text_repel(
+    data = . %>% filter(mean_hits > 72), 
+    aes(case_rate, mean_hits, label = state), 
+    hjust=0.5, vjust=0.4
+  ) + 
+  facet_wrap(vars(week_number), scales = "free_x") +
+  labs(
+    y = "Average number of Google hits",
+    x = "Cases per 100,000 people",
+    caption = "Keywords used: 'febre', 'tosse', and 'como tratar o coronavirus'"
+  )
+```
+
+
 # Plotting the keyword "I can't smell"
 
 ```{r}
@@ -700,6 +731,25 @@ df_dr_1_cant_smell %>%
 df_dr_1_cant_smell
 ```
 
+
+## Graph of current death rate distinguishing by date of I can't smell
+
+```{r}
+data %>% 
+  left_join(states_cant_smell_date, by = "state") %>% 
+  mutate(cant_smell_appears = if_else(!is.na(first_date_cant_smell), 1L, 0L) %>% as.character()) %>% 
+  filter(date_beg == "2020-05-18", !is.na(death_rate)) %>% 
+  count(deaths, state, cant_smell_appears) %>% 
+  arrange(desc(deaths)) %>% 
+  ggplot()+ 
+  geom_col(aes(fct_reorder(state, deaths), deaths, fill = cant_smell_appears)) +
+  coord_flip() + 
+  labs(
+    title = "States ordered by deaths on May 18th, 2020", 
+    x = "State", 
+    y = "Deaths per 100,000 people"
+  )
+```
 
 
 
