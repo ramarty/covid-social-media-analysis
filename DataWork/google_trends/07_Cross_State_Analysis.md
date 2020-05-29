@@ -200,6 +200,8 @@ states_df_0418 %>%
  
 # Focus on "I can't smell" = "Perdi o olfato"  
 
+## Case rate against searches for I can't smell
+
 
 ```r
 states_df_0418 %>% 
@@ -216,7 +218,8 @@ states_df_0418 %>%
 ![](07_Cross_State_Analysis_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
 - Maranhao has the top number of hits for "Perdi o olfato", yet we don't see such a high case rate there
 
-#
+## Death rate against searches for I can't smell
+
 
 ```r
 states_df_0418 %>% 

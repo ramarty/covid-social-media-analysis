@@ -15,7 +15,7 @@ output:
 ---
 
 ```{r global_options, include=FALSE}
-knitr::opts_chunk$set(fig.width=12, fig.height=8, warning=FALSE, message=FALSE)
+knitr::opts_chunk$set(warning=FALSE, message=FALSE)
 ```
 
 ```{r, include = FALSE}
@@ -223,15 +223,18 @@ trends_df %>%
     mean_growth_rate_cases = mean(growth_rate_cases)
   ) %>% 
   ggplot() + 
-  geom_line(aes(date, mean_hits, group = categories, color = fct_reorder2(categories, date, mean_hits))) +
-  geom_line(aes(date, mean_growth_rate_cases, group = 1)) + 
-  labs(color = "Category") +
+  geom_line(aes(date, mean_hits, group = categories, color = fct_reorder2(categories, date, mean_hits)), size = 1.2) +
+  geom_line(data = . %>% filter(categories == "in_1st_person"), aes(date, mean_growth_rate_cases, group = 1), size = 1.1) + 
   labs(
     y = "Average hits per category", 
-    title = "Average growth rate of cases (in black) in comparison to Google Trends over time"
+    x = "Date",
+    title = "Average growth rate of cases (in black)\nin comparison to Google Trends over time"
   ) + 
   coord_cartesian(ylim = c(0, 100)) +
-  theme_light()
+  scale_color_discrete(name = "Search Category", labels = c("Coronavirus", "Symptoms", "1st Person Search")) +
+  theme_light() + 
+  theme(plot.title = element_text(hjust = 0.55)) 
+
 ```
 
 
@@ -255,6 +258,28 @@ trends_df %>%
   coord_cartesian(ylim = c(0, 100)) +
   theme_light()
 ```
+
+## Using cases rather than growth rate of cases
+
+```{r}
+trends_df %>% 
+  filter(!is.na(categories), categories %in% c("virus", "symptoms", "in_1st_person"), keyword %in% main_keywords, !is.na(state)) %>% 
+  group_by(categories, date) %>% 
+  summarize(
+    mean_hits = mean(hits, na.rm = TRUE), 
+    mean_cases = mean(cases)
+  ) %>% 
+  ggplot() + 
+  geom_line(aes(date, mean_hits, group = categories, color = fct_reorder2(categories, date, mean_hits))) +
+  geom_line(data = . %>% filter(categories == "in_1st_person"), aes(date, mean_cases, group = 1)) + 
+  labs(color = "Category") +
+  labs(
+    y = "Average hits per category", 
+    title = "Average number of new cases (in black) in comparison to Google Trends over time"
+  ) + 
+  theme_light()
+```
+
 
 # Time lags
 

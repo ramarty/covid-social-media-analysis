@@ -231,15 +231,17 @@ trends_df %>%
     mean_growth_rate_cases = mean(growth_rate_cases)
   ) %>% 
   ggplot() + 
-  geom_line(aes(date, mean_hits, group = categories, color = fct_reorder2(categories, date, mean_hits))) +
-  geom_line(aes(date, mean_growth_rate_cases, group = 1)) + 
-  labs(color = "Category") +
+  geom_line(aes(date, mean_hits, group = categories, color = fct_reorder2(categories, date, mean_hits)), size = 1.2) +
+  geom_line(data = . %>% filter(categories == "in_1st_person"), aes(date, mean_growth_rate_cases, group = 1), size = 1.1) + 
   labs(
     y = "Average hits per category", 
-    title = "Average growth rate of cases (in black) in comparison to Google Trends over time"
+    x = "Date",
+    title = "Average growth rate of cases (in black)\nin comparison to Google Trends over time"
   ) + 
   coord_cartesian(ylim = c(0, 100)) +
-  theme_light()
+  scale_color_discrete(name = "Search Category", labels = c("Coronavirus", "Symptoms", "1st Person Search")) +
+  theme_light() + 
+  theme(plot.title = element_text(hjust = 0.55)) 
 ```
 
 ![](06_Time_Lags_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
@@ -268,6 +270,31 @@ trends_df %>%
 ```
 
 ![](06_Time_Lags_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
+
+## Using cases rather than growth rate of cases
+
+
+```r
+trends_df %>% 
+  filter(!is.na(categories), categories %in% c("virus", "symptoms", "in_1st_person"), keyword %in% main_keywords, !is.na(state)) %>% 
+  group_by(categories, date) %>% 
+  summarize(
+    mean_hits = mean(hits, na.rm = TRUE), 
+    mean_cases = mean(cases)
+  ) %>% 
+  ggplot() + 
+  geom_line(aes(date, mean_hits, group = categories, color = fct_reorder2(categories, date, mean_hits))) +
+  geom_line(data = . %>% filter(categories == "in_1st_person"), aes(date, mean_cases, group = 1)) + 
+  labs(color = "Category") +
+  labs(
+    y = "Average hits per category", 
+    title = "Average number of new cases (in black) in comparison to Google Trends over time"
+  ) + 
+  theme_light()
+```
+
+![](06_Time_Lags_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
+
 
 # Time lags
 
@@ -377,7 +404,7 @@ trends_df %>%
   )
 ```
 
-![](06_Time_Lags_files/figure-html/unnamed-chunk-17-1.png)<!-- -->
+![](06_Time_Lags_files/figure-html/unnamed-chunk-18-1.png)<!-- -->
 
 
 We now switch the approach to a simpler one, and potentially more reliable one. 
@@ -452,7 +479,7 @@ trends_df %>%
   )
 ```
 
-![](06_Time_Lags_files/figure-html/unnamed-chunk-19-1.png)<!-- -->
+![](06_Time_Lags_files/figure-html/unnamed-chunk-20-1.png)<!-- -->
 
 ## Graph of hits v. 100 cases 
 
@@ -480,7 +507,7 @@ trends_df %>%
   )
 ```
 
-![](06_Time_Lags_files/figure-html/unnamed-chunk-20-1.png)<!-- -->
+![](06_Time_Lags_files/figure-html/unnamed-chunk-21-1.png)<!-- -->
 
 
 With a focus on key words
@@ -507,7 +534,7 @@ trends_df %>%
   )
 ```
 
-![](06_Time_Lags_files/figure-html/unnamed-chunk-21-1.png)<!-- -->
+![](06_Time_Lags_files/figure-html/unnamed-chunk-22-1.png)<!-- -->
 
 ## Graph of hits v. 10 deaths 
 
@@ -533,4 +560,4 @@ trends_df %>%
     title = "Difference in number of days between sudden increase in hits and covid-19 deaths"   )
 ```
 
-![](06_Time_Lags_files/figure-html/unnamed-chunk-22-1.png)<!-- -->
+![](06_Time_Lags_files/figure-html/unnamed-chunk-23-1.png)<!-- -->
