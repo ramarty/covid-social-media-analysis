@@ -282,7 +282,7 @@ df_match %>%
 ![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
 
 
-Showing the states where there any keywords appeared earlier in time
+Showing the states where  any keywords appeared earlier in time
 
 ```r
 df_match %>% 
@@ -392,7 +392,7 @@ df_match %>%
   geom_point(aes(case_rate, mean_hits)) + 
   geom_smooth(aes(case_rate, mean_hits), method = "lm") + 
   geom_text_repel(
-    data = . %>% filter(mean_hits > 75), 
+    data = . %>% filter(mean_hits > 68), 
     aes(case_rate, mean_hits, label = state), 
     hjust=0.5, vjust=0.4
   ) + 
@@ -404,7 +404,7 @@ df_match %>%
 
 ![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-17-1.png)<!-- -->
 
-## Using 1st person symptoms
+## Using all keywords, highlighting more names to find the outliers and leaving the scales free
 
 ```r
 df_match %>% 
@@ -418,11 +418,11 @@ df_match %>%
   geom_point(aes(case_rate, mean_hits)) + 
   geom_smooth(aes(case_rate, mean_hits), method = "lm") + 
   geom_text_repel(
-    data = . %>% filter(mean_hits > 75), 
+    data = . %>% filter(mean_hits > 68), 
     aes(case_rate, mean_hits, label = state), 
     hjust=0.5, vjust=0.4
   ) + 
-  facet_wrap(vars(week_number), scales = "free_x") +
+  facet_wrap(vars(week_number), scales = "free") +
   labs(
     caption = "Keywords used: All"
   ) +
@@ -430,6 +430,7 @@ df_match %>%
 ```
 
 ![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-18-1.png)<!-- -->
+
 ## 3 words, 3 weeks
 
 

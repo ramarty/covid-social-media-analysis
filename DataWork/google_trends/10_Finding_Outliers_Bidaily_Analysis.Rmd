@@ -1,0 +1,344 @@
+---
+title: "10_Finding_Outliers_Bidaily_Analysis"
+author: Manuel Ramos
+output: 
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    code_folding: hide
+    toc_fold: TRUE
+    highlight: tango
+    keep_md: yes
+    theme: cosmo
+    number_sections: true
+---
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(fig.width=10, fig.height=8, size = 10, background = "light", warning=FALSE, message=FALSE)
+```
+
+```{r, include = FALSE}
+
+if(Sys.info()[["user"]] == "wb537287") dropbox_file_path <- "/Users/wb537287/Dropbox/COVID Social Media Analysis/"
+
+library(tidyverse)
+library(gridExtra)
+library(lubridate)
+library(readstata13)
+library(ggrepel)
+library(ggalluvial)
+library(sp)
+
+sjPlot::set_theme(base = theme_light())
+
+
+#admin data of cases and deaths
+#data <- read.csv(file.path(dropbox_file_path, "Data/google_trends/FinalData/brazil_crossstates_bidaily_admin.csv"))
+
+data <- read.csv(file.path(dropbox_file_path, "Data/google_trends/FinalData/brazil_crossstates_bidaily_admin_200520.csv"))
+```
+
+
+convert dates variables into dates
+```{r}
+data <- 
+  data %>% 
+  mutate(
+    date_beg = as.Date(date_beg), 
+    date_end = as.Date(date_end)
+  )
+```
+
+Add week number
+```{r}
+data <- 
+  data %>% 
+  mutate(
+    week_number = week(date_beg), 
+    day = day(date_beg), 
+    month = month(date_beg), 
+    wday = wday(date_beg, label = TRUE)
+  )
+
+```
+
+We subset the data to leave only the dates with matches between searches and cases 
+
+```{r}
+dates_match <- 
+  data %>%
+  count(date_beg) %>% 
+  filter(n > 30) %>% 
+  pull(date_beg)
+
+df_match <-   
+  data %>% 
+  filter(date_beg %in% dates_match)
+```
+
+Find top 6 states in levels
+```{r}
+top_6_states_cases <- 
+  data %>% 
+  filter(date_beg == "2020-04-18") %>% 
+  count(state, cases) %>% 
+  arrange(desc(cases)) %>% 
+  head(6) %>% pull(state)
+
+```
+
+Find states that show up under "I can't smell"
+```{r}
+states_cant_smell <-  
+  df_match %>% 
+  filter(keyword == "perdi o olfato") %>% 
+  filter(!is.na(hits)) %>% 
+  count(state) %>%
+  pull(state)
+```
+
+Find the date in which the state first shows under "I can't smell"
+```{r}
+states_cant_smell_date <- 
+  df_match %>% 
+  filter(keyword == "perdi o olfato", state %in% states_cant_smell) %>% 
+  filter(!is.na(hits), date_beg > "2020-03-01") %>% 
+  group_by(state) %>% 
+  summarize(
+    first_date_cant_smell = min(date_beg)
+  )
+
+# Add a ranking
+states_cant_smell_date <- 
+  states_cant_smell_date %>% 
+  arrange(first_date_cant_smell) %>% 
+  mutate(ranking_cant_smell = rank(first_date_cant_smell))
+```
+
+Find the date in which each state has its first death, then its 5th or more deaths, then its 20th or more deaths
+
+```{r}
+date_1_death <- 
+  df_match %>% 
+  filter(keyword == "tosse") %>%
+  mutate(deaths_positive = if_else(deaths > 0, 1L, 0L)) %>% 
+  filter(deaths_positive == 1L) %>% 
+  group_by(state) %>% 
+  summarize(
+    date_death_1 = min(date_beg)
+  ) %>% 
+  mutate(ranking_death_1 = rank(date_death_1))
+
+# Now with 10 deaths
+date_10_deaths <- 
+  df_match %>% 
+  filter(keyword == "tosse") %>%
+  mutate(deaths_10 = if_else(deaths > 10, 1L, 0L)) %>% 
+  filter(deaths_10 == 1L) %>% 
+  group_by(state) %>% 
+  summarize(
+    date_death_10 = min(date_beg)
+  ) %>% 
+  mutate(ranking_death_10 = rank(date_death_10))
+
+# Now with 20 deaths
+date_20_deaths <- 
+  df_match %>% 
+  filter(keyword == "tosse") %>%
+  mutate(deaths_20 = if_else(deaths > 20, 1L, 0L)) %>% 
+  filter(deaths_20 == 1L) %>% 
+  group_by(state) %>% 
+  summarize(
+    date_death_20 = min(date_beg)
+  ) %>% 
+  mutate(ranking_death_20 = rank(date_death_20))
+
+# Now with 100 deaths
+date_100_deaths <- 
+  df_match %>% 
+  filter(keyword == "tosse") %>%
+  mutate(deaths_100 = if_else(deaths > 100, 1L, 0L)) %>% 
+  filter(deaths_100 == 1L) %>% 
+  group_by(state) %>% 
+  summarize(
+    date_death_100 = min(date_beg)
+  ) %>% 
+  mutate(ranking_death_100 = rank(date_death_100))
+
+# Now with 500 deaths
+date_500_deaths <- 
+  df_match %>% 
+  filter(keyword == "tosse") %>%
+  mutate(deaths_500 = if_else(deaths > 500, 1L, 0L)) %>% 
+  filter(deaths_500 == 1L) %>% 
+  group_by(state) %>% 
+  summarize(
+    date_death_500 = min(date_beg)
+  ) %>% 
+  mutate(ranking_death_500 = rank(date_death_500))
+
+#Deaths on May 18th
+may_18_deaths <- 
+  data %>% 
+  filter(date_beg == "2020-05-18") %>% 
+  count(deaths, state) %>% 
+  arrange(desc(deaths)) %>% 
+  select(state, deaths_may_18 = deaths)
+
+
+
+dates_deaths_dataset <- 
+  date_1_death %>% 
+  left_join(date_10_deaths) %>% 
+  left_join(date_20_deaths) %>% 
+  left_join(date_100_deaths) %>% 
+  left_join(date_500_deaths) %>% 
+  left_join(states_cant_smell_date) %>% 
+  left_join(may_18_deaths)
+```
+
+Find the date in which each state has a death rate greater or equal to 1
+
+```{r}
+date_1_death_rate <- 
+  df_match %>% 
+  filter(keyword == "tosse") %>%
+  mutate(death_rate_positive = if_else(death_rate > 1, 1L, 0L)) %>% 
+  filter(death_rate_positive == 1L) %>% 
+  group_by(state) %>% 
+  summarize(
+    date_death_rate_positive = min(date_beg)
+  ) %>% 
+  mutate(ranking_death_rate = rank(date_death_rate_positive))
+```
+
+
+# We start by adding graphs for every day available
+ 
+## Graph using all keywords extracted
+
+```{r}
+df_match %>% 
+  filter(date_beg > "2020-02-29") %>%
+  group_by(state, week_number) %>% 
+  summarize(
+    mean_hits = mean(hits, na.rm = TRUE), 
+    case_rate = mean(case_rate, na.rm = TRUE)
+  ) %>% 
+  ggplot() + 
+  geom_point(aes(case_rate, mean_hits)) + 
+  geom_smooth(aes(case_rate, mean_hits), method = "lm") + 
+  geom_text_repel(
+    data = . %>% filter(mean_hits > 68), 
+    aes(case_rate, mean_hits, label = state), 
+    hjust=0.5, vjust=0.4
+  ) + 
+  facet_wrap(vars(week_number), scales = "free") +
+  labs(
+    caption = "Keywords used: All"
+  ) +
+  coord_cartesian(y = c(0, 100))
+```
+
+
+# Finding outliers
+
+```{r}
+df <- 
+  df_match %>% 
+  filter(date_beg > "2020-02-29") %>%
+  group_by(state, week_number) %>% 
+  summarize(
+    mean_hits = mean(hits, na.rm = TRUE), 
+    case_rate = mean(case_rate, na.rm = TRUE)
+  ) 
+
+gg <- 
+  df %>% 
+  ggplot(aes(case_rate, mean_hits)) + 
+  geom_point() +
+  facet_wrap(vars(week_number), scales = "free") +
+  labs(
+    caption = "Keywords used: All"
+  ) +
+  coord_cartesian(y = c(0, 100)) +
+  geom_smooth(method = "lm") 
+
+# do the calculations
+gb <- ggplot_build(gg)
+
+# get the CI data
+p <- gb$data[[2]]
+
+# make a polygon out of it
+poly <- data.frame(
+  x=c(p$x[1],    p$x,    p$x[length(p$x)],    rev(p$x)), 
+  y=c(p$ymax[1], p$ymin, p$ymax[length(p$x)], rev(p$ymax))
+)
+
+# test for original values in said polygon and add that to orig data
+# so we can color by it
+df$in_ci <- point.in.polygon(df$case_rate, df$mean_hits, poly$x, poly$y)
+
+# re-do the plot with the new data
+ggplot(df,aes(case_rate, mean_hits)) +
+  geom_point(aes(color=factor(in_ci))) +
+  facet_wrap(vars(week_number), scales = "free") +
+  labs(
+    caption = "Keywords used: All"
+  ) +
+  coord_cartesian(y = c(0, 100)) +
+  geom_smooth(method = "lm") 
+```
+
+
+```{r}
+df_match <- 
+  df_match %>% 
+  filter(date_beg > "2020-02-29") %>%
+  group_by(state, week_number) %>% 
+  summarize(
+    mean_hits = mean(hits, na.rm = TRUE), 
+    case_rate = mean(case_rate, na.rm = TRUE)
+  ) 
+
+df_match %>% 
+  ggplot(aes(case_rate, mean_hits)) + 
+  facet_wrap(vars(week_number), scales = "free") +
+  labs(
+    caption = "Keywords used: All"
+  ) +
+  coord_cartesian(y = c(0, 100)) +
+  geom_smooth(method = "lm") -> gg
+
+## Find the points within bounds
+bounds <- ggplot_build(gg)[[1]][[1]]
+df_match$inside <- with(df_match, bounds$ymin < mean_hits & bounds$ymax > mean_hits)
+
+df_match %>% 
+  group_by(panel) %>% 
+  mutate()
+
+## Add the points
+gg + geom_point(data=df_match, aes(color=inside)) + theme_bw()
+
+```
+
+```{r}
+library(ggplot2)
+
+## dummy data
+df <- mtcars[,c("mpg","cyl")]
+
+ggplot(df, aes(mpg, cyl)) +
+  geom_smooth(params=list(xseq=df$mpg)) -> gg
+
+## Find the points within bounds
+bounds <- ggplot_build(gg)[[1]][[1]]
+df$inside <- with(df, bounds$ymin < cyl & bounds$ymax > cyl)
+
+## Add the points
+gg + geom_point(data=df, aes(color=inside)) + theme_bw()
+```
+
