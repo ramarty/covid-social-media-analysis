@@ -1,0 +1,211 @@
+---
+title: "02_clean_global"
+author: Manuel Ramos
+output: 
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    code_folding: hide
+    toc_fold: TRUE
+    highlight: tango
+    keep_md: yes
+    theme: cosmo
+    number_sections: true
+---
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(fig.width=10, fig.height=8, size = 10, background = "light", warning=FALSE, message=FALSE)
+```
+
+```{r}
+#user's file path
+if(Sys.info()[["user"]] == "wb537287") dropbox_file_path <- "/Users/wb537287/Dropbox/COVID Social Media Analysis/"
+
+#load libraries
+library(tidyverse)
+library(gridExtra)
+library(lubridate)
+library(readstata13)
+library(tidylog)
+library(ggrepel)
+
+#folder dir
+english_folder <- 
+  file.path(
+    dropbox_file_path,
+    "Data_WB_Global/Country_level_google_trends/Country_Level_Cleaned/English_Cleaned"
+  )
+
+port_folder <- 
+  file.path(
+    dropbox_file_path,
+    "Data_WB_Global/Country_level_google_trends/Country_Level_Cleaned/Portuguese_Cleaned"
+  )
+
+#import datasets
+
+data_en <- 
+  english_folder %>% 
+  list.files(
+    pattern = "*.csv",
+    full.names = T
+  ) %>% 
+  map_dfr(read.csv)
+
+
+#data_por <- 
+#  port_folder %>% 
+#  list.files(
+#    pattern = "*.csv",
+#    full.names = T
+#  ) %>% 
+#  map_dfr(read.csv)
+```
+
+Clean dates
+```{r}
+data_en <- 
+  data_en %>% 
+  mutate(date = as.Date(date))
+
+data_en <- 
+  data_en %>% 
+  mutate(
+    week_number = week(date), 
+    day = day(date), 
+    month = month(date), 
+    wday = wday(date, label = TRUE)
+  )
+```
+
+# Cases at Country level (En)
+
+```{r}
+data_en %>% 
+  ggplot(aes(date, cases, group = geo.x, color = fct_reorder2(geo.x, date, cases))) + 
+  geom_line() + 
+  labs(color = "Country Code")
+```
+
+# Deaths at Country level (En)
+
+```{r}
+data_en %>% 
+  ggplot(aes(date, deaths, group = geo.x, color = fct_reorder2(geo.x, date, deaths))) + 
+  geom_line() + 
+  labs(color = "Country Code")
+```
+
+# Across countries: in 1st person
+
+```{r}
+data_en %>% 
+  filter(categories == "in_1st_person") %>% 
+  group_by(geo.x, week_number) %>% 
+  summarize(
+    mean_hits = mean(hits, na.rm = TRUE), 
+    cases = mean(cases, na.rm = TRUE)
+  ) %>% 
+  ggplot() + 
+  geom_point(aes(cases, mean_hits, color = geo.x)) + 
+  geom_smooth(aes(cases, mean_hits), method = "lm") + 
+  geom_text_repel(
+    data = . %>% filter(mean_hits > 80), 
+    aes(cases, mean_hits, label = geo.x), 
+    hjust=0.5, vjust=0.4
+  ) + 
+  facet_wrap(vars(week_number), scales = "free_x") + 
+  labs(
+    caption = "Keywords used: 'febre'"
+  )
+```
+
+# Across countries: in 1st person or symptoms
+
+```{r}
+data_en %>% 
+  filter(categories %in% c("in_1st_person", "symptoms")) %>% 
+  group_by(geo.x, week_number) %>% 
+  summarize(
+    mean_hits = mean(hits, na.rm = TRUE), 
+    cases = mean(cases, na.rm = TRUE)
+  ) %>% 
+  ggplot() + 
+  geom_point(aes(cases, mean_hits, color = geo.x)) + 
+  geom_smooth(aes(cases, mean_hits), method = "lm") + 
+  geom_text_repel(
+    data = . %>% filter(mean_hits > 80), 
+    aes(cases, mean_hits, label = geo.x), 
+    hjust=0.5, vjust=0.4
+  ) + 
+  facet_wrap(vars(week_number), scales = "free_x") + 
+  labs(
+    caption = "Keywords used: 'febre'"
+  )
+```
+
+* Issue: the US has so many more cases that there is not much variation in the x axis across countries
+
+## Across countries: in 1st person or symptoms (excluding the U.S.)
+
+```{r}
+data_en %>% 
+  filter(categories %in% c("in_1st_person", "symptoms"), geo.x != "US") %>% 
+  group_by(geo.x, week_number) %>% 
+  summarize(
+    mean_hits = mean(hits, na.rm = TRUE), 
+    cases = mean(cases, na.rm = TRUE)
+  ) %>% 
+  ggplot() + 
+  geom_point(aes(cases, mean_hits, color = geo.x)) + 
+  geom_smooth(aes(cases, mean_hits), method = "lm") + 
+  geom_text_repel(
+    data = . %>% filter(mean_hits > 80), 
+    aes(cases, mean_hits, label = geo.x), 
+    hjust=0.5, vjust=0.4
+  ) + 
+  facet_wrap(vars(week_number), scales = "free_x") + 
+  labs(
+    caption = "Keywords used: 'febre'"
+  )
+```
+
+# I can't smell at the weekly level
+
+```{r}
+data_en %>% 
+  filter(keyword == "I can't smell") %>% 
+  group_by(week_number, geo.x) %>% 
+  summarize(
+    mean_hits = mean(hits, na.rm = TRUE), 
+    cases = mean(cases, na.rm = TRUE)
+  ) %>% 
+  ggplot() + 
+  geom_point(aes(cases, mean_hits, color = geo.x)) + 
+  geom_smooth(aes(cases, mean_hits), method = "lm") + 
+  geom_text_repel(
+    aes(cases, mean_hits, label = geo.x), 
+    hjust=0.5, vjust=0.4
+  ) + 
+  facet_wrap(vars(week_number), scales = "free_x") +
+  labs(
+    caption = "Keywords used: 'I can't smell'"
+  )
+```
+
+* It's hard for this alarm system to work at the country level, because it's quite likely that the term shows overall at the country level.
+
+# I can't smell over time
+
+```{r}
+data_en %>% 
+  filter(keyword == "I can't smell") %>% 
+  group_by(date, geo.x) %>% 
+  summarize(
+    mean_hits = mean(hits, na.rm = TRUE), 
+    cases = mean(cases, na.rm = TRUE)
+  ) %>% 
+  ggplot() + 
+  geom_line(aes(date, mean_hits, color = geo.x))
+```
