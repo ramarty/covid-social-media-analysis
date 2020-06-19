@@ -180,6 +180,30 @@ search_df %>%
 
 ![](08_Maranhao_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
 
+## States showing up "I can't smell"
+
+
+```r
+reduced_keywords <- c("como tratar o coronavírus", "Estou com falta de ar", "febre", "eu tenho coronavírus", "tosse", "Perdi o olfato")
+
+reduced_keywords <- c("como tratar o coronavírus",  "eu tenho coronavírus", "Perdi o olfato")
+
+search_df %>% 
+  filter(keyword %in% reduced_keywords, geo %in% c("BR-RJ", "BR-MA", "BR-SE")) %>% 
+  group_by(geo, keyword, date) %>% 
+  summarize(mean_hits = mean(hits, na.rm = TRUE)) %>% 
+  ggplot(aes(date, mean_hits)) + 
+  geom_point(aes(group = geo, color = geo)) + 
+  geom_line(aes(group = geo, color = geo)) + 
+  facet_wrap(vars(keyword)) +
+  labs(
+    x = "Date", 
+    y = "Average number of hits per state", 
+    color = "State code"
+  )
+```
+
+![](08_Maranhao_files/figure-html/unnamed-chunk-11-1.png)<!-- -->
 
 
 # We now use the data for Maranhao relative to its own time trends (instead of relative to Rio de Janeiro)
@@ -239,7 +263,7 @@ trends_df %>%
   facet_wrap(vars(keyword)) 
 ```
 
-![](08_Maranhao_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
+![](08_Maranhao_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
 
 ## Evolution of key categories v. cases for Maranhao  
 
@@ -259,7 +283,7 @@ trends_df %>%
   labs(subtitle = "The black line represents overall cases")
 ```
 
-![](08_Maranhao_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
+![](08_Maranhao_files/figure-html/unnamed-chunk-14-1.png)<!-- -->
  
 # Comparison of Maranhao with other states with a high case rate
 
@@ -324,7 +348,7 @@ trends_df %>%
   )
 ```
 
-![](08_Maranhao_files/figure-html/unnamed-chunk-16-1.png)<!-- -->
+![](08_Maranhao_files/figure-html/unnamed-chunk-17-1.png)<!-- -->
 
 
 
@@ -347,7 +371,7 @@ trends_df %>%
   )
 ```
 
-![](08_Maranhao_files/figure-html/unnamed-chunk-17-1.png)<!-- -->
+![](08_Maranhao_files/figure-html/unnamed-chunk-18-1.png)<!-- -->
 
 At the weekly level
 
@@ -372,5 +396,29 @@ trends_df %>%
   )
 ```
 
-![](08_Maranhao_files/figure-html/unnamed-chunk-18-1.png)<!-- -->
+![](08_Maranhao_files/figure-html/unnamed-chunk-19-1.png)<!-- -->
+
+
+# Re-do cross-sectional graphs for mid march, to check if Maranhao was an outlier then
+
+We focus on March 15. We need to extract the hits and the case rate in that date for Maranhao and other states
+
+So w
+```e start by merging the case rate with the cases on March 15
+
+
+```r
+#we start by merging the search_df with the states name
+search_df <- 
+  search_df %>% 
+  left_join(states_name, by = c("geo" = "sub_code"))
+
+#we now need to merge search_df with the cases over time
+search_df <- 
+  search_df %>% mutate(date = as.Date(date)) %>% 
+  left_join(
+    admin_data %>% mutate(date = as.Date(date)), 
+    by = c("date" = "date", "name" = "state")
+  )
+```
 

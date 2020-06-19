@@ -162,13 +162,26 @@ date_500_deaths <-
   ) %>% 
   mutate(ranking_death_500 = rank(date_death_500))
 
+# Now with 500 deaths
+date_1000_deaths <- 
+  df_match %>% 
+  filter(keyword == "tosse") %>%
+  mutate(deaths_1000 = if_else(deaths > 1000, 1L, 0L)) %>% 
+  filter(deaths_1000 == 1L) %>% 
+  group_by(state) %>% 
+  summarize(
+    date_death_1000 = min(date_beg)
+  ) %>% 
+  mutate(ranking_death_1000 = rank(date_death_1000))
+
+
 #Deaths on May 18th
 may_18_deaths <- 
   data %>% 
   filter(date_beg == "2020-05-18") %>% 
   count(deaths, state) %>% 
   arrange(desc(deaths)) %>% 
-  select(state, deaths_may_18 = deaths)
+  dplyr::select(state, deaths_may_18 = deaths)
 
 
 
@@ -178,6 +191,7 @@ dates_deaths_dataset <-
   left_join(date_20_deaths) %>% 
   left_join(date_100_deaths) %>% 
   left_join(date_500_deaths) %>% 
+  left_join(date_1000_deaths) %>% 
   left_join(states_cant_smell_date) %>% 
   left_join(may_18_deaths)
 ```
@@ -1024,42 +1038,59 @@ data %>%
 # Table of dates of "I can't smell" and deaths
 
 ```r
-dates_deaths_dataset %>% 
+dates_deaths_dataset <- 
+  dates_deaths_dataset %>% 
   arrange(desc(deaths_may_18), first_date_cant_smell) %>% 
-  select(state, first_date_cant_smell, starts_with("date"), deaths_may_18, everything()) %>% 
-  knitr::kable()
+  dplyr::select(state, first_date_cant_smell, starts_with("date"), deaths_may_18, everything()) 
+
+write.csv(
+  dates_deaths_dataset, 
+  file.path(dropbox_file_path, "Documentation/google trends/Dates of deaths in Brazil.csv")
+  )
 ```
 
 
+```r
+data %>% 
+  left_join(states_cant_smell_date, by = "state") %>% 
+  mutate(cant_smell_appears = if_else(!is.na(first_date_cant_smell), 1L, 0L) %>% as.character())  %>% 
+  group_by(state, keyword, date_beg) %>% 
+  summarize(mean_hits = mean(hits, na.rm = TRUE)) %>% 
+  ggplot(aes(date_beg, mean_hits)) + 
+  geom_point(aes(group = state, color = state)) + 
+  geom_line(aes(group = state, color = state)) + 
+  facet_wrap(vars(keyword)) + 
+  labs(
+    subtitle = "Maranhao is highlighted in black"
+  )
+```
 
-state                 first_date_cant_smell   date_death_1   date_death_10   date_death_20   date_death_100   date_death_500    deaths_may_18   ranking_death_1   ranking_death_10   ranking_death_20   ranking_death_100   ranking_death_500   ranking_cant_smell
---------------------  ----------------------  -------------  --------------  --------------  ---------------  ---------------  --------------  ----------------  -----------------  -----------------  ------------------  ------------------  -------------------
-São Paulo             2020-03-13              2020-03-17     2020-03-21      2020-03-23      2020-03-31       2020-04-10                 4823               1.0                1.0                1.0                 1.0                 1.0                  1.0
-Rio de Janeiro        2020-03-29              2020-03-19     2020-03-29      2020-03-31      2020-04-08       2020-04-24                 2852               2.0                2.0                2.0                 2.0                 2.0                  3.5
-Ceará                 2020-03-29              2020-03-27     2020-04-02      2020-04-04      2020-04-14       2020-05-02                 1748               7.5                3.0                3.0                 3.5                 4.5                  3.5
-Pernambuco            2020-04-08              2020-03-25     2020-04-04      2020-04-06      2020-04-14       2020-04-28                 1640               4.0                4.5                4.0                 3.5                 3.0                  5.0
-Amazonas              2020-03-27              2020-03-25     2020-04-04      2020-04-08      2020-04-16       2020-05-02                 1433               4.0                4.5                5.0                 5.0                 4.5                  2.0
-Pará                  2020-04-16              2020-04-02     2020-04-12      2020-04-16      2020-04-28       2020-05-08                 1329              19.5               14.5               12.0                 7.0                 6.0                  6.5
-Maranhão              2020-04-16              2020-03-31     2020-04-08      2020-04-12      2020-04-26       2020-05-16                  576              15.0                9.0                8.0                 6.0                 7.0                  6.5
-Bahia                 2020-04-26              2020-03-29     2020-04-08      2020-04-12      2020-04-30       NA                          312              11.0                9.0                8.0                 8.0                  NA                  8.0
-Espírito Santo        NA                      2020-04-02     2020-04-14      2020-04-16      2020-05-02       NA                          302              19.5               16.0               12.0                 9.0                  NA                   NA
-Alagoas               2020-04-30              2020-03-31     2020-04-20      2020-04-24      2020-05-08       NA                          221              15.0               18.0               17.0                12.0                  NA                 10.0
-Paraíba               2020-04-28              2020-04-02     2020-04-10      2020-04-16      2020-05-08       NA                          207              19.5               12.5               12.0                12.0                  NA                  9.0
-Minas Gerais          NA                      2020-03-31     2020-04-08      2020-04-14      2020-05-08       NA                          161              15.0                9.0               10.0                12.0                  NA                   NA
-Rio Grande do Norte   NA                      2020-03-29     2020-04-08      2020-04-18      2020-05-14       NA                          146              11.0                9.0               14.5                15.5                  NA                   NA
-Rio Grande do Sul     NA                      2020-03-25     2020-04-10      2020-04-18      2020-05-12       NA                          144               4.0               12.5               14.5                14.0                  NA                   NA
-Amapá                 NA                      2020-04-04     2020-04-20      2020-04-26      2020-05-14       NA                          127              23.0               18.0               18.0                15.5                  NA                   NA
-Paraná                NA                      2020-03-27     2020-04-06      2020-04-10      2020-05-06       NA                          127               7.5                6.0                6.0                10.0                  NA                   NA
-Santa Catarina        NA                      2020-03-27     2020-04-08      2020-04-12      NA               NA                           85               7.5                9.0                8.0                  NA                  NA                   NA
-Piauí                 NA                      2020-03-29     2020-04-20      2020-04-28      NA               NA                           80              11.0               18.0               19.0                  NA                  NA                   NA
-Rondônia              NA                      2020-03-31     2020-04-28      2020-05-02      NA               NA                           77              15.0               22.0               20.5                  NA                  NA                   NA
-Goiás                 NA                      2020-03-27     2020-04-12      2020-04-22      NA               NA                           73               7.5               14.5               16.0                  NA                  NA                   NA
-Acre                  NA                      2020-04-08     2020-04-24      2020-05-02      NA               NA                           67              25.0               20.0               20.5                  NA                  NA                   NA
-Roraima               NA                      2020-04-04     2020-05-04      2020-05-10      NA               NA                           60              23.0               24.0               23.0                  NA                  NA                   NA
-Sergipe               NA                      2020-04-02     2020-04-28      2020-05-06      NA               NA                           59              19.5               22.0               22.0                  NA                  NA                   NA
-Tocantins             NA                      2020-04-16     2020-05-10      2020-05-14      NA               NA                           32              26.0               26.0               24.5                  NA                  NA                   NA
-Mato Grosso           NA                      2020-04-04     2020-04-28      2020-05-14      NA               NA                           29              23.0               22.0               24.5                  NA                  NA                   NA
-Mato Grosso do Sul    NA                      2020-03-31     2020-05-08      NA              NA               NA                           16              15.0               25.0                 NA                  NA                  NA                   NA
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-42-1.png)<!-- -->
+
+# Comparison across states
+
+
+```r
+reduced_keywords <- c("como tratar o coronavírus", "estou com falta de ar", "febre", "coronavirus", "tosse", "perdi o olfato", "perda de olfato", "dificultade ao respirar", "dor nos olhos")
+
+reduced_keywords <- c("estou com falta de ar", "coronavirus", "perdi o olfato")
+
+data %>% 
+  filter(state %in% c("Rio de Janeiro", "Maranhão", "Sergipe"), keyword %in% reduced_keywords) %>% 
+  group_by(state, keyword, date_beg) %>% 
+  summarize(mean_hits = mean(hits, na.rm = TRUE)) %>% 
+  ggplot(aes(date_beg, mean_hits)) + 
+  geom_point(aes(group = state, color = state)) + 
+  geom_line(aes(group = state, color = state)) + 
+  facet_wrap(vars(keyword)) +
+  labs(
+    x = "Date", 
+    y = "Average number of hits per state", 
+    color = "State"
+  )
+```
+
+![](09_Crossstate_Bidaily_Analysis_files/figure-html/unnamed-chunk-43-1.png)<!-- -->
 
 
 # Next steps: 

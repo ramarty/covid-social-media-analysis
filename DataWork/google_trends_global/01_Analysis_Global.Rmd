@@ -20,7 +20,7 @@ knitr::opts_chunk$set(fig.width=10, fig.height=8, size = 10, background = "light
 
 ```{r}
 #user's file path
-if(Sys.info()[["user"]] == "wb537287") dropbox_file_path <- "/Users/wb537287/Dropbox/COVID Social Media Analysis/"
+if(Sys.info()[["user"]] == "wb537287") dropbox_file_path <- "/Users/wb537287/Dropbox/COVID Social Media Analysis"
 
 #load libraries
 library(tidyverse)
@@ -30,47 +30,50 @@ library(readstata13)
 library(tidylog)
 library(ggrepel)
 
-#folder dir
-english_folder <- 
-  file.path(
-    dropbox_file_path,
-    "Data_WB_Global/Country_level_google_trends/Country_Level_Cleaned/English_Cleaned"
-  )
-
-port_folder <- 
-  file.path(
-    dropbox_file_path,
-    "Data_WB_Global/Country_level_google_trends/Country_Level_Cleaned/Portuguese_Cleaned"
-  )
-
 #import datasets
+data_por <- 
+  read.csv(
+    file.path(
+      dropbox_file_path,
+      "Data_WB_Global/Country_Level_Cleaned/Portuguese_Cleaned/Portuguese_countries_clean.csv"
+    ), 
+    encoding = "UTF-8"
+  )
+
 
 data_en <- 
-  english_folder %>% 
-  list.files(
-    pattern = "*.csv",
-    full.names = T
-  ) %>% 
-  map_dfr(read.csv)
+  read.csv(
+    file.path(
+      dropbox_file_path,
+      "Data_WB_Global/Country_Level_Cleaned/English_Cleaned/English_countries_clean.csv"
+    ), 
+    encoding = "UTF-8"
+  )
 
-
-#data_por <- 
-#  port_folder %>% 
-#  list.files(
-#    pattern = "*.csv",
-#    full.names = T
-#  ) %>% 
-#  map_dfr(read.csv)
+data_sp <- 
+  read.csv(
+    file.path(
+      dropbox_file_path,
+      "Data_WB_Global/Country_Level_Cleaned/Spanish_Cleaned/Spanish_countries_clean.csv"
+    ), 
+    encoding = "UTF-8"
+  )
 ```
+
+Merge datasets
+```{r}
+data <- rbind(data_en, data_por, data_sp)
+```
+
 
 Clean dates
 ```{r}
-data_en <- 
-  data_en %>% 
+data <- 
+  data %>% 
   mutate(date = as.Date(date))
 
-data_en <- 
-  data_en %>% 
+data <- 
+  data %>% 
   mutate(
     week_number = week(date), 
     day = day(date), 
@@ -79,20 +82,48 @@ data_en <-
   )
 ```
 
-# Cases at Country level (En)
+Find countries that show up under "I can't smell"
+```{r}
+countries_cant_smell <-  
+  data %>% 
+  filter(keyword %in% c("I can't smell", "Perdi o olfato", "no puedo oler")) %>% 
+  filter(!is.na(hits)) %>% 
+  count(geo.x) %>%
+  pull(geo.x)
+```
+
+Find the date in which the country first shows under "I can't smell"
+```{r}
+countries_cant_smell_date <- 
+  data %>% 
+  filter(keyword %in% c("I can't smell", "Perdi o olfato", "no puedo oler"), geo.x %in% countries_cant_smell) %>% 
+  filter(!is.na(hits), date > "2020-03-01") %>% 
+  group_by(geo.x) %>% 
+  summarize(
+    first_date_cant_smell = min(date)
+  )
+
+# Add a ranking
+countries_cant_smell_date <- 
+  countries_cant_smell_date %>% 
+  arrange(first_date_cant_smell) %>% 
+  mutate(ranking_cant_smell = rank(first_date_cant_smell))
+```
+
+# daily_cases at Country level (En)
 
 ```{r}
-data_en %>% 
-  ggplot(aes(date, cases, group = geo.x, color = fct_reorder2(geo.x, date, cases))) + 
+data %>% 
+  ggplot(aes(date, daily_cases, group = geo.x, color = fct_reorder2(geo.x, date, daily_cases))) + 
   geom_line() + 
   labs(color = "Country Code")
 ```
 
-# Deaths at Country level (En)
+# daily_deaths at Country level (En)
 
 ```{r}
-data_en %>% 
-  ggplot(aes(date, deaths, group = geo.x, color = fct_reorder2(geo.x, date, deaths))) + 
+data %>% 
+  ggplot(aes(date, daily_deaths, group = geo.x, color = fct_reorder2(geo.x, date, daily_deaths))) + 
   geom_line() + 
   labs(color = "Country Code")
 ```
@@ -100,19 +131,19 @@ data_en %>%
 # Across countries: in 1st person
 
 ```{r}
-data_en %>% 
+data %>% 
   filter(categories == "in_1st_person") %>% 
   group_by(geo.x, week_number) %>% 
   summarize(
     mean_hits = mean(hits, na.rm = TRUE), 
-    cases = mean(cases, na.rm = TRUE)
+    daily_cases = mean(daily_cases, na.rm = TRUE)
   ) %>% 
   ggplot() + 
-  geom_point(aes(cases, mean_hits, color = geo.x)) + 
-  geom_smooth(aes(cases, mean_hits), method = "lm") + 
+  geom_point(aes(daily_cases, mean_hits, color = geo.x)) + 
+  geom_smooth(aes(daily_cases, mean_hits), method = "lm") + 
   geom_text_repel(
     data = . %>% filter(mean_hits > 80), 
-    aes(cases, mean_hits, label = geo.x), 
+    aes(daily_cases, mean_hits, label = geo.x), 
     hjust=0.5, vjust=0.4
   ) + 
   facet_wrap(vars(week_number), scales = "free_x") + 
@@ -124,19 +155,19 @@ data_en %>%
 # Across countries: in 1st person or symptoms
 
 ```{r}
-data_en %>% 
+data %>% 
   filter(categories %in% c("in_1st_person", "symptoms")) %>% 
   group_by(geo.x, week_number) %>% 
   summarize(
     mean_hits = mean(hits, na.rm = TRUE), 
-    cases = mean(cases, na.rm = TRUE)
+    daily_cases = mean(daily_cases, na.rm = TRUE)
   ) %>% 
   ggplot() + 
-  geom_point(aes(cases, mean_hits, color = geo.x)) + 
-  geom_smooth(aes(cases, mean_hits), method = "lm") + 
+  geom_point(aes(daily_cases, mean_hits, color = geo.x)) + 
+  geom_smooth(aes(daily_cases, mean_hits), method = "lm") + 
   geom_text_repel(
     data = . %>% filter(mean_hits > 80), 
-    aes(cases, mean_hits, label = geo.x), 
+    aes(daily_cases, mean_hits, label = geo.x), 
     hjust=0.5, vjust=0.4
   ) + 
   facet_wrap(vars(week_number), scales = "free_x") + 
@@ -145,24 +176,24 @@ data_en %>%
   )
 ```
 
-* Issue: the US has so many more cases that there is not much variation in the x axis across countries
+* Issue: the US has so many more daily_cases that there is not much variation in the x axis across countries
 
 ## Across countries: in 1st person or symptoms (excluding the U.S.)
 
 ```{r}
-data_en %>% 
+data %>% 
   filter(categories %in% c("in_1st_person", "symptoms"), geo.x != "US") %>% 
   group_by(geo.x, week_number) %>% 
   summarize(
     mean_hits = mean(hits, na.rm = TRUE), 
-    cases = mean(cases, na.rm = TRUE)
+    daily_cases = mean(daily_cases, na.rm = TRUE)
   ) %>% 
   ggplot() + 
-  geom_point(aes(cases, mean_hits, color = geo.x)) + 
-  geom_smooth(aes(cases, mean_hits), method = "lm") + 
+  geom_point(aes(daily_cases, mean_hits, color = geo.x)) + 
+  geom_smooth(aes(daily_cases, mean_hits), method = "lm") + 
   geom_text_repel(
     data = . %>% filter(mean_hits > 80), 
-    aes(cases, mean_hits, label = geo.x), 
+    aes(daily_cases, mean_hits, label = geo.x), 
     hjust=0.5, vjust=0.4
   ) + 
   facet_wrap(vars(week_number), scales = "free_x") + 
@@ -174,18 +205,18 @@ data_en %>%
 # I can't smell at the weekly level
 
 ```{r}
-data_en %>% 
-  filter(keyword == "I can't smell") %>% 
+data %>% 
+  filter(keyword %in% c("I can't smell", "Perdi o olfato", "no puedo oler")) %>% 
   group_by(week_number, geo.x) %>% 
   summarize(
     mean_hits = mean(hits, na.rm = TRUE), 
-    cases = mean(cases, na.rm = TRUE)
+    daily_cases = mean(daily_cases, na.rm = TRUE)
   ) %>% 
   ggplot() + 
-  geom_point(aes(cases, mean_hits, color = geo.x)) + 
-  geom_smooth(aes(cases, mean_hits), method = "lm") + 
+  geom_point(aes(daily_cases, mean_hits, color = geo.x)) + 
+  geom_smooth(aes(daily_cases, mean_hits), method = "lm") + 
   geom_text_repel(
-    aes(cases, mean_hits, label = geo.x), 
+    aes(daily_cases, mean_hits, label = geo.x), 
     hjust=0.5, vjust=0.4
   ) + 
   facet_wrap(vars(week_number), scales = "free_x") +
@@ -196,16 +227,182 @@ data_en %>%
 
 * It's hard for this alarm system to work at the country level, because it's quite likely that the term shows overall at the country level.
 
-# I can't smell over time
+
+# Case rate and death rate per Country
+
+## Case rate: Highlighting the countries that show up under I can't smell at any point
+```{r}
+data %>% 
+  filter(!is.na(geo.x), !is.na(case_rate)) %>% 
+  count(case_rate, date, geo.x) %>% 
+  ggplot() +
+  geom_line(aes(date, case_rate, group = geo.x, color = fct_reorder2(geo.x, date, case_rate))) +
+  geom_line(
+    data = . %>% filter(geo.x %in% countries_cant_smell),
+    aes(date, case_rate, group = geo.x, color = fct_reorder2(geo.x, date, case_rate)), size = 2) +
+  labs(
+    title = "Case rate per Country",
+    color = "Country"
+  )
+```
+
+## daily_cases: Highlighting the countries that show up under I can't smell at any point
+```{r}
+data %>% 
+  filter(!is.na(geo.x), !is.na(case_rate)) %>% 
+  count(daily_cases, date, geo.x) %>% 
+  ggplot() +
+  geom_line(aes(date, daily_cases, group = geo.x, color = fct_reorder2(geo.x, date, daily_cases))) +
+  geom_line(
+    data = . %>% filter(geo.x %in% countries_cant_smell),
+    aes(date, daily_cases, group = geo.x, color = fct_reorder2(geo.x, date, daily_cases)), size = 2) +
+  labs(
+    title = "daily_cases per Country",
+    color = "Countries"
+  )
+```
+
+## Death rate: Highlighting the countries that show up under I can't smell at any point
+```{r}
+data %>% 
+  filter(!is.na(geo.x), !is.na(death_rate)) %>% 
+  count(death_rate, date, geo.x) %>% 
+  ggplot() +
+  geom_line(aes(date, death_rate, group = geo.x, color = fct_reorder2(geo.x, date, death_rate))) +
+  geom_line(
+    data = . %>% filter(geo.x %in% countries_cant_smell),
+    aes(date, death_rate, group = geo.x, color = fct_reorder2(geo.x, date, death_rate)), size = 2) +
+  labs(
+    title = "Death rate per Countries",
+    color = "Country"
+  )
+```
+
+## daily_deaths: Highlighting the countries that show up under I can't smell at any point
+```{r}
+data %>% 
+  filter(!is.na(geo.x), !is.na(daily_deaths)) %>% 
+  count(daily_deaths, date, geo.x) %>% 
+  ggplot() +
+  geom_line(aes(date, daily_deaths, group = geo.x, color = fct_reorder2(geo.x, date, daily_deaths))) +
+  geom_line(
+    data = . %>% filter(geo.x %in% countries_cant_smell),
+    aes(date, daily_deaths, group = geo.x, color = fct_reorder2(geo.x, date, daily_deaths)), size = 2) +
+  labs(
+    title = "daily_deaths per Country",
+    color = "Country"
+  )
+```
+
+## Date of showing up "I can't smell"
 
 ```{r}
-data_en %>% 
-  filter(keyword == "I can't smell") %>% 
-  group_by(date, geo.x) %>% 
-  summarize(
-    mean_hits = mean(hits, na.rm = TRUE), 
-    cases = mean(cases, na.rm = TRUE)
-  ) %>% 
-  ggplot() + 
-  geom_line(aes(date, mean_hits, color = geo.x))
+data %>% 
+  filter(!is.na(geo.x), !is.na(death_rate), geo.x %in% countries_cant_smell) %>% 
+  count(death_rate, date, geo.x) %>% 
+  ggplot() +
+  geom_line(aes(date, death_rate, group = geo.x, color = fct_reorder2(geo.x, date, death_rate))) +
+  geom_vline(
+    data = countries_cant_smell_date, 
+    aes(xintercept = first_date_cant_smell, group = geo.x, color = geo.x)
+  ) +
+  geom_label_repel(
+    data = countries_cant_smell_date, 
+    aes(first_date_cant_smell, y = 80, label = geo.x), 
+    hjust=0.5, vjust=0.4
+  ) + 
+  labs(
+    title = "Death rate per Country",
+    color = "Country"
+  )
 ```
+
+
+## Date of showing up "I can't smell" & daily_deaths (instead of death rate)
+
+```{r}
+data %>% 
+  filter(!is.na(geo.x), !is.na(death_rate), geo.x %in% countries_cant_smell) %>% 
+  count(daily_deaths, date, geo.x) %>% 
+  ggplot() +
+  geom_line(aes(date, daily_deaths, group = geo.x, color = fct_reorder2(geo.x, date, daily_deaths))) +
+  geom_vline(
+    data = countries_cant_smell_date, 
+    aes(xintercept = first_date_cant_smell, group = geo.x)
+  ) +
+  geom_label_repel(
+    data = countries_cant_smell_date, 
+    aes(first_date_cant_smell, y = 4500, label = geo.x), 
+    hjust=0.5, vjust=0.4
+  ) + 
+  labs(
+    title = "daily_deaths per Country",
+    color = "Country"
+  )
+```
+
+
+
+## Graph of current death rate distinguishing by date of I can't smell
+
+```{r}
+data %>% 
+  left_join(countries_cant_smell_date, by = "geo.x") %>% 
+  mutate(cant_smell_appears = if_else(!is.na(first_date_cant_smell), 1L, 0L) %>% as.character()) %>% 
+  filter(date == "2020-05-18", !is.na(death_rate)) %>% 
+  count(daily_deaths, geo.x, cant_smell_appears, first_date_cant_smell) %>% 
+  arrange(desc(daily_deaths)) %>% 
+  ggplot()+ 
+  geom_col(aes(fct_reorder(geo.x, daily_deaths), daily_deaths, fill = cant_smell_appears)) +
+  geom_label_repel(
+    aes(
+      x = as.character(geo.x), 
+      y = daily_deaths, 
+      label = as.character(first_date_cant_smell)
+    ), 
+    position = position_fill(vjust = 0)
+  ) + 
+  labs(
+    color = "Country category"
+  ) + 
+  coord_flip() + 
+  labs(
+    title = "Countries ordered by daily_deaths on May 18th, 2020", 
+    x = "Country", 
+    y = "daily_deaths"
+  )
+```
+
+```{r}
+data %>% 
+  left_join(countries_cant_smell_date, by = "geo.x") %>% 
+  mutate(cant_smell_appears = if_else(!is.na(first_date_cant_smell), 1L, 0L) %>% as.character()) %>% 
+  filter(date == "2020-05-18", !is.na(death_rate)) %>% 
+  count(death_rate, geo.x, cant_smell_appears, first_date_cant_smell) %>% 
+  arrange(desc(death_rate)) %>% 
+  ggplot()+ 
+  geom_col(aes(fct_reorder(geo.x, death_rate), death_rate, fill = cant_smell_appears)) +
+  geom_label_repel(
+    aes(
+      x = as.character(geo.x), 
+      y = death_rate, 
+      label = as.character(first_date_cant_smell)
+    ),  
+    position = position_fill(vjust = 0.5)
+  ) + 
+  coord_flip() + 
+  labs(
+    title = "Countries ordered by death rate on May 18th, 2020", 
+    x = "Country", 
+    y = "Daily Deaths per 100,000 people"
+  )
+```
+
+
+Troubleshooting
+```{r}
+data_por %>% 
+  filter(daily_cases < 0)
+
+```
+

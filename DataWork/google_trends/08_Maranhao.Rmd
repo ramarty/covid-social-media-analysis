@@ -21,6 +21,8 @@ knitr::opts_chunk$set(fig.width=12, fig.height=8, warning=FALSE, message=FALSE)
 ```{r, include = FALSE}
 if(Sys.info()[["user"]] == "wb537287") dropbox_file_path <- "/Users/wb537287/Dropbox/COVID Social Media Analysis/"
 
+source("/Users/wb537287/Documents/GitHub/covid-social-media-analysis/_master.R")
+
 library(tidyverse)
 library(gridExtra)
 library(lubridate)
@@ -46,7 +48,8 @@ states_name <-
   filter(country_code == "BR", sub_code != "") %>% head(27) %>% dplyr::select(-country_code)
 
 #admin data
-admin_data <- read.csv(file.path(dropbox_file_path, "Data/brazil_admin_data/brazil_covid19_200419.csv"), encoding = "UTF-8")
+#admin_data <- read.csv(file.path(dropbox_file_path, "Data/brazil_admin_data/brazil_covid19_200419.csv"), encoding = "UTF-8")
+admin_data <- read.csv(file.path(dropbox_file_path, "Data/brazil_admin_data/brazil_covid19_200520.csv"), encoding = "UTF-8")
 
 ```
 
@@ -190,6 +193,27 @@ search_df %>%
 
 ```
 
+## States showing up "I can't smell"
+
+```{r}
+reduced_keywords <- c("como tratar o coronavírus", "Estou com falta de ar", "febre", "eu tenho coronavírus", "tosse", "Perdi o olfato")
+
+reduced_keywords <- c("como tratar o coronavírus",  "eu tenho coronavírus", "Perdi o olfato")
+
+search_df %>% 
+  filter(keyword %in% reduced_keywords, geo %in% c("BR-RJ", "BR-MA", "BR-SE")) %>% 
+  group_by(geo, keyword, date) %>% 
+  summarize(mean_hits = mean(hits, na.rm = TRUE)) %>% 
+  ggplot(aes(date, mean_hits)) + 
+  geom_point(aes(group = geo, color = geo)) + 
+  geom_line(aes(group = geo, color = geo)) + 
+  facet_wrap(vars(keyword)) +
+  labs(
+    x = "Date", 
+    y = "Average number of hits per state", 
+    color = "State code"
+  )
+```
 
 
 # We now use the data for Maranhao relative to its own time trends (instead of relative to Rio de Janeiro)
@@ -390,6 +414,5 @@ search_df <-
     by = c("date" = "date", "name" = "state")
   )
 
-?left_join()
-search_df  
+```
 
