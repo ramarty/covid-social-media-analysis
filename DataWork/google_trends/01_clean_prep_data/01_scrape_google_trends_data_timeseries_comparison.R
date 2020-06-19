@@ -1,19 +1,12 @@
 # Scrape Data from Google Trends
-
-# RESOURCES
-# https://github.com/GeneralMills/pytrends
-# https://support.google.com/trends/answer/4365533?hl=en
-
+# Loop through states and terms. For each state-term combination, also search
+# for the comparison iso/state. Consequently, for each search, we'll get hits
+# for 1 term and 2 states.
 
 comparison_iso <- "BR-SP"
-#comparison_iso <- "BR-RJ"
 
 # Grab admin codes to scrape ---------------------------------------------------
-
-# Iso Codes  ----
-library(ISOcodes)
-
-isocodes <- ISO_3166_2
+isocodes <- ISO_3166_2 # from ISOcodes package
 
 br_isocodes <- isocodes %>% 
   janitor::clean_names() %>% 
@@ -22,49 +15,28 @@ br_isocodes <- isocodes %>%
   dplyr::rename(sub_code = code) %>% 
   dplyr::select(sub_code, name)
 
-# So can search 4 countries at a time
-br_isocodes$iso_search_group <- rep(1:27, each=4)[1:nrow(br_isocodes)]
-
-
-
 # Scrape Data ------------------------------------------------------------------
 
 ## Initialize dataframe
 trends_df_all <- data.frame(NULL)
 
 ## Loop through search terms
-for(term in c("quais são os sintomas do coronavírus",
-              "eu tenho coronavírus",
-              "entediado",
-              "estou entediado",
-              "Perdi o olfato",
-              "Estou com falta de ar",
-              "meus olhos doem",
-              "estou com febre",
-              "como tratar o coronavírus",
-              "teste de coronavírus",
+for(term in c("perdi o olfato",
               "febre",
               "tosse",
-              "número de emergência coronavírus",
-              "ajuda do coronavírus",
-              "Eu fico em casa",
-              "Isolamento social",
-              "profissionais de saúde",
-              "medicos",
               "cloroquina",
-              "isolamento vertical",
-              "volta brasil")){
+              "isolamento vertical")){
   
   ## Scrape for specific localities
-  trends_df <- lapply(unique(br_isocodes$iso_search_group), function(i){
+  trends_df <- lapply(br_isocodes$sub_code, function(iso_i){
     
-    print(i)
+    print(iso_i)
     
     tryCatch({  
       
       out <- gtrends(term, 
                      category = "0",
-                     geo = c(br_isocodes$sub_code[br_isocodes$iso_search_group %in% i], 
+                     geo = c(iso_i, 
                              comparison_iso) %>%
                        unique(),
                      time = "today 3-m",
@@ -75,7 +47,7 @@ for(term in c("quais são os sintomas do coronavírus",
       
       out_df <- out$interest_over_time
       out_df$iso_search_group <- i
-      #out_df$name <- br_isocodes$name[i]
+      out_df$comparison_iso <- comparison_iso
       for(var in names(out_df)) out_df[[var]] <- out_df[[var]] %>% as.character()
       
       return(out_df)

@@ -16,7 +16,7 @@ json_files <- lapply(c("2020-01", "2020-02", "2020-03", "2020-04"), function(yyy
 }) %>% unlist()
 
 #### Clean Tweets
-temp <- lapply(json_files, function(json_path_i){
+temp <- lapply(rev(json_files), function(json_path_i){
   
   print(json_path_i)
   

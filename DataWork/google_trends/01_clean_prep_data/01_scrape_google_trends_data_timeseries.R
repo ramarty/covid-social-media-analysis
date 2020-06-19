@@ -1,6 +1,6 @@
 # Scrape Data from Google Trends
 
-ISO_SCRAPE <- "MZ"
+ISO_SCRAPE <- "BR"
 
 # Grab admin codes to scrape ---------------------------------------------------
 isocodes_all <- ISO_3166_2
