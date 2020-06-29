@@ -394,7 +394,7 @@ data %>%
   labs(
     title = "Countries ordered by death rate on May 18th, 2020", 
     x = "Country", 
-    y = "Daily Deaths per 100,000 people"
+    y = "Deaths per 100,000 people"
   )
 ```
 

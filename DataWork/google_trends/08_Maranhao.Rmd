@@ -397,8 +397,7 @@ trends_df %>%
 
 We focus on March 15. We need to extract the hits and the case rate in that date for Maranhao and other states
 
-So w
-```e start by merging the case rate with the cases on March 15
+So we start by merging the case rate with the cases on March 15
 
 ```{r}
 #we start by merging the search_df with the states name
