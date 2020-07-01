@@ -5,13 +5,14 @@
 # https://support.google.com/trends/answer/4365533?hl=en
 
 # Grab admin codes to scrape ---------------------------------------------------
-data("countries")
-brazil_search <- countries[grepl("BR-", countries$sub_code),] 
-brazil_search$sub_code <- brazil_search$sub_code %>% as.character()
-brazil_search$name <- brazil_search$name %>% as.character()
-brazil_search$id <- 1:nrow(brazil_search)
+isocodes <- ISO_3166_2 # from ISOcodes package
 
-brazil_search$search_group <- rep(1:550, each=5)[1:nrow(brazil_search)]
+br_isocodes <- isocodes %>% 
+  janitor::clean_names() %>% 
+  filter(str_detect(code, "BR-"),
+         code != "BR-FN") %>% 
+  dplyr::rename(sub_code = code) %>% 
+  dplyr::select(sub_code, name)
 
 # Categories ----
 data("categories")
@@ -19,58 +20,60 @@ data("categories")
 # Scrape Data ------------------------------------------------------------------
 ## Loop through search terms
 
-search_terms <- c(
-  "tosse",
-  "febre",
-  "cansaço",
-  "dificuldade ao respirar",
-  "perda de olfato",
-  "dor nos olhos",
-  
-  "ventiladores",
-  "desinfetantes",
-  "termômetros",
-  "leito de hospital ou hospitalar",
-  "hidroxicloroquina",
-  "máscara facial",
-  "papel higiênico",
-  "médico",
-  "médica",
-  
-  "fique em casa",
-  "lavar as mãosv",
-  "distância social",
-  
-  "Educação online",
-  "desemprego",
-  "teletrabalho",
-  "vdívida",
-  "terapia",
-  "psicologia",
-  "Violência baseada no gênero ou violência contra a mulher",
-  
-  "quais são os sintomas do coronavírus",
-  "eu tenho coronavírus",
-  "Perdi o olfato",
-  "Estou com falta de ar",
-  "meus olhos doem",
-  "estou com febre",
-  "como tratar o coronavírus",
-  "teste de coronavírus",
-  "número de emergência coronavírus",
-  "ajuda do coronavírus",
-  "Eu fico em casa",
-  "Isolamento social",
-  "profissionais de saúde",
-  "medicos",
-  "cloroquina",
-  "isolamento vertical",
-  "volta brasil"
-)
+terms <- c("perdi o olfato",
+           "febre",
+           "tosse",
+           "cloroquina",
+           "isolamento vertical")
 
-
-
-
+# search_terms <- c(
+#   "tosse",
+#   "febre",
+#   "cansaço",
+#   "dificuldade ao respirar",
+#   "perda de olfato",
+#   "dor nos olhos",
+#   
+#   "ventiladores",
+#   "desinfetantes",
+#   "termômetros",
+#   "leito de hospital ou hospitalar",
+#   "hidroxicloroquina",
+#   "máscara facial",
+#   "papel higiênico",
+#   "médico",
+#   "médica",
+#   
+#   "fique em casa",
+#   "lavar as mãosv",
+#   "distância social",
+#   
+#   "Educação online",
+#   "desemprego",
+#   "teletrabalho",
+#   "vdívida",
+#   "terapia",
+#   "psicologia",
+#   "Violência baseada no gênero ou violência contra a mulher",
+#   
+#   "quais são os sintomas do coronavírus",
+#   "eu tenho coronavírus",
+#   "Perdi o olfato",
+#   "Estou com falta de ar",
+#   "meus olhos doem",
+#   "estou com febre",
+#   "como tratar o coronavírus",
+#   "teste de coronavírus",
+#   "número de emergência coronavírus",
+#   "ajuda do coronavírus",
+#   "Eu fico em casa",
+#   "Isolamento social",
+#   "profissionais de saúde",
+#   "medicos",
+#   "cloroquina",
+#   "isolamento vertical",
+#   "volta brasil"
+# )
 
 results_df <- lapply(search_terms, 
                      function(term){

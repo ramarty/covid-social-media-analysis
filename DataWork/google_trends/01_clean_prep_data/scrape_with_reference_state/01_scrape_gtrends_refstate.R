@@ -3,7 +3,7 @@
 # for the comparison iso/state. Consequently, for each search, we'll get hits
 # for 1 term and 2 states.
 
-comparison_iso <- "BR-SP"
+comparison_iso <- "BR-RJ"
 
 terms <- c("perdi o olfato",
            "febre",
@@ -32,6 +32,7 @@ extract_trends <- function(term_i, iso_i, comparison_iso, sleep_time = 0.1){
                            comparison_iso) %>%
                      unique(),
                    time = "today 3-m",
+                   #time = "today 12-m",
                    onlyInterest=T,
                    low_search_volume=T)
     
