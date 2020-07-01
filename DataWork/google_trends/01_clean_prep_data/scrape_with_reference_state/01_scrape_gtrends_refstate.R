@@ -1,10 +1,16 @@
 # Scrapes google trends, using both a comparison state and without a comparison 
 # state
 
+#### PARAMETERS
 comparison_iso <- "BR-SP"
+scrape_group <- 1 # can be integer or vector: eg, 1 or 1:5
 
-terms <- c("febre",
-           "tosse")
+# Terms to Scrape --------------------------------------------------------------
+keywords <- read.csv(file.path(dropbox_file_path, "Data", "google_trends", "covid_keywords.csv"),
+                     stringsAsFactors = F)
+
+keywords <- keywords[keywords$scrape_group %in% scrape_group,]
+keywords$keyword <- keywords$keyword %>% tolower()
 
 # ISO Codes --------------------------------------------------------------------
 isocodes <- ISO_3166_2 # from ISOcodes package
@@ -20,7 +26,7 @@ br_isocodes <- isocodes %>%
 extract_trends <- function(term_i, 
                            iso_i, 
                            comparison_iso, 
-                           sleep_time = 0.1,
+                           sleep_time = 1,
                            also_scrape_without_cstate = T){
   
   tryCatch({  
@@ -33,7 +39,7 @@ extract_trends <- function(term_i,
       out <- gtrends(term_i, 
                      category = "0",
                      geo = iso_i,
-                     time = "today 3-m",
+                     time = "2020-01-01 2020-06-30",
                      onlyInterest=T,
                      low_search_volume=T)
       
@@ -106,7 +112,7 @@ extract_trends <- function(term_i,
 
 results_all_df <- data.frame(NULL)
 
-for(term_i in terms){
+for(term_i in keywords$keyword){
   print(paste(term_i, "------------------------------------------------------"))
   for(iso_i in br_isocodes$sub_code){
     
@@ -118,11 +124,12 @@ for(term_i in terms){
     
   }
   
-  Sys.sleep(15) # pause after each term
+  Sys.sleep(30) # pause after each term
 }
 
 # Export -----------------------------------------------------------------------
-saveRDS(results_all_df, file.path(dropbox_file_path, "Data", "google_trends", "RawData", 
-                                  paste0("br_gtrends_ref",comparison_iso,".Rds")))
-
-
+saveRDS(results_all_df, file.path(dropbox_file_path, "Data", "google_trends", "RawData",
+                                  "brazil",
+                                  paste0("br_gtrends_ref",comparison_iso,
+                                         "_scrapegroup",scrape_group,
+                                         ".Rds")))
