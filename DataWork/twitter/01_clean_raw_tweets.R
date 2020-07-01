@@ -3,6 +3,11 @@
 # Reads raw tweet information and subsets information to relevant variables.
 # Produces CSV and Rds files for each date/hour. 
 
+source(file.path("~/Documents/Github/covid-social-media-analysis", "_master.R"))
+
+# If file already cleaned, replace. Do this when change output.
+REPLACE_CLEANED <- F
+
 #### Create list of tweet json files
 json_files <- lapply(c("2020-01", "2020-02", "2020-03", "2020-04"), function(yyyy_mm){
   list.files(file.path(covid_twitter_github, yyyy_mm),
@@ -11,7 +16,7 @@ json_files <- lapply(c("2020-01", "2020-02", "2020-03", "2020-04"), function(yyy
 }) %>% unlist()
 
 #### Clean Tweets
-temp <- lapply(json_files, function(json_path_i){
+temp <- lapply(rev(json_files), function(json_path_i){
   
   print(json_path_i)
   
@@ -25,6 +30,8 @@ temp <- lapply(json_files, function(json_path_i){
     file.path(dropbox_file_path, "Data", "twitter", "RawData", "rds", paste0(file_name_i, ".Rds"))
   )
   
+  if(REPLACE_CLEANED) cleaned_already <- F
+  
   #### If not cleaned already, then clean
   if(!(cleaned_already)){
     
@@ -36,6 +43,7 @@ temp <- lapply(json_files, function(json_path_i){
       data.frame(
         full_text = tweets_df$full_text,
         location = tweets_df$user$location,
+        user_description = tweets_df$user$description,
         lang = tweets_df$lang,
         created_at = tweets_df$created_at,
         retweet_count = tweets_df$retweet_count,
