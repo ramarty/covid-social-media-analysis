@@ -10,6 +10,9 @@ keywords <- read.csv(file.path(dropbox_file_path, "Data", "google_trends", "covi
                      stringsAsFactors = F)
 
 keywords <- keywords[keywords$scrape_group %in% scrape_group,]
+keywords <- keywords[keywords$scrape %in% "yes",]
+
+# Clean keyword
 keywords$keyword <- keywords$keyword %>% tolower()
 
 # ISO Codes --------------------------------------------------------------------
@@ -54,7 +57,7 @@ extract_trends <- function(term_i,
                           geo = c(iso_i, 
                                   comparison_iso) %>%
                             unique(),
-                          time = "today 3-m",
+                          time = "2020-01-01 2020-06-30",
                           onlyInterest=T,
                           low_search_volume=T)
     
@@ -80,7 +83,7 @@ extract_trends <- function(term_i,
       # hits of comparison state
       out_cstate_df <- out_cstate_df %>%
         filter(geo != comparison_iso) %>%
-        left_join(out_cstate_compstate, by = "date")
+        left_join(out_cstate_compstate_df, by = "date")
     } else{
       out_cstate_df$hits_compstate = out_cstate_df$hits_with_compstate
     }
@@ -124,12 +127,12 @@ for(term_i in keywords$keyword){
     
   }
   
-  Sys.sleep(30) # pause after each term
+  Sys.sleep(60) # pause after each term
 }
 
 # Export -----------------------------------------------------------------------
 saveRDS(results_all_df, file.path(dropbox_file_path, "Data", "google_trends", "RawData",
-                                  "brazil",
+                                  "brazil_with_reference_state",
                                   paste0("br_gtrends_ref",comparison_iso,
                                          "_scrapegroup",scrape_group,
                                          ".Rds")))

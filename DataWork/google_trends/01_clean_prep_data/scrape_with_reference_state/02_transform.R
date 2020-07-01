@@ -4,9 +4,12 @@
 comparison_iso <- "BR-SP"
 
 # Load Data --------------------------------------------------------------------
-gtrends_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "RawData", 
-                                paste0("br_gtrends_ref",comparison_iso,".Rds")))
-
+# Append across scrape groups
+gtrends_df <- file.path(dropbox_file_path, "Data", "google_trends", "RawData",
+                        "brazil_with_reference_state") %>%
+  list.files(pattern = "*.Rds", full.names = T) %>%
+  lapply(readRDS) %>%
+  bind_rows()
 
 # Using formulat on page 32 
 # http://documents1.worldbank.org/curated/en/821821591104924698/pdf/Winners-and-Losers-from-COVID-19-Global-Evidence-from-Google-Search.pdf
@@ -23,7 +26,7 @@ gtrends_df <- gtrends_df %>%
 
 # Save Data --------------------------------------------------------------------
 saveRDS(gtrends_df, file.path(dropbox_file_path, "Data", "google_trends", "RawData", 
-                  paste0("br_gtrends_ref",comparison_iso,"_adj.Rds")))
+                              paste0("br_gtrends_ref",comparison_iso,"_adj.Rds")))
 
 
 
