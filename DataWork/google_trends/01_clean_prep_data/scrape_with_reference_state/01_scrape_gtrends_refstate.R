@@ -16,8 +16,6 @@ keywords <- keywords[keywords$scrape %in% "yes",]
 # Clean keyword
 keywords$keyword <- keywords$keyword %>% tolower()
 
-keywords <- keywords[-c(3,4),]
-
 # ISO Codes --------------------------------------------------------------------
 isocodes <- ISO_3166_2 # from ISOcodes package
 
@@ -32,7 +30,7 @@ br_isocodes <- isocodes %>%
 extract_trends <- function(iso_i,
                            term_i, 
                            comparison_iso, 
-                           sleep_time = 5,
+                           sleep_time = 10,
                            also_scrape_without_cstate = T){
   
   print(iso_i)
@@ -128,18 +126,35 @@ for(term_i in keywords$keyword[keywords$scrape_group %in% scrape_group]){
   if(!file.exists(out_path) | overwrite_files){
     print(paste(term_i, "------------------------------------------------------"))
     
-    term_df <- lapply(br_isocodes$sub_code,
-                       extract_trends,
-                       term_i,
-                       comparison_iso) %>%
-      bind_rows()
     
-    saveRDS(term_df, out_path)
     
-    Sys.sleep(60) # pause after each term
+    tryCatch({
+      
+      
+      
+      term_df <- lapply(br_isocodes$sub_code,
+                        extract_trends,
+                        term_i,
+                        comparison_iso) %>%
+        bind_rows()
+      
+      saveRDS(term_df, out_path)
+      
+      Sys.sleep(60) # pause after each term
+      
+      
+      
+      
+      
+    }, error=function(e){})
+    
+    
+    
+
+    
   }
   
-
+  
 }
 
 
