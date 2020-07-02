@@ -43,7 +43,6 @@ extract_trends <- function(iso_i,
   if(also_scrape_without_cstate){
     
     out <- gtrends(term_i, 
-                   category = "0",
                    geo = iso_i,
                    time = "2020-01-01 2020-06-30",
                    onlyInterest=T,
@@ -51,61 +50,67 @@ extract_trends <- function(iso_i,
     
     out_df <- out$interest_over_time
     for(var in names(out_df)) out_df[[var]] <- out_df[[var]] %>% as.character()
-    
   }
   
-  # With comparison state
-  out_cstate <- gtrends(term_i, 
-                        category = "0",
-                        geo = c(iso_i, 
-                                comparison_iso) %>%
-                          unique(),
-                        time = "2020-01-01 2020-06-30",
-                        onlyInterest=T,
-                        low_search_volume=T)
   
-  out_cstate_df <- out_cstate$interest_over_time
-  for(var in names(out_cstate_df)) out_cstate_df[[var]] <- out_cstate_df[[var]] %>% as.character()
-  
-  
-  
-  #### 2. Prep comparison state output
-  out_cstate_df <- out_cstate_df %>%
-    dplyr::rename(hits_with_compstate = hits)
-  
-  ## Add hits of comparison state as variable (go from long to wide)
-  if(iso_i != comparison_iso){
+  # Didn't return error, but no hits? Object will be null, which will cause
+  # error later. In this case, we just want to skip.
+  if((class(out)[1] %in% "gtrends") & is.null(out_df)){
+    out_all_df <- NULL
+  } else{
     
-    # Grab hits of comparison state
-    out_cstate_compstate_df <- out_cstate_df %>%
-      filter(geo == comparison_iso) %>%
-      dplyr::select(date, hits_with_compstate) %>%
-      dplyr::rename(hits_compstate = hits_with_compstate)
+    # With comparison state
+    out_cstate <- gtrends(term_i, 
+                          geo = c(iso_i, 
+                                  comparison_iso) %>%
+                            unique(),
+                          time = "2020-01-01 2020-06-30",
+                          onlyInterest=T,
+                          low_search_volume=T)
     
-    # Restrict to state of interest (remove comparison state), and merge
-    # hits of comparison state
+    out_cstate_df <- out_cstate$interest_over_time
+    for(var in names(out_cstate_df)) out_cstate_df[[var]] <- out_cstate_df[[var]] %>% as.character()
+    
+    
+    
+    #### 2. Prep comparison state output
     out_cstate_df <- out_cstate_df %>%
-      filter(geo != comparison_iso) %>%
-      left_join(out_cstate_compstate_df, by = "date")
-  } else{
-    out_cstate_df$hits_compstate = out_cstate_df$hits_with_compstate
+      dplyr::rename(hits_with_compstate = hits)
+    
+    ## Add hits of comparison state as variable (go from long to wide)
+    if(iso_i != comparison_iso){
+      
+      # Grab hits of comparison state
+      out_cstate_compstate_df <- out_cstate_df %>%
+        filter(geo == comparison_iso) %>%
+        dplyr::select(date, hits_with_compstate) %>%
+        dplyr::rename(hits_compstate = hits_with_compstate)
+      
+      # Restrict to state of interest (remove comparison state), and merge
+      # hits of comparison state
+      out_cstate_df <- out_cstate_df %>%
+        filter(geo != comparison_iso) %>%
+        left_join(out_cstate_compstate_df, by = "date")
+    } else{
+      out_cstate_df$hits_compstate = out_cstate_df$hits_with_compstate
+    }
+    
+    
+    
+    #### 3. Merge datasets with comp state and without comp state
+    if(also_scrape_without_cstate){
+      out_all_df <- out_df %>%
+        dplyr::select(date, hits) %>%
+        left_join(out_cstate_df, by = "date")
+    } else{
+      out_all_df <- out_cstate_df
+    }
+    
   }
-  
-  
-  
-  #### 3. Merge datasets with comp state and without comp state
-  if(also_scrape_without_cstate){
-    out_all_df <- out_df %>%
-      dplyr::select(date, hits) %>%
-      left_join(out_cstate_df, by = "date")
-  } else{
-    out_all_df <- out_cstate_df
-  }
-  
-  
   #### 4. Take a quick nap b/c of google rate limits
-  Sys.sleep(sleep_time)
+  Sys.sleep(sleep_time + runif(1)*2)
   
+  print(nrow(out_all_df))
   return(out_all_df)
   #}, 
   #error = function(e) return(NULL)
@@ -150,7 +155,7 @@ for(term_i in keywords$keyword[keywords$scrape_group %in% scrape_group]){
     
     
     
-
+    
     
   }
   
