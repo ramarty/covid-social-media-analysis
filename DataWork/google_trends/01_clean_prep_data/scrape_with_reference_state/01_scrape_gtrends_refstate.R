@@ -3,7 +3,7 @@
 
 #### PARAMETERS
 comparison_iso <- "BR-SP"
-scrape_group <- 1:44 # can be integer or vector: eg, 1 or 1:5
+scrape_group <- 1:9 # can be integer or vector: eg, 1 or 1:5
 
 overwrite_files <- F
 
@@ -15,6 +15,8 @@ keywords <- keywords[keywords$scrape %in% "yes",]
 
 # Clean keyword
 keywords$keyword <- keywords$keyword %>% tolower()
+
+keywords <- keywords[-c(3,4),]
 
 # ISO Codes --------------------------------------------------------------------
 isocodes <- ISO_3166_2 # from ISOcodes package
