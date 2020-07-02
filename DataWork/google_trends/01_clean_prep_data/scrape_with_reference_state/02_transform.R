@@ -6,7 +6,7 @@ comparison_iso <- "BR-SP"
 # Load Data --------------------------------------------------------------------
 # Append across scrape groups
 gtrends_df <- file.path(dropbox_file_path, "Data", "google_trends", "RawData",
-                        "brazil_with_reference_state") %>%
+                        "brazil_with_ref_state_by_keyword") %>%
   list.files(pattern = "*.Rds", full.names = T) %>%
   lapply(readRDS) %>%
   bind_rows()
@@ -25,7 +25,8 @@ gtrends_df <- gtrends_df %>%
   mutate(hits_adj = hits_with_compstate / max(hits_compstate))
 
 # Save Data --------------------------------------------------------------------
-saveRDS(gtrends_df, file.path(dropbox_file_path, "Data", "google_trends", "RawData", 
+saveRDS(gtrends_df, file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
+                              "brazil_with_refstate",
                               paste0("br_gtrends_ref",comparison_iso,"_adj.Rds")))
 
 
