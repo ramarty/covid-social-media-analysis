@@ -3,7 +3,7 @@
 
 #### PARAMETERS
 comparison_iso <- "BR-SP"
-scrape_group <- 1 # can be integer or vector: eg, 1 or 1:5
+scrape_group <- 1:44 # can be integer or vector: eg, 1 or 1:5
 
 overwrite_files <- F
 
@@ -30,8 +30,10 @@ br_isocodes <- isocodes %>%
 extract_trends <- function(iso_i,
                            term_i, 
                            comparison_iso, 
-                           sleep_time = 10,
+                           sleep_time = 5,
                            also_scrape_without_cstate = T){
+  
+  print(iso_i)
   
   #tryCatch({  
   
@@ -115,7 +117,6 @@ extract_trends <- function(iso_i,
 # Nested for loop isn't ideal, but works so oh well.
 for(term_i in keywords$keyword[keywords$scrape_group %in% scrape_group]){
   
-  print(paste(term_i, "------------------------------------------------------"))
   out_path <- file.path(dropbox_file_path, "Data", "google_trends", "RawData",
                         "brazil_with_ref_state_by_keyword",
                         paste0("br_gtrends_ref",comparison_iso,
@@ -123,6 +124,8 @@ for(term_i in keywords$keyword[keywords$scrape_group %in% scrape_group]){
                                ".Rds"))
   
   if(!file.exists(out_path) | overwrite_files){
+    print(paste(term_i, "------------------------------------------------------"))
+    
     term_df <- lapply(br_isocodes$sub_code,
                        extract_trends,
                        term_i,
@@ -130,9 +133,11 @@ for(term_i in keywords$keyword[keywords$scrape_group %in% scrape_group]){
       bind_rows()
     
     saveRDS(term_df, out_path)
+    
+    Sys.sleep(60) # pause after each term
   }
   
-  Sys.sleep(60) # pause after each term
+
 }
 
 
