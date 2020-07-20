@@ -49,5 +49,5 @@ if(Sys.info()[["user"]] == "robmarty") covid_twitter_github <- "~/Documents/Gith
 
 brazil_twitter_figures_path <- file.path(dropbox_file_path, "Data", "twitter", "Outputs", "figures")
 
-
+google_figures_path <- file.path(dropbox_file_path, "Data", "google_trends", "outputs", "figures")
 
