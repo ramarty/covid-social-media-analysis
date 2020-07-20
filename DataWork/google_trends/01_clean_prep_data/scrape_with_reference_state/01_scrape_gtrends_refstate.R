@@ -3,7 +3,7 @@
 
 #### PARAMETERS
 comparison_iso <- "BR-SP"
-scrape_group <- 1:9 # can be integer or vector: eg, 1 or 1:5
+scrape_group <- 31:37 # can be integer or vector: eg, 1 or 1:5
 
 overwrite_files <- F
 

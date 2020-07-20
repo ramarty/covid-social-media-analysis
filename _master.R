@@ -36,6 +36,7 @@ library(textdata)
 library(tidyr)
 library(rgeos)
 library(dplyr)
+library(tidylog)
 
 # Filepaths --------------------------------------------------------------------
 if(Sys.info()[["user"]] == "WB521633") dropbox_file_path <- "C:/Users/wb521633/Dropbox/World Bank/Side Work/COVID Social Media Analysis"
