@@ -177,8 +177,9 @@ trends_df %>%
   ) + 
   facet_wrap(vars(week_number), scales = "free_x") +
   labs(
-    caption = "Keywords used: 'febre', 'tosse', and 'como tratar o coronavirus'; Using hits_adj"
-  )
+    caption = "Keywords used: 'febre', 'tosse', and 'como tratar o coronavirus'; Using hits_adj; zooming in y<3"
+  ) +
+  coord_cartesian(ylim = c(0, 3))
 ```
 
 ## Correlation between average of 3 main keywords and case rate
@@ -197,7 +198,7 @@ trends_df %>%
   geom_point(aes(case_rate, average_hits)) +
   geom_smooth(aes(case_rate, average_hits), method = "lm") +
   geom_label_repel(
-    data = . %>% filter(case_rate > 500 | average_hits > 70), 
+    data = . %>% filter(case_rate > 500 | average_hits > 0.5), 
     aes(case_rate, average_hits, label = state), 
     hjust=0.5, vjust=0.4
   ) + 
@@ -231,20 +232,6 @@ trends_df %>%
     caption = "Keywords used: 'I can't smell'; Using hits_adj"
   )
 ```
-
-## Death rate against searches for I can't smell
-
-```{r}
-trends_df %>% 
-  filter(!is.na(hits), keyword == "Perdi o olfato") %>% 
-  ggplot() + 
-  geom_point(aes(death_rate, hits)) +
-  geom_smooth(aes(death_rate, hits), method = "lm") + 
-  ggrepel::geom_label_repel(aes(death_rate, hits, label = state), hjust=0.5, vjust=0.4) +
-  coord_cartesian(ylim = c(0, 100)) + 
-  theme_light()
-```
-
 
 
 # Case rate and death rate per state
@@ -323,7 +310,7 @@ trends_df %>%
 ```
 
 
-## Date of showing up "I can't smell"
+## Date of showing up "I can't smell" 
 
 ```{r}
 trends_df %>% 
@@ -347,13 +334,13 @@ trends_df %>%
 ```
 
 
-## Graph of current death rate distinguishing by date of I can’t smell
+## Graph of current death distinguishing by date of I can’t smell
 
 ```{r}
 trends_df %>% 
   left_join(states_cant_smell_date, by = "state") %>% 
   mutate(cant_smell_appears = if_else(!is.na(first_date_cant_smell), 1L, 0L) %>% as.character()) %>% 
-  filter(date == "2020-06-18", !is.na(death_rate)) %>% 
+  filter(date == "2020-06-28", !is.na(deaths)) %>% 
   count(deaths, state, cant_smell_appears, first_date_cant_smell) %>% 
   arrange(desc(deaths)) %>% 
   ggplot()+ 
@@ -371,11 +358,45 @@ trends_df %>%
   ) + 
   coord_flip() + 
   labs(
-    title = "States ordered by deaths on June 18th, 2020", 
+    title = "States ordered by deaths on June 28th, 2020", 
     x = "State", 
     y = "Deaths"
   )
 ```
+
+## Looking at cases
+
+
+```{r}
+trends_df %>% 
+  left_join(states_cant_smell_date, by = "state") %>% 
+  mutate(
+    cant_smell_appears = if_else(!is.na(first_date_cant_smell), 1L, 0L) %>% as.character()
+  ) %>% 
+  filter(date == "2020-06-28", !is.na(cases)) %>% 
+  count(cases, state, cant_smell_appears, first_date_cant_smell) %>% 
+  arrange(desc(cases)) %>% 
+  ggplot()+ 
+  geom_col(aes(fct_reorder(state, cases), cases, fill = cant_smell_appears)) +
+  geom_label_repel(
+    aes(
+      x = as.character(state), 
+      y = cases, 
+      label = as.character(first_date_cant_smell)
+    ), 
+    position = position_fill(vjust = 0)
+  ) + 
+  labs(
+    color = "State category"
+  ) + 
+  coord_flip() + 
+  labs(
+    title = "States ordered by cases on June 28th, 2020", 
+    x = "State", 
+    y = "Cases"
+  )
+```
+## Looking at death rate
 
 ```{r}
 trends_df %>% 
@@ -400,6 +421,80 @@ trends_df %>%
     x = "State", 
     y = "Deaths per 100,000 people"
   )
+```
+
+## Correlations between I can't smell and covid cases
+
+Create the variables counting the number of days before/after "I can't smell" shows up. For those states that don't have "I can't smell", we won't be able to include them. 
+```{r}
+trends_df <- 
+  trends_df %>% 
+  left_join(states_cant_smell_date, by = "state") %>% 
+  mutate(
+    days_from_cant_smell = date - first_date_cant_smell
+  ) 
+  
+```
+
+We replicate the table of correlations from day -3 to day 3 for each state
+```{r}
+ex_df <- 
+  trends_df %>% 
+  filter(days_from_cant_smell >= -3, days_from_cant_smell <= 3) %>% 
+  mutate(days_from_cant_smell = as.numeric(days_from_cant_smell))
+
+cor(ex_df$days_from_cant_smell, ex_df$hits_adj, use = "complete.obs")
+
+cor(ex_df$days_from_cant_smell, ex_df$hits_adj, use = "complete.obs")
+```
+
+
+```{r}
+data <- 
+  gather(
+    data_all, city, pr, Bilbao:Valencia) %>%
+    gather(telecon, index, NAO:AO
+  )
+
+data
+
+data_nest <- group_by(data, city, telecon) %>% nest()
+data_nest
+
+str(slice(data_nest, 1))
+
+cor_fun <- function(df) cor.test(df$pr, df$index, method = "spearman") %>% tidy()
+
+data_nest <- mutate(data_nest, model = map(data, cor_fun))
+data_nest
+
+str(slice(data_nest, 1))
+
+corr_pr <- select(data_nest, -data) %>% unnest()
+corr_pr
+
+corr_pr <- mutate(corr_pr, sig = ifelse(p.value <0.05, "Sig.", "Non Sig."))
+
+ggplot()+
+  geom_tile(data = corr_pr,
+            aes(city, telecon, fill = estimate),
+            size = 1,
+            colour = "white")+
+  geom_tile(data = filter(corr_pr, sig == "Sig."),
+            aes(city, telecon),
+            size = 1,
+            colour = "black",
+            fill = "transparent")+
+  geom_text(data = corr_pr,
+            aes(city, telecon, label = round(estimate, 2),
+            fontface = ifelse(sig == "Sig.", "bold", "plain")))+
+  scale_fill_gradient2(breaks = seq(-1, 1, 0.2))+
+  labs(x = "", y = "", fill = "", p.value = "")+
+  theme_minimal()+
+  theme(panel.grid.major = element_blank(),
+        panel.border = element_blank(),
+        panel.background = element_blank(),
+        axis.ticks = element_blank())
 ```
 
 
