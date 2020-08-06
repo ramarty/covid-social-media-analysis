@@ -103,10 +103,10 @@ trends_wide_all <- trends_wide_all %>%
 trends_wide_all <- trends_wide_all %>%
   arrange(date)
 
-keywrds_to_lag <- c("perda_de_olfato") %>% paste(collapse = "|")
+keywrds_to_lag <- c("perda_de_olfato", "perda_o_olfato") %>% paste(collapse = "|")
 vars_to_lag <- names(trends_wide_all)[grepl(keywrds_to_bin, names(trends_wide_all))]
 
-vars_to_lag <- "ma7_hits_perda_de_olfato_bin"
+vars_to_lag <- c("ma7_hits_perda_de_olfato_bin", "ma7_hits_perdi_o_olfato_bin")
 
 trends_wide_all <- lapply(1:25, function(lag_i){
   print(lag_i)
