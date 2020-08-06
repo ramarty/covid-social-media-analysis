@@ -3,18 +3,20 @@
 
 #### PARAMETERS
 comparison_iso <- "US"
-scrape_group <- 31:37 # can be integer or vector: eg, 1 or 1:5
-
 overwrite_files <- F
+language <- "en" # "en", "pr"
 
 # Terms to Scrape --------------------------------------------------------------
 keywords <- read.csv(file.path(dropbox_file_path, "Data", "google_trends", "covid_keywords.csv"),
                      stringsAsFactors = F)
 
+keywords <- keywords %>%
+  arrange(priority_to_scrape)
+
 keywords <- keywords[keywords$scrape %in% "yes",]
 
 # Clean keyword
-keywords$keyword <- keywords$keyword %>% tolower()
+keywords_vec <- keywords[[paste0("keyword_", language)]] %>% tolower() %>% as.character()
 
 # ISO Codes --------------------------------------------------------------------
 isocodes <- ISO_3166_1 # from ISOcodes package
@@ -22,9 +24,6 @@ isocodes <- ISO_3166_1 # from ISOcodes package
 iso2 <- isocodes$Alpha_2
 
 # Function to Scrape Data ------------------------------------------------------
-iso_i <- iso2[1]
-term_i <- keywords$keyword[1]
-
 extract_trends <- function(iso_i,
                            term_i, 
                            comparison_iso, 
@@ -109,46 +108,41 @@ extract_trends <- function(iso_i,
 
 # Scrape Data ------------------------------------------------------------------
 # Nested for loop isn't ideal, but works so oh well.
-for(term_i in keywords$keyword[keywords$scrape_group %in% scrape_group]){
-  
-  out_path <- file.path(dropbox_file_path, "Data", "google_trends", "RawData",
-                        "brazil_with_ref_state_by_keyword",
-                        paste0("br_gtrends_ref",comparison_iso,
-                               "_term",term_i,
-                               ".Rds"))
-  
-  if(!file.exists(out_path) | overwrite_files){
-    print(paste(term_i, "------------------------------------------------------"))
+for(term_i in keywords_vec){
+  for(iso_i in iso2){
     
+    out_path <- file.path(dropbox_file_path, "Data", "google_trends", "RawData",
+                          "global_with_ref_state_by_keyword",
+                          paste0("global_gtrends_ref_",
+                                 iso_i, 
+                                 "_compr",
+                                 comparison_iso,
+                                 "_term",
+                                 term_i,
+                                 "_language",
+                                 language,
+                                 ".Rds"))
     
-    
-    tryCatch({
+    if(!file.exists(out_path) | overwrite_files){
+      print(paste(iso_i, term_i, "-------------------------------------------"))
       
+      tryCatch({
+        
+        term_df <- extract_trends(iso_i,
+                                  term_i,
+                                  comparison_iso)
+        term_df$language <- language
+
+        saveRDS(term_df, out_path)
+        
+        Sys.sleep(15) # pause after each term
+        
+        
+      }, error=function(e){})
       
-      
-      term_df <- lapply(br_isocodes$sub_code,
-                        extract_trends,
-                        term_i,
-                        comparison_iso) %>%
-        bind_rows()
-      
-      saveRDS(term_df, out_path)
-      
-      Sys.sleep(60) # pause after each term
-      
-      
-      
-      
-      
-    }, error=function(e){})
-    
-    
-    
-    
+    }
     
   }
-  
-  
 }
 
 
