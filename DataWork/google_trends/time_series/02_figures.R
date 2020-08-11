@@ -5,22 +5,39 @@ trends_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "Fina
                                "brazil_with_refstate_analysis_long.Rds"))
 
 trends_df$ma7_hits_perda_de_olfato_bin <- trends_df$ma7_hits_perda_de_olfato_bin * 7
+trends_df$ma7_hits_perdi_o_olfato_bin  <- trends_df$ma7_hits_perdi_o_olfato_bin  * 7
 
 # Scaled -----------------------------------------------------------------------
 trends_df_lng <- trends_df %>%
   group_by(state) %>%
-  mutate(ma7_hits_perda_de_olfato = ma7_hits_perda_de_olfato / max(ma7_hits_perda_de_olfato, na.rm=T),
-         ma7_hits_perda_de_olfato_bin = ma7_hits_perda_de_olfato_bin / max(ma7_hits_perda_de_olfato_bin, na.rm=T),
-         cases_new = cases_new / max(cases_new),
-         deaths_new = deaths_new / max(deaths_new)) %>%
+  mutate(ma7_hits_perda_de_olfato_scale = ma7_hits_perda_de_olfato / max(ma7_hits_perda_de_olfato, na.rm=T),
+         ma7_hits_perda_de_olfato_bin_scale = ma7_hits_perda_de_olfato_bin / max(ma7_hits_perda_de_olfato_bin, na.rm=T),
+         
+         ma7_hits_perdi_o_olfato_scale = ma7_hits_perdi_o_olfato / max(ma7_hits_perdi_o_olfato, na.rm=T),
+         ma7_hits_perdi_o_olfato_bin_scale = ma7_hits_perdi_o_olfato_bin / max(ma7_hits_perdi_o_olfato_bin, na.rm=T),
+         
+         cases_new_scale = cases_new / max(cases_new),
+         deaths_new_scale = deaths_new / max(deaths_new)) %>%
   ungroup() %>%
-  dplyr::select(state, date, cases_new, deaths_new, 
+  dplyr::select(state, date, 
+                cases_new, 
+                deaths_new, 
                 ma7_hits_perda_de_olfato_bin,
-                ma7_hits_perda_de_olfato) %>%
+                ma7_hits_perda_de_olfato,
+                ma7_hits_perdi_o_olfato_bin,
+                ma7_hits_perdi_o_olfato,
+                
+                cases_new_scale, 
+                deaths_new_scale, 
+                ma7_hits_perda_de_olfato_bin_scale,
+                ma7_hits_perda_de_olfato_scale,
+                ma7_hits_perdi_o_olfato_bin_scale,
+                ma7_hits_perdi_o_olfato_scale) %>%
   pivot_longer(-c(state, date))
 
-for(covid_var in c("cases_new", "deaths_new")){
-  for(google_var in c("ma7_hits_perda_de_olfato_bin", "ma7_hits_perda_de_olfato")){
+for(covid_var in c("cases_new_scale", "deaths_new_scale")){
+  for(google_var in c("ma7_hits_perda_de_olfato_bin_scale", "ma7_hits_perda_de_olfato_scale",
+                      "ma7_hits_perdi_o_olfato_bin_scale", "ma7_hits_perdi_o_olfato_scale")){
     
     trends_df_lng %>%
       filter(name %in% c(covid_var, google_var)) %>%
@@ -40,6 +57,72 @@ for(covid_var in c("cases_new", "deaths_new")){
     
   }
 }
+
+# Hits -------------------------------------------------------------------------
+
+trends_df_lng %>%
+  filter(name == "ma7_hits_perda_de_olfato_bin") %>%
+  ggplot() +
+  geom_line(aes(x = date, y = value)) +
+  labs(title = "N Times\nPerda de Olfato\nAppears Past Week") +
+  theme_minimal() +
+  facet_wrap(~state, ncol = 2) +
+  ggsave(file.path(google_figures_path, "perda_de_olfato_hits_7days.png"),
+         height = 12, width = 3)
+
+trends_df_lng %>%
+  filter(name == "ma7_hits_perdi_o_olfato_bin") %>%
+  ggplot() +
+  geom_line(aes(x = date, y = value)) +
+  labs(title = "N Times\nPerdi o Olfato\nAppears Past Week") +
+  theme_minimal() +
+  facet_wrap(~state, ncol = 2) +
+  ggsave(file.path(google_figures_path, "perdi_o_olfato_hits_7days.png"),
+         height = 12, width = 3)
+
+trends_df_lng %>%
+  filter(name == "cases_new") %>%
+  ggplot() +
+  geom_line(aes(x = date, y = value)) +
+  labs(title = " \n \nNew Cases") +
+  theme_minimal() +
+  facet_wrap(~state, ncol = 2, scales = "free_y") +
+  ggsave(file.path(google_figures_path, "cases_new.png"),
+         height = 12, width = 3)
+
+trends_df_lng %>%
+  filter(name == "deaths_new") %>%
+  ggplot() +
+  geom_line(aes(x = date, y = value)) +
+  labs(title = " \n \nNew Deaths") +
+  theme_minimal() +
+  facet_wrap(~state, ncol = 2, scales = "free_y") +
+  ggsave(file.path(google_figures_path, "deaths_new.png"),
+         height = 12, width = 3)
+
+
+
+ggplot() +
+  geom_histogram(data = trends_df[!is.na(trends_df$ma7_hits_perda_de_olfato_bin) &
+                                    !(trends_df$ma7_hits_perda_de_olfato_bin %in% 0),],
+                 aes(x = cases_new),
+                 fill="red") +
+  theme_minimal() +
+  labs(title = "Distribution of Cases when I cant smell appears\nX times in previous week") +
+  facet_wrap(~ma7_hits_perda_de_olfato_bin) +
+  ggsave(file.path(google_figures_path, "cases_new_hist.png"),
+         height = 7, width = 7)
+
+ggplot() +
+  geom_histogram(data = trends_df[!is.na(trends_df$ma7_hits_perda_de_olfato_bin) &
+                                    !(trends_df$ma7_hits_perda_de_olfato_bin %in% 0),],
+                 aes(x = deaths_new),
+                 fill="red") +
+  theme_minimal() +
+  labs(title = "Distribution of Deaths when I cant smell appears\nX times in previous week") +
+  facet_wrap(~ma7_hits_perda_de_olfato_bin) +
+  ggsave(file.path(google_figures_path, "deaths_new_hist.png"),
+         height = 7, width = 7)
 
 # First X Cases ----------------------------------------------------------------
 trends_df_1000cases <- trends_df %>%

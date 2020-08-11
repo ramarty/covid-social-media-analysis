@@ -52,3 +52,6 @@ brazil_twitter_figures_path <- file.path(dropbox_file_path, "Data", "twitter", "
 
 google_figures_path <- file.path(dropbox_file_path, "Data", "google_trends", "outputs", "figures")
 
+
+
+
