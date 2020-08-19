@@ -1,0 +1,97 @@
+---
+title: "COVID - Global"
+author: DIME
+output: 
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    code_folding: hide
+    toc_fold: TRUE
+    highlight: tango
+    keep_md: yes
+    theme: cosmo
+    number_sections: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r dataprep, echo=FALSE, include=FALSE}
+# Setup ------------------------------------------------------------------------
+if(Sys.info()[["user"]] == "robmarty") github <- "~/Documents/Github/covid-social-media-analysis/"
+
+source(file.path(github, "_master.R"))
+
+# Load Data --------------------------------------------------------------------
+trends_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
+                              "global_with_refstate",
+                              paste0("gl_gtrends_ref","US","_adj_cases.Rds")))
+```
+
+# Time Series
+
+## I can't smell
+
+```{r, fig.height=10, warning=FALSE, message=FALSE}
+
+trends_df %>%
+  filter(keyword == "i can't smell") %>%
+  filter(!is.na(Country)) %>%
+  dplyr::select(date, Country, hits, cases_new) %>%
+  pivot_longer(cols = -c(date, Country)) %>%
+  
+  group_by(Country, name) %>%
+  mutate(value = value / max(value, na.rm=T)) %>%
+  ungroup() %>%
+  
+  ggplot() +
+  geom_line(aes(x = date, y = value, color = name, group = name)) +
+  facet_wrap(~Country,
+             ncol = 3)
+```
+
+
+## Loss of Smell
+
+```{r, fig.height=50, warning=FALSE, message=FALSE}
+
+trends_df %>%
+  filter(keyword == "loss of smell") %>%
+  filter(!is.na(Country)) %>%
+  dplyr::select(date, Country, hits, cases_new) %>%
+  pivot_longer(cols = -c(date, Country)) %>%
+  
+  group_by(Country, name) %>%
+  mutate(value = value / max(value, na.rm=T)) %>%
+  ungroup() %>%
+  
+  ggplot() +
+  geom_line(aes(x = date, y = value, color = name, group = name)) +
+  facet_wrap(~Country,
+             ncol = 3)
+
+```
+
+## Fever
+
+```{r, fig.height=70, warning=FALSE, message=FALSE}
+
+trends_df %>%
+  filter(keyword == "fever") %>%
+  filter(!is.na(Country)) %>%
+  dplyr::select(date, Country, hits, cases_new) %>%
+  pivot_longer(cols = -c(date, Country)) %>%
+  
+  group_by(Country, name) %>%
+  mutate(value = value / max(value, na.rm=T)) %>%
+  ungroup() %>%
+  
+  ggplot() +
+  geom_line(aes(x = date, y = value, color = name, group = name)) +
+  facet_wrap(~Country,
+             ncol = 3)
+
+```
+

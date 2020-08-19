@@ -69,7 +69,7 @@ trends_df %>%
 
 # Green Light - Predicting Decrease
 
-# 7 Day Moving Average: New Cases and Loss of Smell
+# Moving Average (7 Days): New Cases and Loss of Smell
 
 
 ```r

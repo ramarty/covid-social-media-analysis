@@ -1,12 +1,12 @@
 # Applies equation to make hits comparable across time/states using a comparison
 # state
 
-comparison_iso <- "BR-SP"
+comparison_iso <- "US"
 
 # Load Data --------------------------------------------------------------------
 # Append across scrape groups
 gtrends_df <- file.path(dropbox_file_path, "Data", "google_trends", "RawData",
-                        "brazil_with_ref_state_by_keyword") %>%
+                        "global_with_ref_state_by_keyword") %>%
   list.files(pattern = "*.Rds", full.names = T) %>%
   lapply(readRDS) %>%
   bind_rows()
@@ -26,8 +26,8 @@ gtrends_df <- gtrends_df %>%
 
 # Save Data --------------------------------------------------------------------
 saveRDS(gtrends_df, file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
-                              "brazil_with_refstate",
-                              paste0("br_gtrends_ref",comparison_iso,"_adj.Rds")))
+                              "global_with_refstate",
+                              paste0("gl_gtrends_ref",comparison_iso,"_adj.Rds")))
 
 
 
