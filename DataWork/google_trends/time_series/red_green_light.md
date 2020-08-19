@@ -67,8 +67,6 @@ trends_df %>%
 
 ![](red_green_light_files/figure-html/unnamed-chunk-2-1.png)<!-- -->
 
-# Green Light - Predicting Decrease
-
 # Moving Average (7 Days): New Cases and Loss of Smell
 
 

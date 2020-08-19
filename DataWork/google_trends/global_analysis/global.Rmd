@@ -14,6 +14,8 @@ output:
     number_sections: true
 ---
 
+Results show timeseries of new cases and google hits of different search terms. All values are standardized between 0 and 1 (for now) to help with plotting.
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```

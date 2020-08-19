@@ -74,8 +74,6 @@ trends_df %>%
              ncol = 2) 
 ```
 
-# Green Light - Predicting Decrease
-
 # Moving Average (7 Days): New Cases and Loss of Smell
 
 ```{r}
