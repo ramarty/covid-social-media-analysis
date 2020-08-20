@@ -39,7 +39,7 @@ trends_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "Fina
 ```{r, fig.height=10, warning=FALSE, message=FALSE}
 
 trends_df %>%
-  filter(keyword == "i can't smell") %>%
+  filter(keyword_en == "i can't smell") %>%
   filter(!is.na(Country)) %>%
   dplyr::select(date, Country, hits, cases_new) %>%
   pivot_longer(cols = -c(date, Country)) %>%
@@ -52,6 +52,8 @@ trends_df %>%
   geom_line(aes(x = date, y = value, color = name, group = name)) +
   facet_wrap(~Country,
              ncol = 3)
+
+
 ```
 
 
@@ -60,7 +62,7 @@ trends_df %>%
 ```{r, fig.height=50, warning=FALSE, message=FALSE}
 
 trends_df %>%
-  filter(keyword == "loss of smell") %>%
+  filter(keyword_en == "loss of smell") %>%
   filter(!is.na(Country)) %>%
   dplyr::select(date, Country, hits, cases_new) %>%
   pivot_longer(cols = -c(date, Country)) %>%
@@ -81,7 +83,7 @@ trends_df %>%
 ```{r, fig.height=70, warning=FALSE, message=FALSE}
 
 trends_df %>%
-  filter(keyword == "fever") %>%
+  filter(keyword_en == "fever") %>%
   filter(!is.na(Country)) %>%
   dplyr::select(date, Country, hits, cases_new) %>%
   pivot_longer(cols = -c(date, Country)) %>%

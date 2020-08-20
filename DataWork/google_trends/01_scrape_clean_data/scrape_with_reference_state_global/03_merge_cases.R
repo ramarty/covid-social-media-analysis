@@ -27,14 +27,13 @@ cases_df <- cases_df %>%
                 date = Date_reported) 
 
 cases_df$cases_new[cases_df$cases_new < 0] <- 0
+cases_df$death_new[cases_df$death_new < 0] <- 0
 
-gtrends_cases_df <- merge(gtrends_df, cases_df, by = c("geo", "date"), all.x=T, all.y=F)
+gtrends_cases_df <- merge(gtrends_df, cases_df, by = c("geo", "date"), all.x=F, all.y=F)
 
 # Export -----------------------------------------------------------------------
 saveRDS(gtrends_cases_df, file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
                               "global_with_refstate",
                               paste0("gl_gtrends_ref",comparison_iso,"_adj_cases.Rds")))
-
-
 
 

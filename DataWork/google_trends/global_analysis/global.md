@@ -27,7 +27,7 @@ Results show timeseries of new cases and google hits of different search terms. 
 
 ```r
 trends_df %>%
-  filter(keyword == "i can't smell") %>%
+  filter(keyword_en == "i can't smell") %>%
   filter(!is.na(Country)) %>%
   dplyr::select(date, Country, hits, cases_new) %>%
   pivot_longer(cols = -c(date, Country)) %>%
@@ -50,7 +50,7 @@ trends_df %>%
 
 ```r
 trends_df %>%
-  filter(keyword == "loss of smell") %>%
+  filter(keyword_en == "loss of smell") %>%
   filter(!is.na(Country)) %>%
   dplyr::select(date, Country, hits, cases_new) %>%
   pivot_longer(cols = -c(date, Country)) %>%
@@ -72,7 +72,7 @@ trends_df %>%
 
 ```r
 trends_df %>%
-  filter(keyword == "fever") %>%
+  filter(keyword_en == "fever") %>%
   filter(!is.na(Country)) %>%
   dplyr::select(date, Country, hits, cases_new) %>%
   pivot_longer(cols = -c(date, Country)) %>%

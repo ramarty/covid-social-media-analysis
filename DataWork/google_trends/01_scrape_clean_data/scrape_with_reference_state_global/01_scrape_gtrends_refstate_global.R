@@ -4,9 +4,9 @@
 #### PARAMETERS
 comparison_iso <- "US"
 overwrite_files <- F
-language <- "pr" # "en", "pr", "es"
+language <- "pr" # "pr", "es", "fr", "ge", "ar", "ch"
 
-for(language in c("pr", "es", "fr", "ge", "ar", "ch")){
+for(language in c("es", "fr")){
   
   # Terms to Scrape --------------------------------------------------------------
   keywords <- read.csv(file.path(dropbox_file_path, "Data", "google_trends", "covid_keywords.csv"),
