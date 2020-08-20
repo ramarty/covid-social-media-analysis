@@ -6,7 +6,7 @@ comparison_iso <- "US"
 overwrite_files <- F
 language <- "pr" # "pr", "es", "fr", "ge", "ar", "ch"
 
-for(language in c("es", "fr")){
+for(language in c("es", "fr", "ar", "ch")){
   
   # Terms to Scrape --------------------------------------------------------------
   keywords <- read.csv(file.path(dropbox_file_path, "Data", "google_trends", "covid_keywords.csv"),
@@ -140,7 +140,7 @@ for(language in c("es", "fr")){
           
           saveRDS(term_df, out_path)
           
-          Sys.sleep(15) # pause after each term
+          #Sys.sleep(15) # pause after each term
           
         }, error=function(e){})
         

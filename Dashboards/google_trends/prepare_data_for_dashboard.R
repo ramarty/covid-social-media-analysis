@@ -41,6 +41,7 @@ world_ne_sf <- readRDS(file.path(dropbox_file_path, "Data", "world_shapefile", "
                   "world_ne.Rds"))
 
 world_ne_sf <- world_ne_sf[!(world_ne_sf$name %in% "Antarctica"),]
+world_ne_sf <- world_ne_sf[world_ne_sf$continent != "Seven seas (open ocean)",]
 
 saveRDS(world_ne_sf, file.path(DASHBOARD_PATH, "world_ne.Rds"))
 

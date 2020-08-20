@@ -65,7 +65,7 @@ world_sf <- readRDS(file.path("data", "world_ne.Rds"))
 ui <- fluidPage(
   
   navbarPage(
-    theme = shinytheme("flatly"), # journal
+    theme = shinytheme("cosmo"), # journal, flatly, sandstone
     collapsible = TRUE,
     title = "Google Trends",
     
@@ -73,10 +73,25 @@ ui <- fluidPage(
     
     # ** Google Trends ---------------------------------------------------------
     tabPanel(
-      "Trends",
+      "Search Term Correlate with COVID-19",
       tags$head(includeCSS("styles.css")),
       
       dashboardBody(
+        
+        h2("Search Terms Correlating with COVID-19 Cases and Deaths",
+           align = "center"),
+        
+        fluidRow(
+          column(8,
+                 "This page shows how well different Google search terms correlate with COVID-19 cases and deaths. 
+                 Predictive search terms can help track the spread of COVID-19, particularly when official data may
+                 take time to be released.",
+                 offset = 2
+                 )
+          
+        ),
+        
+       
         
         fluidRow(
           
@@ -225,7 +240,7 @@ server = (function(input, output, session) {
     #ggplotly(p)
     p
     
-  })
+  }, bg="transparent")
   
   # * Histogram ----------------------------------------------------------------
   output$cor_histogram <- renderPlotly({
@@ -255,7 +270,7 @@ server = (function(input, output, session) {
                    y = N, 
                    fill = bins,
                    text = text), color = "black") +
-      labs(x = "",
+      labs(x = "Correlation",
            y = "Number of Countries") +
       scale_fill_gradient(low = "white",
                           high = muted("red")) +
