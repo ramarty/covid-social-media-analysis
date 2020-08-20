@@ -132,14 +132,12 @@ ui <- fluidPage(
                    h4(textOutput("cor_title_text"),
                       align = "center"),
                    
-                   strong("Distribution",
-                          align = "center"),
+                   column(12, strong("Distribution"), align = "center"),
                    
                    plotlyOutput("cor_histogram",
                                 height = "200px"),
                    
-                   strong("Map",
-                          align = "center"),
+                   column(12, strong("Map"), align = "center"),
                    
                    plotlyOutput("cor_map",
                                 height = "200px")
@@ -212,7 +210,7 @@ server = (function(input, output, session) {
     
     p <- ggplot(gtrends_r(), aes(x = date)) +
       geom_col(aes(y = covid, fill = paste("COVID-19", input$select_covid_type))) +
-      geom_line(aes(y = hits, color = "Google Term Popularity")) +
+      geom_line(aes(y = hits, color = paste0("Search Popularity of ", input$select_keyword))) +
       facet_wrap(~Country,
                  scales = "free_y",
                  ncol = 2) +
@@ -221,7 +219,8 @@ server = (function(input, output, session) {
       labs(x = "", y = paste("COVID-19", input$select_covid_type),
            fill = "", color = "") +
       theme_ipsum() + 
-      theme(legend.position="top")
+      theme(legend.position="top",
+            legend.text = element_text(size=14))
     
     #ggplotly(p)
     p
