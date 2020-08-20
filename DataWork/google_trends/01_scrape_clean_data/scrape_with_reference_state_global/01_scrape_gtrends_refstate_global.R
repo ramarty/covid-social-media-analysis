@@ -4,9 +4,13 @@
 #### PARAMETERS
 comparison_iso <- "US"
 overwrite_files <- F
-language <- "pr" # "pr", "es", "fr", "ge", "ar", "ch"
+language <- "pt" 
 
-for(language in c("es", "fr", "ar", "ch")){
+languages <- read.csv(file.path(dropbox_file_path, 
+                                "Data", "country_primary_language", "countries_lang.csv"),
+                      stringsAsFactors = F) 
+
+for(language in c("pt", "en", "es", "fr", "ar", "de", "zh", "nl", "it", "no")){
   
   # Terms to Scrape --------------------------------------------------------------
   keywords <- read.csv(file.path(dropbox_file_path, "Data", "google_trends", "covid_keywords.csv"),
@@ -24,9 +28,11 @@ for(language in c("es", "fr", "ar", "ch")){
   keywords_vec <- keywords_vec[1:8]
   
   # ISO Codes --------------------------------------------------------------------
-  isocodes <- ISO_3166_1 # from ISOcodes package
+  #isocodes <- ISO_3166_1 # from ISOcodes package
   
-  iso2 <- isocodes$Alpha_2
+  #iso2 <- isocodes$Alpha_2
+  
+  iso2 <- languages$Code[languages$Language_code_main %in% language]
   
   # Function to Scrape Data ------------------------------------------------------
   extract_trends <- function(iso_i,
@@ -148,8 +154,6 @@ for(language in c("es", "fr", "ar", "ch")){
       
     }
   }
-  
-  
   
   # end language loop
 }
