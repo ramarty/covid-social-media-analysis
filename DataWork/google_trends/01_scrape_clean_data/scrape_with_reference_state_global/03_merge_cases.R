@@ -37,3 +37,4 @@ saveRDS(gtrends_cases_df, file.path(dropbox_file_path, "Data", "google_trends", 
                               paste0("gl_gtrends_ref",comparison_iso,"_adj_cases.Rds")))
 
 
+

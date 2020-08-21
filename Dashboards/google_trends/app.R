@@ -1,5 +1,9 @@
 # Google Trends Dashboard
 
+# TODO:
+# 1. Table - which search term is most predictive for each country. The table will
+#    report: country name, search term, correlation, total cases, total deaths.
+
 # PACKAGES AND SETUP ===========================================================
 
 #### Setting directory so will work locally
@@ -85,13 +89,14 @@ ui <- fluidPage(
           column(8,
                  "This page shows how well different Google search terms correlate with COVID-19 cases and deaths. 
                  Predictive search terms can help track the spread of COVID-19, particularly when official data may
-                 take time to be released.",
+                 take time to be released. We explore how the strength of the correlation varies accross countries;
+                 differences may arise due to different patterns of search behavior or people less frequently using Google.",
                  offset = 2
-                 )
+          )
           
         ),
         
-       
+        
         
         fluidRow(
           
@@ -125,13 +130,19 @@ ui <- fluidPage(
                  
                  numericInput("select_cor",
                               label = strong("Min. Correlation"),
-                              value = 0,
-                              min = 0
+                              value = -1,
+                              min = -1
                  )
                  
-                 ),
+          ),
           
           column(6,
+                 
+                 column(12, align = "center",
+                        
+                        uiOutput("ui_sort_by")
+                        
+                 ),
                  
                  uiOutput("ui_line_graph")
                  
@@ -182,19 +193,18 @@ ui <- fluidPage(
 server = (function(input, output, session) {
   
   # * gTrends Filtered ---------------------------------------------------------
-  
   gtrends_r <- reactive({
     
     if(input$select_covid_type %in% "Cases"){
       gtrends_df$covid <- gtrends_df$cases_new
-      gtrends_df$covid_ma7 <- gtrends_df$cases_ma7
+      gtrends_df$covid_ma7 <- gtrends_df$cases_new_ma7
       gtrends_df$covid_total <- gtrends_df$cases_total
       gtrends_df$covid_hits_cor <- gtrends_df$cases_hits_cor
     }
     
     if(input$select_covid_type %in% "Deaths"){
       gtrends_df$covid <- gtrends_df$death_new
-      gtrends_df$covid_ma7 <- gtrends_df$death_ma7
+      gtrends_df$covid_ma7 <- gtrends_df$death_new_ma7
       gtrends_df$covid_total <- gtrends_df$death_total
       gtrends_df$covid_hits_cor <- gtrends_df$death_hits_cor
     }
@@ -220,10 +230,30 @@ server = (function(input, output, session) {
     
   })
   
+  # * Correlation Table --------------------------------------------------------
+  # output$cor_table <- renderTable({
+  #   
+  #   gtrends_df <- gtrends_df %>%
+  #     dplyr::distinct(Country, keyword_en, cases_total, death_total, cases_hits_cor, death_hits_cor) %>%
+  #     group_by(Country, cases_total, death_total) %>%
+  #     dplyr::summarise(keyword_en = )
+  #   
+  # })
+  
   # * Line Graph ---------------------------------------------------------------
   output$line_graph <- renderPlot({
+
+    df <- gtrends_r()
     
-    p <- ggplot(gtrends_r(), aes(x = date)) +
+    if(input$sort_by %in% c("Cases", "Deaths")){
+      df$Country <- df$Country %>% as.factor() %>% reorder(-df$covid)
+    }
+    
+    if(input$sort_by %in% "Correlation"){
+      df$Country <- df$Country %>% as.factor() %>% reorder(-df$covid_hits_cor)
+    }
+    
+    p <- ggplot(df, aes(x = date)) +
       geom_col(aes(y = covid, fill = paste("COVID-19", input$select_covid_type))) +
       geom_line(aes(y = hits, color = paste0("Search Popularity of ", input$select_keyword))) +
       facet_wrap(~Country,
@@ -276,7 +306,7 @@ server = (function(input, output, session) {
                           high = muted("red")) +
       theme_ipsum() +
       theme(legend.position = "none")
-
+    
     p %>%
       ggplotly(tooltip = "text") %>%
       layout(plot_bgcolor='transparent', paper_bgcolor='transparent') %>%
@@ -299,7 +329,7 @@ server = (function(input, output, session) {
     if(!(input$select_continent %in% "All")){
       world_sf <- world_sf[world_sf$continent %in% input$select_continent,]
     }
-
+    
     p <- ggplot() +
       geom_sf(data = world_sf,
               aes(fill = covid_hits_cor,
@@ -389,6 +419,18 @@ server = (function(input, output, session) {
     
     plotOutput("line_graph",
                height = paste0(rows/2*300,"px"))
+  })
+  
+  output$ui_sort_by <- renderUI({
+    
+    selectInput(
+      "sort_by",
+      label = strong("Sort By"),
+      choices = c("Name", input$select_covid_type, "Correlation"),
+      selected = "Name",
+      multiple = F
+    )
+    
   })
   
   

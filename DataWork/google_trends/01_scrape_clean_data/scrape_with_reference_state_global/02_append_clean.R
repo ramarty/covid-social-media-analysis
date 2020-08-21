@@ -41,8 +41,8 @@ languages <- languages %>%
 gtrends_df <- merge(gtrends_df, languages, by = "geo", all.x = T, all.y = F)
 
 #### Fix language code in gtrends dataset
-gtrends_df$language[gtrends_df$language %in% "ge"] <- "de"
-gtrends_df$language[gtrends_df$language %in% "pr"] <- "pt"
+#gtrends_df$language[gtrends_df$language %in% "ge"] <- "de"
+#gtrends_df$language[gtrends_df$language %in% "pr"] <- "pt"
 
 #### Only keep if google hits language matches state language
 gtrends_df <- gtrends_df %>%
@@ -55,7 +55,7 @@ keywords <- read.csv(file.path(dropbox_file_path, "Data", "google_trends", "covi
 
 #### Dataset with english and translated word
 keywords <- keywords %>%
-  dplyr::select(keyword_en, keyword_pr, keyword_es, keyword_fr, keyword_ar, keyword_ge, keyword_ch) %>%
+  dplyr::select(names(keywords) %>% str_subset("keyword")) %>%
   dplyr::mutate(keyword = keyword_en) %>%
   pivot_longer(cols = -c(keyword)) %>%
   dplyr::rename(keyword_en = keyword) %>%
@@ -72,6 +72,7 @@ gtrends_df <- merge(gtrends_df, keywords, by = "keyword", all.x=T, all.y=F)
 saveRDS(gtrends_df, file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
                               "global_with_refstate",
                               paste0("gl_gtrends_ref",comparison_iso,"_adj.Rds")))
+
 
 
 

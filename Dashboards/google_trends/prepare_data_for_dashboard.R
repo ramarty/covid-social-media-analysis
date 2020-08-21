@@ -27,7 +27,7 @@ gtrends_df <- gtrends_df[gtrends_df$keyword_en %in%
 
 gtrends_df <- gtrends_df[gtrends_df$date >= "2020-02-01",]
 
-#### Add in ISO 3
+#### Add in ISO 3 and Continent
 world_df <- readRDS(file.path(dropbox_file_path, "Data", "world_shapefile", "FinalData", "world_ne.Rds"))
 world_df$geometry <- NULL
 
@@ -50,4 +50,6 @@ saveRDS(world_ne_sf, file.path(DASHBOARD_PATH, "world_ne.Rds"))
 
 #readOGR(dsn = file.path(dropbox_file_path, "Data", "world_shapefile", "RawData"),
 #        layer = "ne_50m_admin_0_countries")
+
+
 
