@@ -24,6 +24,8 @@ gtrends_df <- gtrends_df %>%
   mutate(hits_ma7_lag7 = lag(hits_ma7, 7)) %>%
   mutate(cases_lag7 = lag(cases, 7),
          death_lag7 = lag(death, 7)) %>%
+  mutate(cases_total = max(cases, na.rm=T),
+         death_total = max(death, na.rm=T)) %>%
   ungroup() %>%
   mutate(hits_ma7_7dayinc = hits_ma7 - hits_ma7_lag7,
          cases_7dayinc = cases - cases_lag7,
@@ -34,6 +36,7 @@ gtrends_df <- gtrends_df %>%
                 hits, hits_ma7, hits_ma7_7dayinc,
                 cases, death,
                 cases_new, death_new,
+                cases_total, death_total,
                 cases_7dayinc, death_7dayinc)
 
 # Lags -------------------------------------------------------------------------
@@ -81,9 +84,14 @@ hits_vars <- names(gtrends_df) %>% str_subset("hits_") %>%
   str_subset("lead|lag")
 
 gtrends_long_df <- gtrends_df %>%
-  dplyr::select(c("Country", "geo", "date", "keyword_en", "cases_new", "death_new", 
+  dplyr::select(c("Country", "geo", "date", "keyword_en", 
+                  "cases_total", "death_total", 
+                  "cases_new", "death_new", 
                   "cases_7dayinc", "death_7dayinc", hits_vars)) %>%
-  pivot_longer(cols = -c(Country, geo, date, keyword_en, cases_7dayinc, cases_new)) %>%
+  pivot_longer(cols = -c(Country, geo, date, keyword_en, 
+                         cases_total, death_total,
+                         cases_7dayinc, cases_new,
+                         death_7dayinc, death_new)) %>%
   mutate(time_lag = name %>%
            str_replace_all("hits_ma7_7dayinc_", "") %>%
            str_replace_all("hits_ma7_", "") %>%
@@ -103,10 +111,13 @@ cor_df <- gtrends_long_df %>%
   mutate(cor_cases_new = cor(cases_new, hits_value),
          cor_cases_7dayinc = cor(cases_7dayinc, hits_value),
          cor_death_new = cor(death_new, hits_value),
-         cor_death_7dayinc = cor(death_7dayinc, hits_value))
+         cor_death_7dayinc = cor(death_7dayinc, hits_value)) %>%
+  ungroup()
 
-# Export 
-
+# Export -----------------------------------------------------------------------
+saveRDS(cor_df, file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
+                  "global_with_refstate",
+                  paste0("gl_gtrends_ref","US","_adj_cases_correlations.Rds")))
 
 
 

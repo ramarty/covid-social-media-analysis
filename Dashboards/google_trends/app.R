@@ -63,6 +63,8 @@ library(hrbrthemes)
 
 gtrends_df <- readRDS(file.path("data", "gtrends.Rds"))
 world_sf <- readRDS(file.path("data", "world_ne.Rds"))
+cor_df <- readRDS(file.path(DASHBOARD_PATH, "correlations.Rds"))
+cor_max_df <- readRDS(file.path(DASHBOARD_PATH, "correlations_max_lag.Rds"))
 
 # UI -==========================================================================
 ui <- fluidPage(
@@ -95,44 +97,63 @@ ui <- fluidPage(
           
         ),
         
+        
         fluidRow(
           
-          column(2,
-                 
-                 selectInput(
-                   "select_keyword",
-                   label = strong("Keyword"),
-                   choices = gtrends_df$keyword_en %>% unique %>% sort(),
-                   selected = "Loss of Smell",
-                   multiple = F
-                 ),
-                 
-                 selectInput(
-                   "select_covid_type",
-                   label = strong("Cases/Deaths"),
-                   choices = c("Cases", "Deaths"),
-                   selected = "Cases",
-                   multiple = F
-                 ),
-                 
-                 selectInput(
-                   "select_continent",
-                   label = strong("Continent"),
-                   choices = c("All", world_sf$continent %>% unique()),
-                   selected = "All",
-                   multiple = F
-                 ),
-                 
-          ),
+          fluidRow(
+            
+            column(3,
+                   
+                   ),
+            
+            column(2,
+                   
+                   selectInput(
+                     "select_keyword",
+                     label = strong("Keyword"),
+                     choices = gtrends_df$keyword_en %>% unique %>% sort(),
+                     selected = "Loss of Smell",
+                     multiple = F
+                   )
+            ),
+            
+            column(2,
+                   
+                   selectInput(
+                     "select_covid_type",
+                     label = strong("Cases/Deaths"),
+                     choices = c("Cases", "Deaths"),
+                     selected = "Cases",
+                     multiple = F
+                   )
+            ),
+            
+            column(2,
+                   
+                   
+                   selectInput(
+                     "select_continent",
+                     label = strong("Continent"),
+                     choices = c("All", world_sf$continent %>% unique()),
+                     selected = "All",
+                     multiple = F
+                   )
+            ),
+            
+          )
           
-          column(6,
+        ),
+        
+        
+        fluidRow(
+          
+          column(8,
                  
                  column(12, align = "center",
                         uiOutput("ui_sort_by")
                  ),
                  
                  uiOutput("ui_line_graph")
-                 
                  
                  
           ),
@@ -181,7 +202,7 @@ ui <- fluidPage(
         fluidRow(
           
           column(4,
-                  # BLANK for offsetting
+                 # BLANK for offsetting
           ),
           
           column(2,
@@ -203,29 +224,20 @@ ui <- fluidPage(
                    multiple = F
                  )
           )
-
+          
         ),
         
         fluidRow(
-          column(8,
+          column(12,
                  
                  plotlyOutput("increase_map"),
                  
                  div(style = 'height:1000px; overflow-y: scroll',
                      htmlOutput("cor_table"))
                  
-          ),
-          
-          column(4,
-                 
-                 wellPanel(
-                   
-                   h4("Stuff here convincing that increase in term is predictive of increase in cases",
-                      align = "center")
-                   
-                 )
-                 
           )
+          
+          
         )
         
         
@@ -310,9 +322,7 @@ server = (function(input, output, session) {
   })
   
   # * Trends Map ---------------------------------------------------------------
-  
   output$increase_map <- renderPlotly({
-    
     
     increase_df <- gtrends_sub_df %>% 
       distinct(Country, geo, increase)

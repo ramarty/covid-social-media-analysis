@@ -56,6 +56,35 @@ world_ne_sf <- world_ne_sf[world_ne_sf$continent != "Seven seas (open ocean)",]
 
 saveRDS(world_ne_sf, file.path(DASHBOARD_PATH, "world_ne.Rds"))
 
+# Correlations -----------------------------------------------------------------
+cor_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
+                            "global_with_refstate",
+                            paste0("gl_gtrends_ref","US","_adj_cases_correlations.Rds")))
+
+cor_df <- cor_df %>%
+  filter(hits_type %in% "hits") %>%
+  dplyr::select(Country, geo, time_lag, keyword_en,
+                cases_total, death_total,
+                cor_cases_new, cor_death_new)
+
+saveRDS(cor_df, file.path(DASHBOARD_PATH, "correlations.Rds"))
+
+# Correlations: Time Lag Max Date ----------------------------------------------
+cor_max_df <- cor_df %>%
+  filter(!is.na(cor_cases_new),
+         !is.na(cor_death_new)) %>%
+  group_by(Country, geo, keyword_en, cases_total, death_total) %>%
+  dplyr::summarise(time_lag_cases_cor_max = time_lag[which.max(cor_cases_new)],
+                   time_lag_death_cor_max = time_lag[which.max(cor_death_new)],
+                   
+                   cor_cases_new_max = cor_cases_new[which.max(cor_cases_new)],
+                   cor_death_new_max = cor_death_new[which.max(cor_death_new)])
+
+saveRDS(cor_max_df, file.path(DASHBOARD_PATH, "correlations_max_lag.Rds"))
+
+
+
+
 
 
 
