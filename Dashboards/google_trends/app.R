@@ -64,7 +64,6 @@ library(hrbrthemes)
 gtrends_df <- readRDS(file.path("data", "gtrends.Rds"))
 world_sf <- readRDS(file.path("data", "world_ne.Rds"))
 
-
 # UI -==========================================================================
 ui <- fluidPage(
   
@@ -96,8 +95,6 @@ ui <- fluidPage(
           
         ),
         
-        
-        
         fluidRow(
           
           column(2,
@@ -126,32 +123,21 @@ ui <- fluidPage(
                    multiple = F
                  ),
                  
-                 #uiOutput("ui_select_covid_cases"),
-                 
-                 # numericInput("select_cor",
-                 #              label = strong("Min. Correlation"),
-                 #              value = -1,
-                 #              min = -1
-                 # )
-                 
           ),
           
           column(6,
                  
                  column(12, align = "center",
-                        
                         uiOutput("ui_sort_by")
-                        
                  ),
                  
                  uiOutput("ui_line_graph")
                  
+                 
+                 
           ),
           
           column(4,
-                 
-                 
-                 
                  
                  wellPanel(
                    
@@ -168,23 +154,83 @@ ui <- fluidPage(
                    plotlyOutput("cor_map",
                                 height = "200px")
                    
-                   
-                   
                    , style = "padding: 2px;"
+                 )
+          )
+        )
+      )
+    ),
+    
+    # ** Google Trends ---------------------------------------------------------
+    tabPanel(
+      "Increase in Search Term",
+      tags$head(includeCSS("styles.css")),
+      
+      dashboardBody(
+        
+        h2("Increase in Search Term",
+           align = "center"),
+        
+        fluidRow(
+          column(8,
+                 "DESCRIPTION HERE.",
+                 offset = 2
+          ),
+        ),
+        
+        fluidRow(
+          
+          column(4,
+                  # BLANK for offsetting
+          ),
+          
+          column(2,
+                 selectInput(
+                   "select_term_increase",
+                   label = strong("Select Term"),
+                   choices = c("Loss of Smell", "Fever"),
+                   selected = "Loss of Smell",
+                   multiple = F
+                 )
+          ),
+          
+          column(2,
+                 selectInput(
+                   "select_continent_increase",
+                   label = strong("Continent"),
+                   choices = c("All", world_sf$continent %>% unique()),
+                   selected = "All",
+                   multiple = F
+                 )
+          )
+
+        ),
+        
+        fluidRow(
+          column(8,
+                 
+                 plotlyOutput("increase_map"),
+                 
+                 div(style = 'height:1000px; overflow-y: scroll',
+                     htmlOutput("cor_table"))
+                 
+          ),
+          
+          column(4,
+                 
+                 wellPanel(
+                   
+                   h4("Stuff here convincing that increase in term is predictive of increase in cases",
+                      align = "center")
+                   
                  )
                  
           )
-          
         )
         
         
-        
-        
-        
       )
-      
     )
-    
   )
 )
 
@@ -213,8 +259,8 @@ server = (function(input, output, session) {
     
     gtrends_sub_df <- gtrends_df %>%
       filter(#covid_total >= input$select_covid_cases,
-             #covid_hits_cor >= input$select_cor,
-             keyword_en %in% input$select_keyword)
+        #covid_hits_cor >= input$select_cor,
+        keyword_en %in% input$select_keyword)
     
     gtrends_sub_df <- gtrends_sub_df %>%
       group_by(geo) %>%
@@ -230,19 +276,153 @@ server = (function(input, output, session) {
     
   })
   
-  # * Correlation Table --------------------------------------------------------
-  # output$cor_table <- renderTable({
-  #   
-  #   gtrends_df <- gtrends_df %>%
-  #     dplyr::distinct(Country, keyword_en, cases_total, death_total, cases_hits_cor, death_hits_cor) %>%
-  #     group_by(Country, cases_total, death_total) %>%
-  #     dplyr::summarise(keyword_en = )
-  #   
-  # })
+  # * Last 7 Days Reactive -----------------------------------------------------
+  gtrends_recent <- reactive({
+    
+    #### Subset to last 14 days and add variable indicating first or second week
+    last_14_days <- gtrends_df$date %>% 
+      unique %>% 
+      sort() %>% 
+      tail(14)
+    
+    gtrends_df$hits <- gtrends_df$hits_ma7
+    
+    first_week  <- last_14_days %>% head(7)
+    second_week <- last_14_days %>% tail(7)
+    
+    gtrends_sub_df <- gtrends_df[gtrends_df$date %in% last_14_days,]
+    gtrends_sub_df <- gtrends_sub_df[gtrends_sub_df$keyword_en %in% "Loss of Smell",]
+    
+    gtrends_sub_df$week <- NA
+    gtrends_sub_df$week[gtrends_sub_df$date %in% first_week] <- 1
+    gtrends_sub_df$week[gtrends_sub_df$date %in% second_week] <- 2
+    
+    #### Table
+    gtrends_sub_df <- gtrends_sub_df %>%
+      group_by(geo) %>%
+      mutate(week_1_hits = mean(hits[week %in% 1]),
+             week_2_hits = mean(hits[week %in% 2])) %>%
+      ungroup() %>%
+      mutate(increase = week_2_hits - week_1_hits) 
+    
+    gtrends_sub_df
+    
+  })
+  
+  # * Trends Map ---------------------------------------------------------------
+  
+  output$increase_map <- renderPlotly({
+    
+    
+    increase_df <- gtrends_sub_df %>% 
+      distinct(Country, geo, increase)
+    
+    world_sf <- merge(world_sf, increase_df, by = "geo", all.x = T, all.y = F)
+    
+    world_sf$text <- paste0(world_sf$name, "\n", world_sf$increase %>% round(2))
+    
+    if(!(input$select_continent %in% "All")){
+      world_sf <- world_sf[world_sf$continent %in% input$select_continent,]
+    }
+    
+    p <- ggplot() +
+      geom_sf(data = world_sf,
+              aes(fill = increase,
+                  text = text),
+              color = NA) +
+      
+      #  scale_fill_gradientn(colors = brewer.pal(n = 9, name = "RdYlGn")) +
+      
+      scale_fill_gradient2(low =  "#1A9850",
+                           mid = "#FFFFBF",
+                           high = "#D73027",
+                           midpoint = 0) +
+      theme_void() +
+      theme(legend.position = "none") +
+      theme(panel.grid.major = element_blank(), 
+            panel.grid.minor = element_blank(),
+            panel.border = element_blank(),
+            panel.background = element_blank(),
+            axis.line = element_blank()) +
+      coord_map(
+        projection = "mercator")
+    
+    p %>%
+      ggplotly(tooltip = "text") %>%
+      layout(plot_bgcolor='transparent',
+             paper_bgcolor='transparent') %>%
+      config(displayModeBar = F)
+    
+    
+    
+    
+  })
+  
+  
+  
+  # * Trends Table --------------------------------------------------------
+  output$cor_table <- renderUI({
+    
+    #### Define Colors
+    customGreen = "#71CA97"
+    customGreen0 = "#DeF7E9"
+    customRed = "#ff7f7f"
+    customRed0 = "#FA614B66"
+    customGreen0 = "#DeF7E9"
+    customYellow = "goldenrod2"
+    
+    data_for_table <- gtrends_recent() %>%
+      group_by(Country, increase, cases_total) %>%
+      summarize(
+        TrendSparkline = spk_chr(
+          hits, 
+          type ="line",
+          lineColor = 'black', 
+          fillColor = "orange", 
+          height=40,
+          width=90
+        ),
+        week_2_hits = week_2_hits[1]
+      ) %>%
+      dplyr::select(Country, cases_total, increase, week_2_hits, TrendSparkline) %>%
+      arrange(-increase)
+    
+    #### Make Table
+    f_list <- list(
+      `var1` = formatter("span", style = ~ style(color = "black")),
+      `var2` = formatter("span", style = ~ style(color = "black")),
+      `var3` = formatter("span", style = ~ style(color = "black")),
+      `var4` = formatter("span", style = ~ style(color = "black"))
+    )
+    
+    names_vec <- c("Country", "Total Cases", "Increase", "Average Hits List Week","Trend")
+    names(f_list)         <- names_vec[1:4]
+    names(data_for_table) <- names_vec
+    
+    # https://github.com/renkun-ken/formattable/issues/89
+    
+    table_max <- 10
+    
+    l <- formattable(
+      data_for_table %>% as.data.table(), # [1:table_max,]
+      align = c("l", "l", "l", "l"),
+      f_list
+    ) %>% format_table(align = c("l", "l", "l", "l")) %>%
+      htmltools::HTML() %>%
+      div() %>%
+      # use new sparkline helper for adding dependency
+      spk_add_deps() %>%
+      # use column for bootstrap sizing control
+      # but could also just wrap in any tag or tagList
+      {column(width=12, .)}
+    
+    l
+    
+  })
   
   # * Line Graph ---------------------------------------------------------------
   output$line_graph <- renderPlot({
-
+    
     df <- gtrends_r()
     
     if(input$sort_by %in% c("Cases", "Deaths")){
@@ -347,40 +527,11 @@ server = (function(input, output, session) {
       coord_map(
         projection = "mercator")
     
-    
-    
-    
     p %>%
       ggplotly(tooltip = "text") %>%
       layout(plot_bgcolor='transparent',
              paper_bgcolor='transparent') %>%
       config(displayModeBar = F)
-    
-    
-    
-    # use style to modify layer
-    #p <- style(p, hoverinfo = 'none', traces = c(3))
-    
-    # use plotly_build to modify layer
-    #p <- plotly_build(p)
-    #str(p$x$layout$annotations) # check annotations
-    #p$x$layout$annotations = NULL # remove annotation
-    #p
-    # https://stackoverflow.com/questions/54695153/fix-plotly-legend-position-and-disable-plotly-panel-for-shiny-in-rmarkdown
-    
-    
-    
-    # plot_ly(world_sf,
-    #         color = ~covid_hits_cor,
-    #         colors = 'Purples',
-    #         stroke = I("black"),
-    #         span = I(1)) %>%
-    #   layout(plot_bgcolor='transparent',
-    #          paper_bgcolor='transparent') %>%
-    #   config(displayModeBar = F) %>%
-    #   layout(legend = list(orientation = "h",   # show entries horizontally
-    #                        xanchor = "center",  # use center of legend as anchor
-    #                        x = 0.5))
     
   })
   

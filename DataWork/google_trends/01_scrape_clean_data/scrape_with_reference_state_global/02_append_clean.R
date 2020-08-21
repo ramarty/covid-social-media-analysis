@@ -41,6 +41,7 @@ languages <- languages %>%
 gtrends_df <- merge(gtrends_df, languages, by = "geo", all.x = T, all.y = F)
 
 #### Fix language code in gtrends dataset
+gtrends_df <- gtrends_df[!(gtrends_df$language %in% c("pr", "ge")),]
 #gtrends_df$language[gtrends_df$language %in% "ge"] <- "de"
 #gtrends_df$language[gtrends_df$language %in% "pr"] <- "pt"
 

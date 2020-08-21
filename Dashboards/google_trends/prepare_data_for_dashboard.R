@@ -48,7 +48,6 @@ gtrends_df <- merge(gtrends_df, world_df, by = "geo", all.x=F, all.y = F)
 saveRDS(gtrends_df, file.path(DASHBOARD_PATH, "gtrends.Rds"))
 
 # World Shapefile --------------------------------------------------------------
-
 world_ne_sf <- readRDS(file.path(dropbox_file_path, "Data", "world_shapefile", "FinalData",
                                  "world_ne.Rds"))
 
@@ -58,10 +57,6 @@ world_ne_sf <- world_ne_sf[world_ne_sf$continent != "Seven seas (open ocean)",]
 saveRDS(world_ne_sf, file.path(DASHBOARD_PATH, "world_ne.Rds"))
 
 
-
-
-#readOGR(dsn = file.path(dropbox_file_path, "Data", "world_shapefile", "RawData"),
-#        layer = "ne_50m_admin_0_countries")
 
 
 
