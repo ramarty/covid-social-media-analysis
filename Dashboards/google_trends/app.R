@@ -126,13 +126,13 @@ ui <- fluidPage(
                    multiple = F
                  ),
                  
-                 uiOutput("ui_select_covid_cases"),
+                 #uiOutput("ui_select_covid_cases"),
                  
-                 numericInput("select_cor",
-                              label = strong("Min. Correlation"),
-                              value = -1,
-                              min = -1
-                 )
+                 # numericInput("select_cor",
+                 #              label = strong("Min. Correlation"),
+                 #              value = -1,
+                 #              min = -1
+                 # )
                  
           ),
           
@@ -212,8 +212,8 @@ server = (function(input, output, session) {
     gtrends_df$hits <- gtrends_df$hits_ma7 
     
     gtrends_sub_df <- gtrends_df %>%
-      filter(covid_total >= input$select_covid_cases,
-             covid_hits_cor >= input$select_cor,
+      filter(#covid_total >= input$select_covid_cases,
+             #covid_hits_cor >= input$select_cor,
              keyword_en %in% input$select_keyword)
     
     gtrends_sub_df <- gtrends_sub_df %>%
