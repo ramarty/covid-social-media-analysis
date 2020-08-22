@@ -25,8 +25,6 @@ for(language in c("pt", "en", "es", "fr", "ar", "de", "zh", "nl", "it", "no")){
   keywords_vec <- keywords[[paste0("keyword_", language)]] %>% tolower() %>% as.character()
   keywords_vec <- keywords_vec[keywords_vec != ""]
   
-  keywords_vec <- keywords_vec[1:8]
-  
   # ISO Codes --------------------------------------------------------------------
   #isocodes <- ISO_3166_1 # from ISOcodes package
   
@@ -146,7 +144,7 @@ for(language in c("pt", "en", "es", "fr", "ar", "de", "zh", "nl", "it", "no")){
           
           saveRDS(term_df, out_path)
           
-          #Sys.sleep(15) # pause after each term
+          Sys.sleep(15) # pause after each term
           
         }, error=function(e){})
         

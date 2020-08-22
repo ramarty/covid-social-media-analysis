@@ -59,13 +59,6 @@ library(lubridate)
 library(geosphere)
 library(hrbrthemes)
 
-# LOAD/PREP DATA ===============================================================
-
-gtrends_df <- readRDS(file.path("data", "gtrends.Rds"))
-world_sf <- readRDS(file.path("data", "world_ne.Rds"))
-cor_df <- readRDS(file.path(DASHBOARD_PATH, "correlations.Rds"))
-cor_max_df <- readRDS(file.path(DASHBOARD_PATH, "correlations_max_lag.Rds"))
-
 # UI -==========================================================================
 ui <- fluidPage(
   
@@ -88,10 +81,11 @@ ui <- fluidPage(
         
         fluidRow(
           column(8,
-                 "This page shows how well different Google search terms correlate with COVID-19 cases and deaths. 
-                 Predictive search terms can help track the spread of COVID-19, particularly when official data may
-                 take time to be released. We explore how the strength of the correlation varies accross countries;
-                 differences may arise due to different patterns of search behavior or people less frequently using Google.",
+                 "This page shows (1) how well different Google search terms correlate with COVID-19 cases and deaths 
+                 and (2) the time lag of Google search terms where the correlation is strongest. Trends in search terms 
+                 correlated with COVID cases/deaths can be used to indicate possible increases or decreases in COVID cases/deaths.
+                 Search term trends should not subsitute for official data; however, predictions may be useful when official 
+                 data may take time to be captured.",
                  offset = 2
           )
           
@@ -104,14 +98,17 @@ ui <- fluidPage(
             
             column(3,
                    
-                   ),
+            ),
             
             column(2,
                    
                    selectInput(
                      "select_keyword",
                      label = strong("Keyword"),
-                     choices = gtrends_df$keyword_en %>% unique %>% sort(),
+                     choices = c("Loss of Smell",
+                                 "I Can't Smell",
+                                 "Fever",
+                                 "Cough"),
                      selected = "Loss of Smell",
                      multiple = F
                    )
@@ -130,11 +127,16 @@ ui <- fluidPage(
             
             column(2,
                    
-                   
                    selectInput(
                      "select_continent",
                      label = strong("Continent"),
-                     choices = c("All", world_sf$continent %>% unique()),
+                     choices = c("All",
+                                 "Asia",
+                                 "Africa",
+                                 "Europe",
+                                 "South America",
+                                 "Oceania",
+                                 "North America"),
                      selected = "All",
                      multiple = F
                    )
@@ -150,7 +152,7 @@ ui <- fluidPage(
           column(8,
                  
                  column(12, align = "center",
-                        uiOutput("ui_sort_by")
+                        uiOutput("ui_select_sort_by")
                  ),
                  
                  uiOutput("ui_line_graph")
@@ -165,12 +167,23 @@ ui <- fluidPage(
                    h4(textOutput("cor_title_text"),
                       align = "center"),
                    
-                   column(12, strong("Distribution"), align = "center"),
+                   column(12, strong(textOutput("text_best_time_lag")), align = "center"),
+                   
+                   br(),
+                   br(),
+                   br(),
+                   
+                   plotlyOutput("cor_histogram_time_lag",
+                                height = "200px"),
+                   
+                   column(12, strong(textOutput("text_cor_countries")), align = "center"),
+
+                   br(),
+                   br(),
+                   br(),
                    
                    plotlyOutput("cor_histogram",
                                 height = "200px"),
-                   
-                   column(12, strong("Map"), align = "center"),
                    
                    plotlyOutput("cor_map",
                                 height = "200px")
@@ -184,7 +197,7 @@ ui <- fluidPage(
     
     # ** Google Trends ---------------------------------------------------------
     tabPanel(
-      "Increase in Search Term",
+      "Changes in Search Term",
       tags$head(includeCSS("styles.css")),
       
       dashboardBody(
@@ -207,9 +220,12 @@ ui <- fluidPage(
           
           column(2,
                  selectInput(
-                   "select_term_increase",
+                   "select_term_change",
                    label = strong("Select Term"),
-                   choices = c("Loss of Smell", "Fever"),
+                   choices = c("Loss of Smell",
+                               "I Can't Smell",
+                               "Fever",
+                               "Cough"),
                    selected = "Loss of Smell",
                    multiple = F
                  )
@@ -217,9 +233,15 @@ ui <- fluidPage(
           
           column(2,
                  selectInput(
-                   "select_continent_increase",
+                   "select_continent_change",
                    label = strong("Continent"),
-                   choices = c("All", world_sf$continent %>% unique()),
+                   choices = c("All",
+                               "Asia",
+                               "Africa",
+                               "Europe",
+                               "South America",
+                               "Oceania",
+                               "North America"),
                    selected = "All",
                    multiple = F
                  )
@@ -250,112 +272,15 @@ ui <- fluidPage(
 # SERVER =======================================================================
 server = (function(input, output, session) {
   
-  # * gTrends Filtered ---------------------------------------------------------
-  gtrends_r <- reactive({
-    
-    if(input$select_covid_type %in% "Cases"){
-      gtrends_df$covid <- gtrends_df$cases_new
-      gtrends_df$covid_ma7 <- gtrends_df$cases_new_ma7
-      gtrends_df$covid_total <- gtrends_df$cases_total
-      gtrends_df$covid_hits_cor <- gtrends_df$cases_hits_cor
-    }
-    
-    if(input$select_covid_type %in% "Deaths"){
-      gtrends_df$covid <- gtrends_df$death_new
-      gtrends_df$covid_ma7 <- gtrends_df$death_new_ma7
-      gtrends_df$covid_total <- gtrends_df$death_total
-      gtrends_df$covid_hits_cor <- gtrends_df$death_hits_cor
-    }
-    
-    gtrends_df$hits <- gtrends_df$hits_ma7 
-    
-    gtrends_sub_df <- gtrends_df %>%
-      filter(#covid_total >= input$select_covid_cases,
-        #covid_hits_cor >= input$select_cor,
-        keyword_en %in% input$select_keyword)
-    
-    gtrends_sub_df <- gtrends_sub_df %>%
-      group_by(geo) %>%
-      mutate(hits = hits / max(hits, na.rm = T)) %>% # ensure max is 1 (for eg, for moving avg)
-      mutate(hits = hits * max(covid)) %>%
-      ungroup() 
-    
-    if(!(input$select_continent %in% "All")){
-      gtrends_sub_df <- gtrends_sub_df[gtrends_sub_df$continent %in% input$select_continent,]
-    }
-    
-    gtrends_sub_df
-    
-  })
-  
-  # * Last 7 Days Reactive -----------------------------------------------------
-  gtrends_recent <- reactive({
-    
-    #### Subset to last 14 days and add variable indicating first or second week
-    last_14_days <- gtrends_df$date %>% 
-      unique %>% 
-      sort() %>% 
-      tail(14)
-    
-    gtrends_df$hits <- gtrends_df$hits_ma7
-    
-    first_week  <- last_14_days %>% head(7)
-    second_week <- last_14_days %>% tail(7)
-    
-    gtrends_sub_df <- gtrends_df[gtrends_df$date %in% last_14_days,]
-    gtrends_sub_df <- gtrends_sub_df[gtrends_sub_df$keyword_en %in% "Loss of Smell",]
-    
-    gtrends_sub_df$week <- NA
-    gtrends_sub_df$week[gtrends_sub_df$date %in% first_week] <- 1
-    gtrends_sub_df$week[gtrends_sub_df$date %in% second_week] <- 2
-    
-    #### Table
-    gtrends_sub_df <- gtrends_sub_df %>%
-      group_by(geo) %>%
-      mutate(week_1_hits = mean(hits[week %in% 1]),
-             week_2_hits = mean(hits[week %in% 2])) %>%
-      ungroup() %>%
-      mutate(increase = week_2_hits - week_1_hits) 
-    
-    gtrends_sub_df
-    
-  })
-  
   # * Trends Map ---------------------------------------------------------------
   output$increase_map <- renderPlotly({
     
-    increase_df <- gtrends_sub_df %>% 
-      distinct(Country, geo, increase)
-    
-    world_sf <- merge(world_sf, increase_df, by = "geo", all.x = T, all.y = F)
-    
-    world_sf$text <- paste0(world_sf$name, "\n", world_sf$increase %>% round(2))
-    
-    if(!(input$select_continent %in% "All")){
-      world_sf <- world_sf[world_sf$continent %in% input$select_continent,]
-    }
-    
-    p <- ggplot() +
-      geom_sf(data = world_sf,
-              aes(fill = increase,
-                  text = text),
-              color = NA) +
-      
-      #  scale_fill_gradientn(colors = brewer.pal(n = 9, name = "RdYlGn")) +
-      
-      scale_fill_gradient2(low =  "#1A9850",
-                           mid = "#FFFFBF",
-                           high = "#D73027",
-                           midpoint = 0) +
-      theme_void() +
-      theme(legend.position = "none") +
-      theme(panel.grid.major = element_blank(), 
-            panel.grid.minor = element_blank(),
-            panel.border = element_blank(),
-            panel.background = element_blank(),
-            axis.line = element_blank()) +
-      coord_map(
-        projection = "mercator")
+    p <- readRDS(file.path("precomputed_figures", 
+                           paste0("fig_hits_change_map",
+                                  "_keyword", input$select_term_change,
+                                  "_cases_deaths", "Cases",
+                                  "_continent", input$select_continent_change,
+                                  ".Rds")))
     
     p %>%
       ggplotly(tooltip = "text") %>%
@@ -363,68 +288,17 @@ server = (function(input, output, session) {
              paper_bgcolor='transparent') %>%
       config(displayModeBar = F)
     
-    
-    
-    
   })
-  
-  
   
   # * Trends Table --------------------------------------------------------
   output$cor_table <- renderUI({
     
-    #### Define Colors
-    customGreen = "#71CA97"
-    customGreen0 = "#DeF7E9"
-    customRed = "#ff7f7f"
-    customRed0 = "#FA614B66"
-    customGreen0 = "#DeF7E9"
-    customYellow = "goldenrod2"
-    
-    data_for_table <- gtrends_recent() %>%
-      group_by(Country, increase, cases_total) %>%
-      summarize(
-        TrendSparkline = spk_chr(
-          hits, 
-          type ="line",
-          lineColor = 'black', 
-          fillColor = "orange", 
-          height=40,
-          width=90
-        ),
-        week_2_hits = week_2_hits[1]
-      ) %>%
-      dplyr::select(Country, cases_total, increase, week_2_hits, TrendSparkline) %>%
-      arrange(-increase)
-    
-    #### Make Table
-    f_list <- list(
-      `var1` = formatter("span", style = ~ style(color = "black")),
-      `var2` = formatter("span", style = ~ style(color = "black")),
-      `var3` = formatter("span", style = ~ style(color = "black")),
-      `var4` = formatter("span", style = ~ style(color = "black"))
-    )
-    
-    names_vec <- c("Country", "Total Cases", "Increase", "Average Hits List Week","Trend")
-    names(f_list)         <- names_vec[1:4]
-    names(data_for_table) <- names_vec
-    
-    # https://github.com/renkun-ken/formattable/issues/89
-    
-    table_max <- 10
-    
-    l <- formattable(
-      data_for_table %>% as.data.table(), # [1:table_max,]
-      align = c("l", "l", "l", "l"),
-      f_list
-    ) %>% format_table(align = c("l", "l", "l", "l")) %>%
-      htmltools::HTML() %>%
-      div() %>%
-      # use new sparkline helper for adding dependency
-      spk_add_deps() %>%
-      # use column for bootstrap sizing control
-      # but could also just wrap in any tag or tagList
-      {column(width=12, .)}
+    l <- readRDS(file.path("precomputed_figures", 
+                           paste0("fig_hits_change_table",
+                                  "_keyword", input$select_term_change,
+                                  "_cases_deaths", "Cases",
+                                  "_continent", input$select_continent_change,
+                                  ".Rds")))
     
     l
     
@@ -433,69 +307,44 @@ server = (function(input, output, session) {
   # * Line Graph ---------------------------------------------------------------
   output$line_graph <- renderPlot({
     
-    df <- gtrends_r()
-    
-    if(input$sort_by %in% c("Cases", "Deaths")){
-      df$Country <- df$Country %>% as.factor() %>% reorder(-df$covid)
-    }
-    
-    if(input$sort_by %in% "Correlation"){
-      df$Country <- df$Country %>% as.factor() %>% reorder(-df$covid_hits_cor)
-    }
-    
-    p <- ggplot(df, aes(x = date)) +
-      geom_col(aes(y = covid, fill = paste("COVID-19", input$select_covid_type))) +
-      geom_line(aes(y = hits, color = paste0("Search Popularity of ", input$select_keyword))) +
-      facet_wrap(~Country,
-                 scales = "free_y",
-                 ncol = 2) +
-      scale_fill_manual(values = "orange1") +
-      scale_color_manual(values = "green4") +
-      labs(x = "", y = paste("COVID-19", input$select_covid_type),
-           fill = "", color = "") +
-      theme_ipsum() + 
-      theme(legend.position="top",
-            legend.text = element_text(size=14))
-    
-    #ggplotly(p)
+    p <- readRDS(file.path("precomputed_figures", 
+                           paste0("fig_line_cor",
+                                  "_keyword", input$select_keyword,
+                                  "_cases_deaths", input$select_covid_type,
+                                  "_continent", input$select_continent,
+                                  "_sort_by", input$select_sort_by,
+                                  ".Rds")))
     p
     
   }, bg="transparent")
   
-  # * Histogram ----------------------------------------------------------------
+  # * Histogram - Time Lag Max Cor ---------------------------------------------
+  output$cor_histogram_time_lag <- renderPlotly({
+    
+    p <- readRDS(file.path("precomputed_figures", 
+                           paste0("fig_time_lag_hist",
+                                  "_keyword", input$select_keyword,
+                                  "_cases_deaths", input$select_covid_type,
+                                  "_continent", input$select_continent,
+                                  ".Rds")))
+    
+    p %>%
+      ggplotly(tooltip = "text") %>%
+      layout(plot_bgcolor='transparent', paper_bgcolor='transparent') %>%
+      config(displayModeBar = F)
+    
+  })
+  
+  
+  # * Histogram - Correlation --------------------------------------------------
   output$cor_histogram <- renderPlotly({
     
-    #print(head(gtrends_r()))
-    #print(gtrends_r()$covid_hits_cor)
-    
-    df <- gtrends_r() %>%
-      dplyr::mutate(bins = round(covid_hits_cor*100, digits=-1) / 100) %>%
-      distinct(geo, bins) %>%
-      dplyr::group_by(bins) %>%
-      dplyr::summarise(N = n()) %>%
-      ungroup() %>%
-      mutate(text = paste0("Correlation: ", bins, "\nN countries: ", N)) 
-    
-    df_m <- seq(from = min(df$bins),
-                to = max(df$bins),
-                by = .1) %>%
-      as.data.frame() %>%
-      dplyr::rename(bins = ".") %>%
-      mutate(bins = bins %>% round(1))
-    
-    df <- merge(df, df_m, by = "bins")  
-    
-    p <- ggplot(df) +
-      geom_col(aes(x = bins %>% as.factor(), 
-                   y = N, 
-                   fill = bins,
-                   text = text), color = "black") +
-      labs(x = "Correlation",
-           y = "Number of Countries") +
-      scale_fill_gradient(low = "white",
-                          high = muted("red")) +
-      theme_ipsum() +
-      theme(legend.position = "none")
+    p <- readRDS(file.path("precomputed_figures", 
+                           paste0("fig_cor_hist",
+                                  "_keyword", input$select_keyword,
+                                  "_cases_deaths", input$select_covid_type,
+                                  "_continent", input$select_continent,
+                                  ".Rds")))
     
     p %>%
       ggplotly(tooltip = "text") %>%
@@ -508,34 +357,12 @@ server = (function(input, output, session) {
   # * Histogram ----------------------------------------------------------------
   output$cor_map <- renderPlotly({
     
-    df <- gtrends_r() 
-    df <- df %>%
-      distinct(geo, covid_hits_cor)
-    
-    world_sf <- merge(world_sf, df, by = "geo", all.x = T, all.y = F)
-    
-    world_sf$text <- paste0(world_sf$name, "\n", world_sf$covid_hits_cor %>% round(2))
-    
-    if(!(input$select_continent %in% "All")){
-      world_sf <- world_sf[world_sf$continent %in% input$select_continent,]
-    }
-    
-    p <- ggplot() +
-      geom_sf(data = world_sf,
-              aes(fill = covid_hits_cor,
-                  text = text),
-              color = NA) +
-      scale_fill_gradient(low = "white",
-                          high = muted("red")) +
-      theme_void() +
-      theme(legend.position = "none") +
-      theme(panel.grid.major = element_blank(), 
-            panel.grid.minor = element_blank(),
-            panel.border = element_blank(),
-            panel.background = element_blank(),
-            axis.line = element_blank()) +
-      coord_map(
-        projection = "mercator")
+    p <- readRDS(file.path("precomputed_figures", 
+                           paste0("fig_cor_map",
+                                  "_keyword", input$select_keyword,
+                                  "_cases_deaths", input$select_covid_type,
+                                  "_continent", input$select_continent,
+                                  ".Rds")))
     
     p %>%
       ggplotly(tooltip = "text") %>%
@@ -544,10 +371,6 @@ server = (function(input, output, session) {
       config(displayModeBar = F)
     
   })
-  
-  
-  
-  
   
   # * renderUIs ----------------------------------------------------------------
   output$ui_select_covid_cases <- renderUI({
@@ -570,22 +393,76 @@ server = (function(input, output, session) {
     
   })
   
+  output$text_best_time_lag <- renderText({
+    
+    best_time_lag <- readRDS(file.path("precomputed_figures", 
+                                       paste0("stat_time_lag_best",
+                                              "_keyword", input$select_keyword,
+                                              "_cases_deaths", input$select_covid_type,
+                                              "_continent", input$select_continent,
+                                              ".Rds")))
+    
+    txt <- paste0("Across countries, the search term popularity of ",
+                  input$select_keyword,
+                  " is most strongly correlated with COVID ",
+                  input$select_covid_type, " ",
+                  abs(best_time_lag), " days ",
+                  ifelse(best_time_lag < 0, "before", "after"),
+                  ".")
+    
+    txt
+    
+  })
+  
+  output$text_cor_countries <- renderText({
+    
+    cor_country <- readRDS(file.path("precomputed_figures",
+                                     paste0("stat_cor_countries",
+                                            "_keyword", input$select_keyword,
+                                            "_cases_deaths", input$select_covid_type,
+                                            "_continent", input$select_continent,
+                                            ".Rds")))
+    
+    txt <- paste0("Across countries, the average correlation between the search popularity of ",
+                   input$select_keyword,
+                   " and COVID ",
+                   input$select_covid_type, 
+                   " is ",
+                   round(mean(cor_country$cor_covid_new), 2),
+                   ". ",
+                   cor_country$Country[which.max(cor_country$cor_covid_new)],
+                   " has the strongest correlation (",
+                   max(cor_country$cor_covid_new) %>% round(2),
+                   ").")
+    
+    txt
+    
+  })
+  
+  
+  
+  
+  
+  
+  
+  
   
   output$ui_line_graph <- renderUI({
     
-    df <- gtrends_r()
-    n_states <- df$geo %>% unique %>% length()
-    
-    rows <- round(n_states/2)
+    n_states <- readRDS(file.path("precomputed_figures", paste0("stat_line_cor_N_countries",
+                                                                "_keyword", input$select_keyword,
+                                                                "_cases_deaths", input$select_covid_type,
+                                                                "_continent", input$select_continent,
+                                                                ".Rds")))
     
     plotOutput("line_graph",
-               height = paste0(rows/2*300,"px"))
+               height = paste0(n_states*150,"px"))
   })
   
-  output$ui_sort_by <- renderUI({
+  output$ui_select_sort_by <- renderUI({
     
     selectInput(
-      "sort_by",
+      "select_sort_by",
       label = strong("Sort By"),
       choices = c("Name", input$select_covid_type, "Correlation"),
       selected = "Name",
@@ -593,14 +470,6 @@ server = (function(input, output, session) {
     )
     
   })
-  
-  
-  
-  
-  
-  
-  
-  
   
 })
 

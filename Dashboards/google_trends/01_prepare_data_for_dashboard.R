@@ -65,7 +65,8 @@ cor_df <- cor_df %>%
   filter(hits_type %in% "hits") %>%
   dplyr::select(Country, geo, time_lag, keyword_en,
                 cases_total, death_total,
-                cor_cases_new, cor_death_new)
+                cor_cases_new, cor_death_new) %>%
+  unique()
 
 saveRDS(cor_df, file.path(DASHBOARD_PATH, "correlations.Rds"))
 
@@ -78,7 +79,8 @@ cor_max_df <- cor_df %>%
                    time_lag_death_cor_max = time_lag[which.max(cor_death_new)],
                    
                    cor_cases_new_max = cor_cases_new[which.max(cor_cases_new)],
-                   cor_death_new_max = cor_death_new[which.max(cor_death_new)])
+                   cor_death_new_max = cor_death_new[which.max(cor_death_new)]) %>%
+  unique()
 
 saveRDS(cor_max_df, file.path(DASHBOARD_PATH, "correlations_max_lag.Rds"))
 
