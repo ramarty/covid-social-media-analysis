@@ -13,7 +13,7 @@ temp <- list.files(IN_PATH, pattern = "*.Rds") %>%
     if((i %% 100) %in% 0) print(i)
     i <<- i + 1
     
-    file.copy(file.path(OUT_PATH, file_i),
+    file.copy(file.path(IN_PATH, file_i),
               paste0(OUT_PATH, "/"),
               overwrite=T)
   })

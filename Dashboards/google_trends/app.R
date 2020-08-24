@@ -58,7 +58,8 @@ library(htmltools)
 library(scales)
 library(lubridate)
 library(geosphere)
-library(hrbrthemes)
+#library(hrbrthemes)
+#hrbrthemes::import_roboto_condensed()
 
 keyword_list <- readRDS(file.path("precomputed_figures", 
                                   paste0("keyword_list",
@@ -177,6 +178,9 @@ ui <- fluidPage(
                    
                    plotlyOutput("cor_histogram_time_lag",
                                 height = "200px"),
+                   
+                   br(),
+                   br(),
                    
                    column(12, strong(textOutput("text_cor_countries")), align = "center"),
                    

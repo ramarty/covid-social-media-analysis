@@ -16,7 +16,7 @@ keyword_list <- unique(gtrends_df$keyword_en) %>% sort()
 saveRDS(keyword_list, file.path(FIGURES_PATH, paste0("keyword_list",
                                                    ".Rds")))
 
-for(keyword in keyword_list){
+for(keyword in c("Loss of Smell", keyword_list)){
   for(cases_deaths in c("Cases",
                         "Deaths")){
     for(continent in c("All",
@@ -190,9 +190,10 @@ for(keyword in keyword_list){
                title = paste0("Trends in COVID ",tolower(cases_deaths),  
                               "\nand search popularity of ",
                               keyword, "\n \n")) +
-          theme_ipsum() + 
+          theme_minimal() + 
           theme(legend.position="top",
-                legend.text = element_text(size=14))
+                legend.text = element_text(size=14),
+                plot.title = element_text(size = 16, face = "bold"))
         
         p_cor <- cor_df[cor_df$geo %in% GEO_BOTH,] %>%
           ggplot() +
@@ -212,11 +213,12 @@ for(keyword in keyword_list){
                               keyword, 
                               " across different time lags\nof search popularity.")
                ) +
-          theme_ipsum() +
+          theme_minimal() +
           facet_wrap(~Country,
                      ncol = 1) +
           theme(legend.position="top",
-                legend.text = element_text(size=14))
+                legend.text = element_text(size=14),
+                plot.title = element_text(size = 16, face = "bold"))
         
         p_all <- ggarrange(p_line,
                            p_cor,
@@ -265,7 +267,7 @@ for(keyword in keyword_list){
                y = "Number of Countries") +
           scale_fill_gradient(low = "white",
                               high = muted("red")) +
-          theme_ipsum() +
+          theme_minimal() +
           theme(legend.position = "none")
         
         saveRDS(p, file.path(FIGURES_PATH, paste0("fig_cor_hist",
@@ -286,7 +288,7 @@ for(keyword in keyword_list){
           geom_vline(aes(xintercept = time_lag_best), color = "red") +
           labs(x = "Time lag (days) of strongest correlation",
                y = "Number of Countries") +
-          theme_ipsum()
+          theme_minimal()
         
         saveRDS(p, file.path(FIGURES_PATH, paste0("fig_time_lag_hist",
                                                   "_keyword", keyword,
