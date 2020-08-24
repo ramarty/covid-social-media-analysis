@@ -297,12 +297,32 @@ server = (function(input, output, session) {
   # * Trends Table --------------------------------------------------------
   output$cor_table <- renderUI({
     
-    l <- readRDS(file.path("precomputed_figures", 
-                           paste0("fig_hits_change_table",
+    data_for_table <- readRDS(file.path("precomputed_figures",
+                           paste0("data_hits_change_table",
                                   "_keyword", input$select_term_change,
                                   "_cases_deaths", "Cases",
                                   "_continent", input$select_continent_change,
                                   ".Rds")))
+    
+    f_list <- list(
+      `var1` = formatter("span", style = ~ style(color = "black")),
+      `var2` = formatter("span", style = ~ style(color = "black")),
+      `var3` = formatter("span", style = ~ style(color = "black")),
+      `var4` = formatter("span", style = ~ style(color = "black"))
+    )
+
+    l <- formattable(
+      data_for_table %>% as.data.table(), # [1:table_max,]
+      align = c("l", "l", "l", "l"),
+      f_list
+    ) %>% format_table(align = c("l", "l", "l", "l")) %>%
+      htmltools::HTML() %>%
+      div() %>%
+      # use new sparkline helper for adding dependency
+      spk_add_deps() %>%
+      # use column for bootstrap sizing control
+      # but could also just wrap in any tag or tagList
+      {column(width=12, .)}
     
     l
     
