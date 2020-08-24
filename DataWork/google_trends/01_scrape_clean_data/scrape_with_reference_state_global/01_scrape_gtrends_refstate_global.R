@@ -144,7 +144,7 @@ for(language in c("pt", "en", "es", "fr", "ar", "de", "zh", "nl", "it", "no")){
           
           saveRDS(term_df, out_path)
           
-          Sys.sleep(15) # pause after each term
+          Sys.sleep(16) # pause after each term
           
         }, error=function(e){})
         

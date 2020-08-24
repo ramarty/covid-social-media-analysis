@@ -30,6 +30,7 @@ library(ggplot2)
 library(tidyr)
 library(shinyWidgets)
 library(zoo)
+library(cowplot)
 library(bcrypt)
 library(shinyjs)
 library(ngram)
@@ -58,6 +59,10 @@ library(scales)
 library(lubridate)
 library(geosphere)
 library(hrbrthemes)
+
+keyword_list <- readRDS(file.path("precomputed_figures", 
+                                  paste0("keyword_list",
+                                         ".Rds")))
 
 # UI -==========================================================================
 ui <- fluidPage(
@@ -105,10 +110,7 @@ ui <- fluidPage(
                    selectInput(
                      "select_keyword",
                      label = strong("Keyword"),
-                     choices = c("Loss of Smell",
-                                 "I Can't Smell",
-                                 "Fever",
-                                 "Cough"),
+                     choices = keyword_list,
                      selected = "Loss of Smell",
                      multiple = F
                    )
@@ -177,7 +179,7 @@ ui <- fluidPage(
                                 height = "200px"),
                    
                    column(12, strong(textOutput("text_cor_countries")), align = "center"),
-
+                   
                    br(),
                    br(),
                    br(),
@@ -202,14 +204,15 @@ ui <- fluidPage(
       
       dashboardBody(
         
-        h2("Increase in Search Term",
+        h2("Changes in Search Term",
            align = "center"),
         
         fluidRow(
-          column(8,
-                 "DESCRIPTION HERE.",
-                 offset = 2
-          ),
+           column(8,
+                  "This page shows the change in search term activity. We compare the
+                  average search activity from the past week compared with the week before.",
+                  offset = 2
+           ),
         ),
         
         fluidRow(
@@ -222,10 +225,7 @@ ui <- fluidPage(
                  selectInput(
                    "select_term_change",
                    label = strong("Select Term"),
-                   choices = c("Loss of Smell",
-                               "I Can't Smell",
-                               "Fever",
-                               "Cough"),
+                   choices = keyword_list,
                    selected = "Loss of Smell",
                    multiple = F
                  )
@@ -320,6 +320,15 @@ server = (function(input, output, session) {
   
   # * Histogram - Time Lag Max Cor ---------------------------------------------
   output$cor_histogram_time_lag <- renderPlotly({
+    
+    time_lag_best <- readRDS(file.path("precomputed_figures", 
+                                       paste0("stat_time_lag_best",
+                                              "_keyword", input$select_keyword,
+                                              "_cases_deaths", input$select_covid_type,
+                                              "_continent", input$select_continent,
+                                              ".Rds")))
+    
+    time_lag_best <<- time_lag_best
     
     p <- readRDS(file.path("precomputed_figures", 
                            paste0("fig_time_lag_hist",
@@ -424,16 +433,16 @@ server = (function(input, output, session) {
                                             ".Rds")))
     
     txt <- paste0("Across countries, the average correlation between the search popularity of ",
-                   input$select_keyword,
-                   " and COVID ",
-                   input$select_covid_type, 
-                   " is ",
-                   round(mean(cor_country$cor_covid_new), 2),
-                   ". ",
-                   cor_country$Country[which.max(cor_country$cor_covid_new)],
-                   " has the strongest correlation (",
-                   max(cor_country$cor_covid_new) %>% round(2),
-                   ").")
+                  input$select_keyword,
+                  " and COVID ",
+                  input$select_covid_type, 
+                  " is ",
+                  round(mean(cor_country$cor_covid_new), 2),
+                  ". ",
+                  cor_country$Country[which.max(cor_country$cor_covid_new)],
+                  " has the strongest correlation (",
+                  max(cor_country$cor_covid_new) %>% round(2),
+                  ").")
     
     txt
     

@@ -1,17 +1,22 @@
 
+DASHBOARD_PATH <- file.path(dropbox_file_path, "Data", "google_trends", 
+                            "DashboardData", "data")
 
-FIGURES_PATH <- file.path(github_file_path, "Dashboards", "google_trends", "precomputed_figures")
-DASHBOARD_PATH <- file.path(github_file_path, "Dashboards", "google_trends", "data")
+FIGURES_PATH <- file.path(dropbox_file_path, "Data", "google_trends", "DashboardData",
+                          "precomputed_figures")
 
-keyword <- "Loss of Smell"
+keyword <- "Loss of Smell" # "Loss of Smell"
 cases_deaths <- "Cases"
-continent <- "All"
+continent <- "All" # "Asia" # 
 sort_by <- "Name"
 
-for(keyword in c("Loss of Smell",
-                 "I Can't Smell",
-                 "Fever",
-                 "Cough")){
+gtrends_df <- readRDS(file.path(DASHBOARD_PATH, "gtrends.Rds"))
+keyword_list <- unique(gtrends_df$keyword_en) %>% sort()
+
+saveRDS(keyword_list, file.path(FIGURES_PATH, paste0("keyword_list",
+                                                   ".Rds")))
+
+for(keyword in keyword_list){
   for(cases_deaths in c("Cases",
                         "Deaths")){
     for(continent in c("All",
@@ -142,7 +147,10 @@ for(keyword in c("Loss of Smell",
           group_by(geo) %>%
           mutate(hits = hits / max(hits, na.rm = T)) %>% # ensure max is 1 (for eg, for moving avg)
           mutate(hits = hits * max(covid_new)) %>%
-          ungroup() 
+          ungroup() %>%
+          unique()
+        
+        if(nrow(gtrends_sub_df) %in% 0) next
         
         if(sort_by %in% c("Cases", "Deaths")){
           gtrends_sub_df$Country <- gtrends_sub_df$Country %>% 
@@ -165,6 +173,8 @@ for(keyword in c("Loss of Smell",
         }
         
         GEO_BOTH <- intersect(gtrends_sub_df$geo, cor_df$geo)
+        
+        if(length(GEO_BOTH) %in% 0) next
         
         p_line <- ggplot(gtrends_sub_df[gtrends_sub_df$geo %in% GEO_BOTH,], 
                          aes(x = date)) +
@@ -251,7 +261,7 @@ for(keyword in c("Loss of Smell",
                        y = N, 
                        fill = bins,
                        text = text), color = "black") +
-          labs(x = "",
+          labs(x = "Correlation",
                y = "Number of Countries") +
           scale_fill_gradient(low = "white",
                               high = muted("red")) +
@@ -269,7 +279,7 @@ for(keyword in c("Loss of Smell",
           mutate(text = "FILLER") %>%
           ggplot() +
           geom_histogram(aes(x = time_lag_covid_cor_max),
-                         fill = "deepskyblue2",
+                         fill = "palegreen3",
                          color = "black",
                          text = text,
                          binwidth = 5) +
@@ -315,41 +325,7 @@ for(keyword in c("Loss of Smell",
                                                   "_continent", continent,
                                                   ".Rds")))
         
-        # 5. Hits Change Map ---------------------------------------------------
-        change_df <- gtrends_df %>%
-          distinct(geo, Country, hits_ma7_change)
-        
-        world_data_sf <- merge(world_sf, change_df, by = "geo", all.x = T, all.y = F)
-        
-        world_data_sf$text <- paste0(world_data_sf$name, "\n", world_data_sf$hits_ma7_change %>% round(2))
-        
-        p <- ggplot() +
-          geom_sf(data = world_data_sf,
-                  aes(fill = hits_ma7_change,
-                      text = text),
-                  color = NA) +
-          
-          scale_fill_gradient2(low =  "#1A9850",
-                               mid = "#FFFFBF",
-                               high = "#D73027",
-                               midpoint = 0) +
-          theme_void() +
-          theme(legend.position = "none") +
-          theme(panel.grid.major = element_blank(), 
-                panel.grid.minor = element_blank(),
-                panel.border = element_blank(),
-                panel.background = element_blank(),
-                axis.line = element_blank()) #+
-        #coord_map(
-        #  projection = "mercator")
-        
-        saveRDS(p, file.path(FIGURES_PATH, paste0("fig_hits_change_map",
-                                                  "_keyword", keyword,
-                                                  "_cases_deaths", cases_deaths,
-                                                  "_continent", continent,
-                                                  ".Rds")))
-        
-        # 6. Hits Change Table -------------------------------------------------
+        # 5. Hits Change Table -------------------------------------------------
         #### Define Colors
         customGreen = "#71CA97"
         customGreen0 = "#DeF7E9"
@@ -362,7 +338,7 @@ for(keyword in c("Loss of Smell",
         
         data_for_table <- gtrends_df %>%
           filter(!is.na(week)) %>%
-          group_by(Country, hits_ma7_change, cases_total) %>%
+          group_by(Country, hits_change, cases_total) %>%
           summarize(
             TrendSparkline = spk_chr(
               hits, 
@@ -372,10 +348,10 @@ for(keyword in c("Loss of Smell",
               height=40,
               width=90
             ),
-            week_2_hits_ma7 = week_2_hits_ma7[1]
+            week_2_hits = week_2_hits[1]
           ) %>%
-          dplyr::select(Country, cases_total, hits_ma7_change, week_2_hits_ma7, TrendSparkline) %>%
-          arrange(-hits_ma7_change) %>%
+          dplyr::select(Country, cases_total, hits_change, week_2_hits, TrendSparkline) %>%
+          arrange(-hits_change) %>%
           ungroup()
         
         #### Make Table
@@ -406,6 +382,47 @@ for(keyword in c("Loss of Smell",
           {column(width=12, .)}
         
         saveRDS(l, file.path(FIGURES_PATH, paste0("fig_hits_change_table",
+                                                  "_keyword", keyword,
+                                                  "_cases_deaths", cases_deaths,
+                                                  "_continent", continent,
+                                                  ".Rds")))
+        
+        
+        # 6. Hits Change Map ---------------------------------------------------
+        change_df <- gtrends_df %>%
+          distinct(geo, Country, hits_change)
+        
+        #spark_df <- data_for_table %>%
+        #  dplyr::select(Country, Trend)
+        
+        world_data_sf <- merge(world_sf, change_df, by = "geo", all.x = T, all.y = F)
+        #world_data_sf <- merge(world_data_sf, spark_df, by = "Country", all.x = T, all.y = F)
+
+        
+        world_data_sf$text <- paste0(world_data_sf$name, "\n", 
+                                     world_data_sf$hits_change %>% round(2))
+        
+        p <- ggplot() +
+          geom_sf(data = world_data_sf,
+                  aes(fill = hits_change,
+                      text = text),
+                  color = NA) +
+          
+          scale_fill_gradient2(low =  "#1A9850",
+                               mid = "#FFFFBF",
+                               high = "#D73027",
+                               midpoint = 0) +
+          theme_void() +
+          theme(legend.position = "none") +
+          theme(panel.grid.major = element_blank(), 
+                panel.grid.minor = element_blank(),
+                panel.border = element_blank(),
+                panel.background = element_blank(),
+                axis.line = element_blank()) #+
+        #coord_map(
+        #  projection = "mercator")
+        
+        saveRDS(p, file.path(FIGURES_PATH, paste0("fig_hits_change_map",
                                                   "_keyword", keyword,
                                                   "_cases_deaths", cases_deaths,
                                                   "_continent", continent,

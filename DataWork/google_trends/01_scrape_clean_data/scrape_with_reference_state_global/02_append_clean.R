@@ -7,7 +7,18 @@ gtrends_df <- file.path(dropbox_file_path, "Data", "google_trends", "RawData",
                         "global_with_ref_state_by_keyword") %>%
   list.files(pattern = "*.Rds", full.names = T) %>%
   lapply(readRDS) %>%
-  bind_rows()
+  bind_rows() %>%
+  unique()
+
+# Hits to Numeric --------------------------------------------------------------
+gtrends_df$hits[gtrends_df$hits %in% "<1"] <- "1"
+gtrends_df$hits <- gtrends_df$hits %>% as.numeric()
+
+gtrends_df$hits_with_compstate[gtrends_df$hits_with_compstate %in% "<1"] <- "1"
+gtrends_df$hits_with_compstate <- gtrends_df$hits_with_compstate %>% as.numeric()
+
+gtrends_df$hits_compstate[gtrends_df$hits_compstate %in% "<1"] <- "1"
+gtrends_df$hits_compstate <- gtrends_df$hits_compstate %>% as.numeric()
 
 # Add Hits Adjusted ------------------------------------------------------------
 # Applies equation to make hits comparable across time/states using a comparison
@@ -73,7 +84,4 @@ gtrends_df <- merge(gtrends_df, keywords, by = "keyword", all.x=T, all.y=F)
 saveRDS(gtrends_df, file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
                               "global_with_refstate",
                               paste0("gl_gtrends_ref",comparison_iso,"_adj.Rds")))
-
-
-
 

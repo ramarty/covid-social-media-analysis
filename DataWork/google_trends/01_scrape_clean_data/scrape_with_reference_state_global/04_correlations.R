@@ -7,7 +7,17 @@ gtrends_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "Fin
                                 "global_with_refstate",
                                 paste0("gl_gtrends_ref",comparison_iso,"_adj_cases.Rds")))
 
-gtrends_df <- gtrends_df[gtrends_df$keyword_en %in% c("i can't smell", "loss of smell", "fever", "cough"),]
+gtrends_df <- gtrends_df[gtrends_df$date >= as.Date("2020-02-01"),]
+gtrends_df <- gtrends_df[gtrends_df$keyword_en %in% c("i can't smell", 
+                                                      "loss of smell", 
+                                                      "fever", 
+                                                      "cough",
+                                                      "coronavirus",
+                                                      "corona symptoms",
+                                                      "coronavirus symptoms",
+                                                      "covid symptoms",
+                                                      "loss of taste",
+                                                      "tired"),]
 
 gtrends_df$keyword_en = gtrends_df$keyword_en %>% tools::toTitleCase()
 gtrends_df$keyword_en[gtrends_df$keyword_en %in% "i Can't Smell"] <- "I Can't Smell"
@@ -40,8 +50,8 @@ gtrends_df <- gtrends_df %>%
                 cases_7dayinc, death_7dayinc)
 
 # Lags -------------------------------------------------------------------------
-vars_to_lag <- c("hits_ma7_7dayinc",
-                 "hits_ma7",
+vars_to_lag <- c(#"hits_ma7_7dayinc",
+                 #"hits_ma7",
                  "hits")
 
 gtrends_df <- lapply(1:25, function(lag_i){
@@ -75,8 +85,8 @@ gtrends_df <- lapply(1:25, function(lag_i){
   right_join(gtrends_df, by = c("date", "geo", "keyword_en"))
 
 gtrends_df <- gtrends_df %>%
-  dplyr::rename(hits_ma7_7dayinc_lead0 = hits_ma7_7dayinc,
-                hits_ma7_lead0 = hits_ma7,
+  dplyr::rename(#hits_ma7_7dayinc_lead0 = hits_ma7_7dayinc,
+                #hits_ma7_lead0 = hits_ma7,
                 hits_lead0 = hits)
 
 # Data to Long -----------------------------------------------------------------
@@ -116,85 +126,86 @@ cor_df <- gtrends_long_df %>%
 
 # Export -----------------------------------------------------------------------
 saveRDS(cor_df, file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
-                  "global_with_refstate",
-                  paste0("gl_gtrends_ref","US","_adj_cases_correlations.Rds")))
+                          "global_with_refstate",
+                          paste0("gl_gtrends_ref","US","_adj_cases_correlations.Rds")))
 
 
 
 
-
-
-p <- cor_df %>%
-  filter(hits_type %in% "hits") %>%
-  ggplot() +
-  geom_col(aes(x = time_lag, y = cor_level, fill = cor_level)) + 
-  geom_vline(xintercept = 0,
-             color = "black") +
-  scale_fill_gradient2(low =  "#1A9850",
-                       mid = "#FFFFBF",
-                       high = "#D73027",
-                       midpoint = 0) +
-  labs(x = "Time Lag (Days)",
-       y = "Correlation") +
-  theme_ipsum() +
-  facet_wrap(~Country,
-             ncol = 2)
-ggsave(p, filename = file.path("~/Desktop/hits.png"),
-       height = 30, width=10)
-
-p <- cor_df %>%
-  filter(hits_type %in% "hits_ma7") %>%
-  ggplot() +
-  geom_col(aes(x = time_lag, y = cor_level, fill = cor_level)) + 
-  geom_vline(xintercept = 0,
-             color = "black") +
-  scale_fill_gradient2(low =  "#1A9850",
-                       mid = "#FFFFBF",
-                       high = "#D73027",
-                       midpoint = 0) +
-  labs(x = "Time Lag (Days)",
-       y = "Correlation") +
-  theme_ipsum() +
-  facet_wrap(~Country,
-             ncol = 2)
-ggsave(p, filename = file.path("~/Desktop/hits_ma7.png"),
-       height = 30, width=10)
-
-p <- cor_df %>%
-  filter(hits_type %in% "hits_ma7_7dayinc") %>%
-  ggplot() +
-  geom_col(aes(x = time_lag, y = cor_7dayinc, fill = cor_7dayinc)) + 
-  geom_vline(xintercept = 0,
-             color = "black") +
-  scale_fill_gradient2(low =  "#1A9850",
-                       mid = "#FFFFBF",
-                       high = "#D73027",
-                       midpoint = 0) +
-  labs(x = "Time Lag (Days)",
-       y = "Correlation") +
-  theme_ipsum() +
-  facet_wrap(~Country,
-             ncol = 2)
-ggsave(p, filename = file.path("~/Desktop/hits_ma7_7dayinc.png"),
-       height = 30, width=10)
-
-
-
-
-cor_max_df <- cor_df %>%
-  filter(!is.na(cor_level)) %>%
-  filter(hits_type == "hits") %>%
-  group_by(Country) %>%
-  summarise(time_lag_max_cor = time_lag[which.max(cor_level)],
-            max_cor = cor_level[which.max(cor_level)])
-
-cor_max_df %>%
-  filter(max_cor > 0.2) %>%
-  ggplot() +
-  geom_histogram(aes(x = time_lag_max_cor),
-                 binwidth=4) +
-  geom_vline(xintercept = 0)
-
-
-cor_max_df$time_lag_max_cor %>% hist()
-
+if(F){
+  
+  p <- cor_df %>%
+    filter(hits_type %in% "hits") %>%
+    ggplot() +
+    geom_col(aes(x = time_lag, y = cor_level, fill = cor_level)) + 
+    geom_vline(xintercept = 0,
+               color = "black") +
+    scale_fill_gradient2(low =  "#1A9850",
+                         mid = "#FFFFBF",
+                         high = "#D73027",
+                         midpoint = 0) +
+    labs(x = "Time Lag (Days)",
+         y = "Correlation") +
+    theme_ipsum() +
+    facet_wrap(~Country,
+               ncol = 2)
+  ggsave(p, filename = file.path("~/Desktop/hits.png"),
+         height = 30, width=10)
+  
+  p <- cor_df %>%
+    filter(hits_type %in% "hits_ma7") %>%
+    ggplot() +
+    geom_col(aes(x = time_lag, y = cor_level, fill = cor_level)) + 
+    geom_vline(xintercept = 0,
+               color = "black") +
+    scale_fill_gradient2(low =  "#1A9850",
+                         mid = "#FFFFBF",
+                         high = "#D73027",
+                         midpoint = 0) +
+    labs(x = "Time Lag (Days)",
+         y = "Correlation") +
+    theme_ipsum() +
+    facet_wrap(~Country,
+               ncol = 2)
+  ggsave(p, filename = file.path("~/Desktop/hits_ma7.png"),
+         height = 30, width=10)
+  
+  p <- cor_df %>%
+    filter(hits_type %in% "hits_ma7_7dayinc") %>%
+    ggplot() +
+    geom_col(aes(x = time_lag, y = cor_7dayinc, fill = cor_7dayinc)) + 
+    geom_vline(xintercept = 0,
+               color = "black") +
+    scale_fill_gradient2(low =  "#1A9850",
+                         mid = "#FFFFBF",
+                         high = "#D73027",
+                         midpoint = 0) +
+    labs(x = "Time Lag (Days)",
+         y = "Correlation") +
+    theme_ipsum() +
+    facet_wrap(~Country,
+               ncol = 2)
+  ggsave(p, filename = file.path("~/Desktop/hits_ma7_7dayinc.png"),
+         height = 30, width=10)
+  
+  
+  
+  
+  cor_max_df <- cor_df %>%
+    filter(!is.na(cor_level)) %>%
+    filter(hits_type == "hits") %>%
+    group_by(Country) %>%
+    summarise(time_lag_max_cor = time_lag[which.max(cor_level)],
+              max_cor = cor_level[which.max(cor_level)])
+  
+  cor_max_df %>%
+    filter(max_cor > 0.2) %>%
+    ggplot() +
+    geom_histogram(aes(x = time_lag_max_cor),
+                   binwidth=4) +
+    geom_vline(xintercept = 0)
+  
+  
+  cor_max_df$time_lag_max_cor %>% hist()
+  
+}
