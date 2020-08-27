@@ -14,11 +14,6 @@ output:
     number_sections: true
 ---
 
-```{r global_options, include=FALSE}
-knitr::opts_chunk$set(fig.width=12, fig.height=10, size = 10, background = "light", warning=FALSE, message=FALSE)
-```
-
-
 ## GOAL
 
 This script performs analysis of the google trends data for Brazil to develop an alarm system for covid19 cases at the state level.
@@ -67,6 +62,15 @@ Adjusting the dataset
 trends_df <- 
   trends_df %>% 
   rename(state = name)
+```
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(
+  fig.width = 8, 
+  fig.height = 8, 
+  background = "light", 
+  warning = FALSE, 
+  message = FALSE)
 ```
 
 
@@ -423,78 +427,351 @@ trends_df %>%
   )
 ```
 
+
+# Event study: weeks since I can't smell
+We create a variable for the maximum number of days in a week with "I can't smell" 
+- calculate number of times I can't smell is positive for each state in a week
+- then count, at the week level, the number of times of I cant smell per state
+- then evaluate the growth rate in cases the next week
+
+
+```{r}
+week_geo <- 
+  trends_df %>% 
+  filter(keyword == "febre") %>% 
+  group_by(week_number, geo) %>% 
+  summarize(
+    week_days = n(), 
+    mean_cases = mean(cases, na.rm = TRUE), 
+    mean_deaths = mean(deaths, na.rm = TRUE), 
+    mean_case_rate = mean(case_rate, na.rm = TRUE), 
+    mean_death_rate = mean(death_rate, na.rm = TRUE), 
+    mean_fatalities_per_case = mean(fatalities_per_case, na.rm = TRUE), 
+    mean_growth_rate_cases = mean(growth_rate_cases, na.rm = TRUE), 
+    mean_growth_rate_deaths = mean(growth_rate_deaths, na.rm = TRUE)
+  ) %>% 
+  ungroup()
+
+
+week_geo_cant_smell <- 
+  trends_df %>% 
+  filter(keyword == "perdi o olfato", week_number >= 8) %>% 
+  group_by(week_number, geo) %>% 
+  filter(hits_adj > 0) %>% 
+  summarize(
+    days_cant_smell = n()
+  ) %>% 
+  ungroup()
+
+week_df <- 
+  week_geo %>% 
+  left_join(week_geo_cant_smell, by = c("week_number", "geo"))
+
+week_df <- 
+  week_df %>% 
+  mutate(rate_cant_smell = days_cant_smell/week_days)
+```
+
+I keep the weeks when "I can't smell" is the maximum for each state 
+```{r}
+#selecting number of days cant smell appears per week at the state level
+max_week_cant_smell <- 
+  week_df %>% 
+  filter(week_number > 8) %>% 
+  group_by(geo) %>% 
+  count(days_cant_smell, week_number) %>% 
+  arrange(desc(days_cant_smell)) %>% ungroup()
+
+#keeping only the maximum number of days in a week (might be multiple weeks if there is a tie)
+max_week_cant_smell <- 
+  max_week_cant_smell %>% 
+  group_by(geo) %>% 
+  top_n(1, days_cant_smell)
+
+#if there is a tie in maximum number of days of I cant smell, we pick the earlier week
+max_week_cant_smell <- 
+  max_week_cant_smell %>% 
+  group_by(geo) %>% 
+  top_n(-1, week_number)
+
+#we rename the variables to merge them with the rest of the data
+max_week_cant_smell <-   
+  max_week_cant_smell %>% 
+  rename(max_days_cant_smell = days_cant_smell, week_max_days = week_number) %>% dplyr::select(-n)
+
+week_df <- 
+  week_df %>% 
+  left_join(max_week_cant_smell, by = c("geo"))
+```
+
+We now do an event study of the cases in weeks before and after the maximum days of "I can't smell"
+
+```{r}
+week_df <- 
+  week_df %>% 
+  group_by(geo) %>% 
+  mutate(
+    weeks_since_max_cant_smell = week_number - week_max_days
+  )
+```
+
+We now plot the relationship with a few different outcomes
+
+## Event study: cases and deaths
+
+We do it with the mean of cases and deaths
+```{r fig.width=7, fig.height=7}
+week_df %>% 
+  filter(!is.na(weeks_since_max_cant_smell)) %>%
+  group_by(weeks_since_max_cant_smell) %>% 
+  summarize(
+    mean_cases = mean(mean_cases, na.rm = TRUE), 
+    mean_deaths = mean(mean_deaths, na.rm = TRUE)
+  ) %>% 
+  ggplot() +
+  geom_line(aes(weeks_since_max_cant_smell, mean_cases, color = "Mean cases")) + 
+  geom_line(aes(weeks_since_max_cant_smell, mean_deaths, color = "Mean deaths")) +
+  geom_vline(aes(xintercept = 0), linetype = "dashed") +
+  geom_text(
+    aes(
+      x = 0, 
+      y = 80000, 
+      label = "Week with the most \nI can't smell"
+    ), 
+    size = 3
+    ) +
+  labs(
+    title = "Average evolution of states relative to the week \nwith the most I can't smell appearances",
+    x = "Weeks since maximum I can't smell appearances", 
+    y = "Mean cases or deaths per state", 
+    color = "Variable"
+  ) +
+  theme_light() + 
+  coord_cartesian(xlim = c(-10, 8))
+```
+
+## Event study: case and death rate
+
+We do it with the mean of case rate and death rate
+```{r}
+week_df %>% 
+  filter(!is.na(weeks_since_max_cant_smell)) %>%
+  group_by(weeks_since_max_cant_smell) %>% 
+  summarize(
+    mean_case_rate = mean(mean_case_rate, na.rm = TRUE), 
+    mean_death_rate = mean(mean_death_rate, na.rm = TRUE)
+  ) %>% 
+  ggplot() +
+  geom_line(aes(weeks_since_max_cant_smell, mean_case_rate, color = "Mean case rate")) + 
+  geom_line(aes(weeks_since_max_cant_smell, mean_death_rate, color = "Mean death rate"))  +
+  geom_vline(aes(xintercept = 0), linetype = "dashed") +
+  labs(
+    x = "Weeks since maximum I can't smell", 
+    y = "Mean case or death rate", 
+    color = "Variable"
+  ) + 
+  theme_light()
+```
+
+## Event study: growth rate of cases and deaths
+
+We do it with the mean growth rate of cases and deaths
+
+```{r}
+week_df %>% 
+  filter(!is.na(weeks_since_max_cant_smell)) %>%
+  group_by(weeks_since_max_cant_smell) %>% 
+  summarize(
+    mean_growth_rate_cases = mean(mean_growth_rate_cases, na.rm = TRUE), 
+    mean_growth_rate_deaths = mean(mean_growth_rate_deaths, na.rm = TRUE)
+  ) %>% 
+  ggplot() +
+  geom_line(aes(weeks_since_max_cant_smell, mean_growth_rate_cases, color = "Mean growth rate of cases")) + 
+  geom_line(aes(weeks_since_max_cant_smell, mean_growth_rate_deaths, color = "Mean growth rate of deaths"))  +
+  geom_vline(aes(xintercept = 0), linetype = "dashed") + 
+  labs(
+    x = "Weeks since maximum I can't smell", 
+    y = "Mean growth rate of cases or deaths", 
+    color = "Variable"
+  )
+```
+
+## Event study at the state level with mean cases or deaths
+
+We now do the graphs at the state level
+```{r}
+week_df %>% 
+  filter(!is.na(weeks_since_max_cant_smell)) %>%
+  group_by(weeks_since_max_cant_smell, geo) %>% 
+  summarize(
+    mean_cases = mean(mean_cases, na.rm = TRUE), 
+    mean_deaths = mean(mean_deaths, na.rm = TRUE)
+  ) %>% 
+  ggplot() +
+  geom_line(aes(weeks_since_max_cant_smell, mean_cases, color = "Mean cases")) + 
+  geom_line(aes(weeks_since_max_cant_smell, mean_deaths, color = "Mean deaths")) + 
+  geom_vline(aes(xintercept = 0), linetype = "dashed") +
+  facet_wrap(vars(geo)) + 
+  labs(
+    x = "Weeks since maximum days of I can't smell", 
+    y = "Mean cases or deaths", 
+    color = "Variable"
+  ) + 
+  coord_cartesian(xlim = c(-10, 10)) + 
+  theme_light()
+
+
+```
+
+## Does the intensity in the number of days matters?
+
+We adjust the size of the line to take into account the number of days in the week that I can't smell appears in the key week for each state
+
+```{r}
+week_df %>% 
+  filter(!is.na(weeks_since_max_cant_smell)) %>%
+  group_by(weeks_since_max_cant_smell, geo) %>% 
+  summarize(
+    mean_cases = mean(mean_cases, na.rm = TRUE), 
+    mean_deaths = mean(mean_deaths, na.rm = TRUE), 
+    mean_max_days_cant_smell = mean(max_days_cant_smell, na.rm = TRUE)
+  ) %>% 
+  ggplot() +
+  geom_line(
+    aes(
+      weeks_since_max_cant_smell, 
+      mean_cases, 
+      color = "Mean cases", 
+      size = mean_max_days_cant_smell/2)
+  ) + 
+  geom_line(
+    aes(
+      weeks_since_max_cant_smell, 
+      mean_deaths, 
+      color = "Mean deaths", 
+      size = mean_max_days_cant_smell/2)
+  ) + 
+  geom_vline(aes(xintercept = 0), linetype = "dashed") +
+  facet_wrap(vars(geo)) + 
+  labs(
+    x = "Weeks since maximum days of I can't smell", 
+    y = "Mean cases or deaths", 
+    color = "Variable", 
+    size = "Intensity in # days with I can't smell (x2)"
+  ) + 
+  coord_cartesian(xlim = c(-10, 10))
+```
+
+
+## Showing the actual dates instead
+
+We now do the graphs at the state level and show the actual dates instead
+```{r}
+week_df %>% 
+  group_by(week_number, geo) %>% 
+  summarize(
+    mean_cases = mean(mean_cases, na.rm = TRUE), 
+    mean_deaths = mean(mean_deaths, na.rm = TRUE), 
+    week_max_days = mean(week_max_days, na.rm = TRUE)
+  ) %>% 
+  ggplot() +
+  geom_line(aes(week_number, mean_cases, color = "Mean cases")) + 
+  geom_line(aes(week_number, mean_deaths, color = "Mean deaths")) + 
+  geom_vline(aes(xintercept = week_max_days), linetype = "dashed") +
+  facet_wrap(vars(geo)) + 
+  labs(
+    x = "Weeks since maximum days of I can't smell", 
+    y = "Mean cases or deaths", 
+    color = "Variable"
+  ) +
+  theme_light()
+```
+
+```{r}
+week_df %>% 
+  count(geo, max_days_cant_smell)
+```
+
+## Table of cases since the maximum I can't smell appearances
+
+```{r}
+week_df %>% 
+  filter(weeks_since_max_cant_smell == 0) %>% 
+  summarize(mean_cases = mean(mean_deaths))
+```
+
+
+
 ## Correlations between I can't smell and covid cases
 
 Create the variables counting the number of days before/after "I can't smell" shows up. For those states that don't have "I can't smell", we won't be able to include them. 
 ```{r}
-trends_df <- 
-  trends_df %>% 
-  left_join(states_cant_smell_date, by = "state") %>% 
-  mutate(
-    days_from_cant_smell = date - first_date_cant_smell
-  ) 
+#trends_df <- 
+#  trends_df %>% 
+#  left_join(states_cant_smell_date, by = "state") %>% 
+#  mutate(
+#    days_from_cant_smell = date - first_date_cant_smell
+#  ) 
   
 ```
 
 We replicate the table of correlations from day -3 to day 3 for each state
 ```{r}
-ex_df <- 
-  trends_df %>% 
-  filter(days_from_cant_smell >= -3, days_from_cant_smell <= 3) %>% 
-  mutate(days_from_cant_smell = as.numeric(days_from_cant_smell))
+#ex_df <- 
+#  trends_df %>% 
+#  filter(days_from_cant_smell >= -3, days_from_cant_smell <= 3) %>% 
+#  mutate(days_from_cant_smell = as.numeric(days_from_cant_smell))
 
-cor(ex_df$days_from_cant_smell, ex_df$hits_adj, use = "complete.obs")
+#cor(ex_df$days_from_cant_smell, ex_df$hits_adj, use = "complete.obs")
 
-cor(ex_df$days_from_cant_smell, ex_df$hits_adj, use = "complete.obs")
+#cor(ex_df$days_from_cant_smell, ex_df$hits_adj, use = "complete.obs")
 ```
 
 
 ```{r}
-data <- 
-  gather(
-    data_all, city, pr, Bilbao:Valencia) %>%
-    gather(telecon, index, NAO:AO
-  )
-
-data
-
-data_nest <- group_by(data, city, telecon) %>% nest()
-data_nest
-
-str(slice(data_nest, 1))
-
-cor_fun <- function(df) cor.test(df$pr, df$index, method = "spearman") %>% tidy()
-
-data_nest <- mutate(data_nest, model = map(data, cor_fun))
-data_nest
-
-str(slice(data_nest, 1))
-
-corr_pr <- select(data_nest, -data) %>% unnest()
-corr_pr
-
-corr_pr <- mutate(corr_pr, sig = ifelse(p.value <0.05, "Sig.", "Non Sig."))
-
-ggplot()+
-  geom_tile(data = corr_pr,
-            aes(city, telecon, fill = estimate),
-            size = 1,
-            colour = "white")+
-  geom_tile(data = filter(corr_pr, sig == "Sig."),
-            aes(city, telecon),
-            size = 1,
-            colour = "black",
-            fill = "transparent")+
-  geom_text(data = corr_pr,
-            aes(city, telecon, label = round(estimate, 2),
-            fontface = ifelse(sig == "Sig.", "bold", "plain")))+
-  scale_fill_gradient2(breaks = seq(-1, 1, 0.2))+
-  labs(x = "", y = "", fill = "", p.value = "")+
-  theme_minimal()+
-  theme(panel.grid.major = element_blank(),
-        panel.border = element_blank(),
-        panel.background = element_blank(),
-        axis.ticks = element_blank())
+# data <- 
+#   gather(
+#     data_all, city, pr, Bilbao:Valencia) %>%
+#     gather(telecon, index, NAO:AO
+#   )
+# 
+# data
+# 
+# data_nest <- group_by(data, city, telecon) %>% nest()
+# data_nest
+# 
+# str(slice(data_nest, 1))
+# 
+# cor_fun <- function(df) cor.test(df$pr, df$index, method = "spearman") %>% tidy()
+# 
+# data_nest <- mutate(data_nest, model = map(data, cor_fun))
+# data_nest
+# 
+# str(slice(data_nest, 1))
+# 
+# corr_pr <- select(data_nest, -data) %>% unnest()
+# corr_pr
+# 
+# corr_pr <- mutate(corr_pr, sig = ifelse(p.value <0.05, "Sig.", "Non Sig."))
+# 
+# ggplot()+
+#   geom_tile(data = corr_pr,
+#             aes(city, telecon, fill = estimate),
+#             size = 1,
+#             colour = "white")+
+#   geom_tile(data = filter(corr_pr, sig == "Sig."),
+#             aes(city, telecon),
+#             size = 1,
+#             colour = "black",
+#             fill = "transparent")+
+#   geom_text(data = corr_pr,
+#             aes(city, telecon, label = round(estimate, 2),
+#             fontface = ifelse(sig == "Sig.", "bold", "plain")))+
+#   scale_fill_gradient2(breaks = seq(-1, 1, 0.2))+
+#   labs(x = "", y = "", fill = "", p.value = "")+
+#   theme_minimal()+
+#   theme(panel.grid.major = element_blank(),
+#         panel.border = element_blank(),
+#         panel.background = element_blank(),
+#         axis.ticks = element_blank())
 ```
-
-
