@@ -83,6 +83,8 @@ library(scales)
 library(lubridate)
 library(geosphere)
 library(hrbrthemes)
+# remotes::install_github("wilkelab/ggtext")
+library(ggtext)
 
 # Filepaths --------------------------------------------------------------------
 if(Sys.info()[["user"]] == "WB521633") dropbox_file_path <- "C:/Users/wb521633/Dropbox/World Bank/Side Work/COVID Social Media Analysis"
