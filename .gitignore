@@ -67,8 +67,6 @@
 # Julia
 !/**/*.jl
 
-# Png
-!/**/*.png
 
 #######################
 # Include some additional file formats in any output folder. You might have
