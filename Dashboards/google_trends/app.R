@@ -171,7 +171,7 @@ ui <- fluidPage(
           ),
           column(6,
                  plotOutput("max_cor_hist",
-                              height = "400px")
+                            height = "400px")
           ),
           column(3,
           )
@@ -189,14 +189,14 @@ ui <- fluidPage(
             
             fluidRow(
               
-              column(3,
+              column(2,
               ),
-              column(6,
+              column(8,
                      h2("For a specific search term, when is the correlation highest and how
                     does the correlation vary across countries?",
                         align = "center")
               ),
-              column(3,
+              column(2,
               )
               
             ),
@@ -208,7 +208,7 @@ ui <- fluidPage(
               column(4, align = "center",
                      selectInput(
                        "select_keyword",
-                       label = strong("Keyword"),
+                       label = strong("Search Term"),
                        choices = keyword_list,
                        selected = "Loss of Smell",
                        multiple = F
@@ -269,6 +269,19 @@ ui <- fluidPage(
         ),
         
         fluidRow(
+          column(1,
+          ),
+          column(10,
+                 strong(textOutput("trends_subtitle"), align = "center")
+          ),
+          column(1,
+          )
+        ),
+        
+        br(),
+
+        
+        fluidRow(
           column(4,
           ),
           column(4,align = "center",
@@ -284,7 +297,7 @@ ui <- fluidPage(
                  
                  
                  
-                 imageOutput("line_graph")
+                 uiOutput("ui_line_graph")
                  
                  
           )
@@ -421,30 +434,79 @@ server = (function(input, output, session) {
   })
   
   # * Line Graph ---------------------------------------------------------------
-  output$line_graph <- renderImage({
+  output$line_graph <- renderPlot({
     
-    # p <- readRDS(file.path("precomputed_figures", 
-    #                        paste0("fig_line",
-    #                               "_keyword", input$select_keyword,
-    #                               "_cases_deaths", input$select_covid_type,
-    #                               "_continent", input$select_continent,
-    #                               "_sort_by", input$select_sort_by,
-    #                               ".Rds")))
+    cases_deaths <<- input$select_covid_type
+    keyword_en <<- input$select_keyword
     
-    list(src = file.path("precomputed_figures", 
-                         paste0("fig_line",
-                                "_keyword", input$select_keyword,
-                                "_cases_deaths", input$select_covid_type,
-                                "_continent", input$select_continent,
-                                "_sort_by", input$select_sort_by,
-                                ".png")),
-         contentType = 'image/png',
-         width = 400,
-         height = 250*19,
-         alt = "This is alternate text")
+    p <- readRDS(file.path("precomputed_figures",
+                           paste0("fig_line",
+                                  "_keyword", input$select_keyword,
+                                  "_cases_deaths", input$select_covid_type,
+                                  "_continent", input$select_continent,
+                                  "_sort_by", input$select_sort_by,
+                                  ".Rds")))
     
-  })
-  #}, bg="transparent")
+    #p 
+    
+    # 
+    # n_countries <- length(unique(line_graph_df$title))
+    # 
+    # plt_one_country <- function(df){
+    #   plot_ly(df) %>%
+    #     add_trace(x = ~date,
+    #               y = ~hits,
+    #               type = 'scatter',
+    #               mode = 'lines',
+    #               line = list(color = 'green')) %>%
+    #     add_trace(x = ~date,
+    #               y = ~covid_new,
+    #               type = 'bar',
+    #               marker = list(color = 'orange')) %>%
+    #     add_annotations(
+    #       text = ~unique(Country),
+    #       x = 0.5,
+    #       y = 1,
+    #       yref = "paper",
+    #       xref = "paper",
+    #       xanchor = "middle",
+    #       yanchor = "top",
+    #       showarrow = FALSE,
+    #       font = list(size = 14)
+    #     )
+    # }
+    # 
+    # dfa %>%
+    #   group_by(Country) %>%
+    #   do(mafig = plt_one_country(.)) %>%
+    #   subplot(nrows = n_countries) %>%
+    #   layout(
+    #     showlegend = FALSE,
+    #     #title = '',
+    #     width = 700,
+    #     height = n_countries*100,
+    #     hovermode = FALSE
+    #   ) 
+    # 
+    # 
+    
+    # list(src = file.path("precomputed_figures", 
+    #                      paste0("fig_line",
+    #                             "_keyword", input$select_keyword,
+    #                             "_cases_deaths", input$select_covid_type,
+    #                             "_continent", input$select_continent,
+    #                             "_sort_by", input$select_sort_by,
+    #                             ".png")),
+    #      contentType = 'image/png',
+    #      width = 400,
+    #      height = 250*19,
+    #      alt = "This is alternate text")
+    
+    #})
+    
+    p
+    
+  }, bg="transparent")
   
   # * Histogram - Time Lag Max Cor ---------------------------------------------
   output$cor_histogram_time_lag <- renderPlotly({
@@ -519,10 +581,10 @@ server = (function(input, output, session) {
                                   ".Rds")))
     
     p #%>%
-      #ggplotly(tooltip = "text") %>%
-      #layout(plot_bgcolor='transparent',
-      #       paper_bgcolor='transparent') %>%
-      #config(displayModeBar = F)
+    #ggplotly(tooltip = "text") %>%
+    #layout(plot_bgcolor='transparent',
+    #       paper_bgcolor='transparent') %>%
+    #config(displayModeBar = F)
     
   })
   
@@ -557,11 +619,26 @@ server = (function(input, output, session) {
     
   })
   
+  output$trends_subtitle <- renderText({
+    
+    paste0("For each country, we determine when search activity of ",
+           input$select_keyword,
+           " has the highest correlation with COVID-19 ",
+           tolower(input$select_covid_type), 
+           ". ",
+           "Does search activity some days in the past have the strongest correlation
+           with COVID ", tolower(input$select_covid_type), "? If so, search activity may
+           predict future ", tolower(input$select_covid_type), ".")
+    
+
+    
+  })
+  
   output$which_keyword_title <- renderText({
     
     paste0("Which search terms are most correlated with COVID-19 ",
            input$select_covid_type, "?")
-  
+    
   })
   
   output$text_best_time_lag <- renderText({
@@ -618,17 +695,21 @@ server = (function(input, output, session) {
   
   
   
-  # output$ui_line_graph <- renderUI({
-  #   
-  #   n_states <- readRDS(file.path("precomputed_figures", paste0("stat_line_cor_N_countries",
-  #                                                               "_keyword", input$select_keyword,
-  #                                                               "_cases_deaths", input$select_covid_type,
-  #                                                               "_continent", input$select_continent,
-  #                                                               ".Rds")))
-  #   
-  #   plotOutput("line_graph",
-  #              height = paste0(n_states*225,"px"))
-  # })
+  output$ui_line_graph <- renderUI({
+    
+    n_states <- readRDS(file.path("precomputed_figures", 
+                                  paste0("stat_line_cor_N_countries",
+                                         "_keyword", input$select_keyword,
+                                         "_cases_deaths", input$select_covid_type,
+                                         "_continent", input$select_continent,
+                                         ".Rds")))
+    
+    n_states_div <- ceiling(n_states/5)
+    
+    plotOutput("line_graph",
+               height = paste0(n_states_div*180,"px"))
+    
+  })
   
   output$ui_select_sort_by <- renderUI({
     

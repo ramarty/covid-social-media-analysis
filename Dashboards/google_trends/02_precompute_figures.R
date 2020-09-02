@@ -202,22 +202,93 @@ for(keyword in c("Loss of Smell", keyword_list)){
           
           gtrends_sub_df$past_future <- ifelse(gtrends_sub_df$time_lag_cases_cor_max < 0, 
                                                "past", "future")
-          gtrends_sub_df$title <- paste0("<b>", gtrends_sub_df$Country, "</b><br><br>", 
-                                         "<em>When we consider COVID cases<b> ",
-                                         abs(gtrends_sub_df$time_lag_cases_cor_max), 
-                                         "</b> days into the ",
-                                         gtrends_sub_df$past_future, 
-                                         ",<br>the correlation between search popularity and cases is <b>",
-                                         round(gtrends_sub_df$cor_covid_new_best, 2),
-                                         "</b></em>") 
+          # gtrends_sub_df$title <- paste0("<b>", gtrends_sub_df$Country, "</b><br><br>", 
+          #                                "<em>When we consider COVID cases<b> ",
+          #                                abs(gtrends_sub_df$time_lag_cases_cor_max), 
+          #                                "</b> days into the ",
+          #                                gtrends_sub_df$past_future, 
+          #                                ",<br>the correlation between search popularity and cases is <b>",
+          #                                round(gtrends_sub_df$cor_covid_new_best, 2),
+          #                                "</b></em>") 
           
-          p_line <- ggplot(gtrends_sub_df[gtrends_sub_df$geo %in% GEO_BOTH,], 
+          gtrends_sub_df$title <- paste0("<b>", gtrends_sub_df$Country, "</b><br>",
+                                         "<b>", abs(gtrends_sub_df$time_lag_cases_cor_max),
+                                         "</b> days into the ",
+                                         gtrends_sub_df$past_future,
+                                         ",<br>Correlation: <b>",
+                                         round(gtrends_sub_df$cor_covid_new_best, 2),
+                                         "</b>")
+          
+          
+          #####
+          gtrends_sub_df_lim <- gtrends_sub_df %>%
+            arrange(date) %>%
+            filter(geo %in% GEO_BOTH) %>%
+            dplyr::select(title, Country, date, hits, covid_new)
+          
+          
+          # plt_one_country <- function(df){
+          #   plot_ly(df) %>%
+          #     add_trace(x = ~date,
+          #               y = ~hits,
+          #               type = 'scatter',
+          #               mode = 'lines',
+          #               line = list(color = 'green')) %>%
+          #     add_trace(x = ~date,
+          #               y = ~covid_new,
+          #               type = 'bar',
+          #               marker = list(color = 'orange')) %>%
+          #     add_annotations(
+          #       text = ~unique(Country),
+          #       x = 0.5,
+          #       y = 1,
+          #       yref = "paper",
+          #       xref = "paper",
+          #       xanchor = "middle",
+          #       yanchor = "top",
+          #       showarrow = FALSE,
+          #       font = list(size = 14)
+          #     )
+          # }
+          # 
+          # 
+          # gtrends_sub_df %>%
+          #   filter(keyword_en %in% "Loss of Smell") %>%
+          #   filter(Country %in% c("Brazil", "Canada", "Zimbabwe")) %>%
+          #   arrange(date) %>%
+          #   group_by(title) %>%
+          #   do(mafig = plt_one_country(.)) %>%
+          #   subplot(nrows = 3) %>%
+          #   #subplot(nrows = length(GEO_BOTH)) %>%
+          #   layout(
+          #     showlegend = FALSE,
+          #     #title = '',
+          #     width = 500,
+          #     height = 2*250,
+          #     hovermode = FALSE
+          #   ) 
+          
+          
+          
+          saveRDS(gtrends_sub_df_lim, file.path(FIGURES_PATH, paste0("fig_line_data",
+                                                                     "_keyword", keyword,
+                                                                     "_cases_deaths", cases_deaths,
+                                                                     "_continent", continent,
+                                                                     "_sort_by", sort_by,
+                                                                     ".Rds")))
+          
+          
+          
+        
+          
+          p_line <- ggplot(gtrends_sub_df[gtrends_sub_df$geo %in% GEO_BOTH &
+                                          gtrends_sub_df$date %in% tail(sort(unique(gtrends_sub_df$date)), 20),], 
                            aes(x = date)) +
             geom_col(aes(y = covid_new, fill = paste("COVID-19", cases_deaths))) +
             geom_line(aes(y = hits, color = paste0("Search Popularity of ", keyword_en))) +
             facet_wrap(~title,
                        scales = "free_y",
-                       ncol = 1) +
+                       ncol = 5) +
             scale_fill_manual(values = "orange1") +
             scale_color_manual(values = "green4") +
             labs(x = "", y = paste("COVID-19", cases_deaths),
@@ -226,8 +297,7 @@ for(keyword in c("Loss of Smell", keyword_list)){
             theme_minimal() + 
             theme(legend.position="top",
                   legend.text = element_text(size=14),
-                  strip.text = element_markdown(size = 18),
-                  plot.title = element_text(hjust = 0.5, size = 20, face = "bold"))
+                  strip.text = element_markdown(size = 14, hjust = 0))
           
           saveRDS(p_line, file.path(FIGURES_PATH, paste0("fig_line",
                                                          "_keyword", keyword,
@@ -246,7 +316,7 @@ for(keyword in c("Loss of Smell", keyword_list)){
                  height = n_states*4,
                  width = 12,
                  limitsize = FALSE)
- 
+          
           p_cor <- cor_df[cor_df$geo %in% GEO_BOTH,] %>%
             ggplot() +
             geom_col(aes(x = time_lag, y = cor_covid_new, fill = cor_covid_new)) + 
