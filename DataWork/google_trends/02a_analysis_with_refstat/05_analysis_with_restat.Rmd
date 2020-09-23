@@ -400,6 +400,7 @@ trends_df %>%
     y = "Cases"
   )
 ```
+
 ## Looking at death rate
 
 ```{r}
@@ -427,6 +428,16 @@ trends_df %>%
   )
 ```
 
+## Evaluating how many days I can't smell appears before X deaths
+
+```{r}
+trends_df %>% 
+  left_join(states_cant_smell_date, by = "state") %>% 
+  mutate(
+    cant_smell_appears = if_else(!is.na(first_date_cant_smell), 1L, 0L) %>% as.character()
+  )
+```
+
 
 # Event study: weeks since I can't smell
 We create a variable for the maximum number of days in a week with "I can't smell" 
@@ -448,7 +459,9 @@ week_geo <-
     mean_death_rate = mean(death_rate, na.rm = TRUE), 
     mean_fatalities_per_case = mean(fatalities_per_case, na.rm = TRUE), 
     mean_growth_rate_cases = mean(growth_rate_cases, na.rm = TRUE), 
-    mean_growth_rate_deaths = mean(growth_rate_deaths, na.rm = TRUE)
+    mean_growth_rate_deaths = mean(growth_rate_deaths, na.rm = TRUE), 
+    sum_cases = sum(cases, na.rm = TRUE), 
+    sum_deaths = sum(deaths, na.rm = TRUE)
   ) %>% 
   ungroup()
 
@@ -529,8 +542,7 @@ week_df %>%
     mean_deaths = mean(mean_deaths, na.rm = TRUE)
   ) %>% 
   ggplot() +
-  geom_line(aes(weeks_since_max_cant_smell, mean_cases, color = "Mean cases")) + 
-  geom_line(aes(weeks_since_max_cant_smell, mean_deaths, color = "Mean deaths")) +
+  geom_line(aes(weeks_since_max_cant_smell, mean_cases)) + 
   geom_vline(aes(xintercept = 0), linetype = "dashed") +
   geom_text(
     aes(
@@ -543,8 +555,7 @@ week_df %>%
   labs(
     title = "Average evolution of states relative to the week \nwith the most I can't smell appearances",
     x = "Weeks since maximum I can't smell appearances", 
-    y = "Mean cases or deaths per state", 
-    color = "Variable"
+    y = "Mean cases per state"
   ) +
   theme_light() + 
   coord_cartesian(xlim = c(-10, 8))
@@ -600,9 +611,19 @@ week_df %>%
 
 We now do the graphs at the state level
 ```{r}
+#we merge the state name to the data
+geo_names <- 
+  trends_df %>% 
+  count(geo, state) %>% 
+  select(-n)
+
+week_df <- 
+  week_df %>% 
+  left_join(geo_names, by = "geo")
+
 week_df %>% 
   filter(!is.na(weeks_since_max_cant_smell)) %>%
-  group_by(weeks_since_max_cant_smell, geo) %>% 
+  group_by(weeks_since_max_cant_smell, state) %>% 
   summarize(
     mean_cases = mean(mean_cases, na.rm = TRUE), 
     mean_deaths = mean(mean_deaths, na.rm = TRUE)
@@ -611,7 +632,7 @@ week_df %>%
   geom_line(aes(weeks_since_max_cant_smell, mean_cases, color = "Mean cases")) + 
   geom_line(aes(weeks_since_max_cant_smell, mean_deaths, color = "Mean deaths")) + 
   geom_vline(aes(xintercept = 0), linetype = "dashed") +
-  facet_wrap(vars(geo)) + 
+  facet_wrap(vars(state)) + 
   labs(
     x = "Weeks since maximum days of I can't smell", 
     y = "Mean cases or deaths", 
@@ -668,28 +689,52 @@ week_df %>%
 We now do the graphs at the state level and show the actual dates instead
 ```{r}
 week_df %>% 
-  group_by(week_number, geo) %>% 
+  filter(!is.na(weeks_since_max_cant_smell)) %>%
+  group_by(week_number, state) %>% 
   summarize(
     mean_cases = mean(mean_cases, na.rm = TRUE), 
     mean_deaths = mean(mean_deaths, na.rm = TRUE), 
     week_max_days = mean(week_max_days, na.rm = TRUE)
   ) %>% 
   ggplot() +
-  geom_line(aes(week_number, mean_cases, color = "Mean cases")) + 
-  geom_line(aes(week_number, mean_deaths, color = "Mean deaths")) + 
+  geom_line(aes(week_number, mean_cases)) + 
   geom_vline(aes(xintercept = week_max_days), linetype = "dashed") +
-  facet_wrap(vars(geo)) + 
+  facet_wrap(vars(state)) + 
   labs(
     x = "Weeks since maximum days of I can't smell", 
-    y = "Mean cases or deaths", 
-    color = "Variable"
+    y = "Mean cases"
   ) +
-  theme_light()
+  theme_light() + 
+  scale_y_continuous(
+    labels = scales::unit_format(scale = 1/1000, suffix = "k")
+  ) 
 ```
 
 ```{r}
 week_df %>% 
   count(geo, max_days_cant_smell)
+```
+
+## Final graph
+
+We now do the graphs at the state level and show the actual dates instead
+```{r}
+week_df %>% 
+  filter(!is.na(weeks_since_max_cant_smell)) %>%
+  group_by(week_number, state) %>% 
+  summarize(
+    sum_cases = sum(sum_cases, na.rm = TRUE), 
+    week_max_days = mean(week_max_days, na.rm = TRUE)
+  ) %>% 
+  ggplot() +
+  geom_line(aes(week_number, sum_cases)) + 
+  geom_vline(aes(xintercept = week_max_days), linetype = "dashed") +
+  facet_wrap(vars(state)) + 
+  labs(
+    x = "Weeks since maximum days of I can't smell", 
+    y = "Cumulative COVID-19 cases"
+  ) +
+  theme_light()
 ```
 
 ## Table of cases since the maximum I can't smell appearances
@@ -698,6 +743,103 @@ week_df %>%
 week_df %>% 
   filter(weeks_since_max_cant_smell == 0) %>% 
   summarize(mean_cases = mean(mean_deaths))
+```
+
+# Table of I can't smell and deaths
+
+## Date between I can't smell and deaths
+```{r}
+date_1_death <- 
+  trends_df %>% 
+  filter(keyword == "anosmia") %>%
+  mutate(deaths_positive = if_else(deaths > 0, 1L, 0L)) %>% 
+  filter(deaths_positive == 1L) %>% 
+  group_by(state) %>% 
+  summarize(
+    date_death_1 = min(date)
+  ) 
+# Now with 10 deaths
+date_10_deaths <- 
+  trends_df %>% 
+  filter(keyword == "anosmia") %>%
+  mutate(deaths_10 = if_else(deaths > 10, 1L, 0L)) %>% 
+  filter(deaths_10 == 1L) %>% 
+  group_by(state) %>% 
+  summarize(
+    date_death_10 = min(date)
+  ) 
+
+# Now with 20 deaths
+date_20_deaths <- 
+  trends_df %>% 
+  filter(keyword == "anosmia") %>%
+  mutate(deaths_20 = if_else(deaths > 20, 1L, 0L)) %>% 
+  filter(deaths_20 == 1L) %>% 
+  group_by(state) %>% 
+  summarize(
+    date_death_20 = min(date)
+  ) 
+# Now with 100 deaths
+date_100_deaths <- 
+  trends_df %>% 
+  filter(keyword == "anosmia") %>%
+  mutate(deaths_100 = if_else(deaths > 100, 1L, 0L)) %>% 
+  filter(deaths_100 == 1L) %>% 
+  group_by(state) %>% 
+  summarize(
+    date_death_100 = min(date)
+  ) 
+# Now with 500 deaths
+date_500_deaths <- 
+  trends_df %>% 
+  filter(keyword == "anosmia") %>%
+  mutate(deaths_500 = if_else(deaths > 500, 1L, 0L)) %>% 
+  filter(deaths_500 == 1L) %>% 
+  group_by(state) %>% 
+  summarize(
+    date_death_500 = min(date)
+  ) 
+# Now with 500 deaths
+date_1000_deaths <- 
+  trends_df %>% 
+  filter(keyword == "anosmia") %>%
+  mutate(deaths_1000 = if_else(deaths > 1000, 1L, 0L)) %>% 
+  filter(deaths_1000 == 1L) %>% 
+  group_by(state) %>% 
+  summarize(
+    date_death_1000 = min(date)
+  ) 
+
+dates_deaths_dataset <- 
+  date_1_death %>% 
+  left_join(date_10_deaths) %>% 
+  left_join(date_20_deaths) %>% 
+  left_join(date_100_deaths) %>% 
+  left_join(date_500_deaths) %>% 
+  left_join(date_1000_deaths) %>% 
+  left_join(states_cant_smell_date) 
+```
+
+
+```{r}
+dates_deaths_dataset <- 
+  dates_deaths_dataset %>% 
+  dplyr::select(state, first_date_cant_smell, starts_with("date"), everything()) 
+
+dates_deaths_dataset %>% 
+  filter(!is.na(first_date_cant_smell)) %>% 
+  summarize(
+    dates_since_death_1 = mean(date_death_1 - first_date_cant_smell, na.rm = TRUE), 
+    dates_since_death_10 = mean(date_death_10 - first_date_cant_smell, na.rm = TRUE), 
+    dates_since_death_20 = mean(date_death_20 - first_date_cant_smell, na.rm = TRUE), 
+    dates_since_death_100 = mean(date_death_100 - first_date_cant_smell, na.rm = TRUE), 
+    dates_since_death_500 = mean(date_death_500 - first_date_cant_smell, na.rm = TRUE)
+  )
+
+write.csv(
+  dates_deaths_dataset, 
+  file.path(dropbox_file_path, "Documentation/google trends/Dates of deaths in Brazil.csv")
+  )
 ```
 
 
@@ -775,3 +917,5 @@ We replicate the table of correlations from day -3 to day 3 for each state
 #         panel.background = element_blank(),
 #         axis.ticks = element_blank())
 ```
+
+
