@@ -27,6 +27,7 @@ library(lubridate)
 library(shiny)
 library(wesanderson)
 library(ggplot2)
+library(ggtext)
 library(tidyr)
 library(shinyWidgets)
 library(zoo)
@@ -82,121 +83,225 @@ ui <- fluidPage(
       
       dashboardBody(
         
-        h2("Search Terms Correlating with COVID-19 Cases and Deaths",
+        # h2("Search Terms Correlating with COVID-19 Cases and Deaths",
+        #    align = "center"),
+        
+        # fluidRow(
+        #   column(8,
+        #          "This page shows (1) how well different Google search terms correlate with COVID-19 cases and deaths 
+        #          and (2) the time lag of Google search terms where the correlation is strongest. Trends in search terms 
+        #          correlated with COVID cases/deaths can be used to indicate possible increases or decreases in COVID cases/deaths.
+        #          Search term trends should not subsitute for official data; however, predictions may be useful when official 
+        #          data may take time to be captured.",
+        #          offset = 2
+        #   )
+        #   
+        # ),
+        
+        fluidRow(
+          
+          column(4,
+          ),
+          column(4, align = "center",
+                 HTML("<b><em>Choose to examine COVID cases or deaths and restrict the analysis to
+                        a specific continent</em></b>")
+                 
+          ),
+          column(4,
+          ),
+          
+        ),
+        
+        br(),
+        
+        
+        fluidRow(
+          
+          column(3,
+          ),
+          
+          column(3, align = "center",
+                 
+                 selectInput(
+                   "select_covid_type",
+                   label = strong("Cases/Deaths"),
+                   choices = c("Cases", "Deaths"),
+                   selected = "Cases",
+                   multiple = F
+                 )
+          ),
+          
+          column(3, align = "center",
+                 
+                 selectInput(
+                   "select_continent",
+                   label = strong("Continent"),
+                   choices = c("All",
+                               "Asia",
+                               "Africa",
+                               "Europe",
+                               "South America",
+                               "Oceania",
+                               "North America"),
+                   selected = "All",
+                   multiple = F
+                 )
+          ),
+          
+        ),
+        
+        hr(),
+        
+        h2(textOutput("which_keyword_title"),
            align = "center"),
         
         fluidRow(
-          column(8,
-                 "This page shows (1) how well different Google search terms correlate with COVID-19 cases and deaths 
-                 and (2) the time lag of Google search terms where the correlation is strongest. Trends in search terms 
-                 correlated with COVID cases/deaths can be used to indicate possible increases or decreases in COVID cases/deaths.
-                 Search term trends should not subsitute for official data; however, predictions may be useful when official 
-                 data may take time to be captured.",
-                 offset = 2
+          column(3,
+          ),
+          column(6, align = "center",
+                 strong("The below figure shows the average correlation between different search
+               terms and COVID (black point) and the distribution across countries (green)."),
+          ),
+          column(3,
+          )
+        ),
+        
+        fluidRow(
+          column(3,
+          ),
+          column(6,
+                 plotOutput("max_cor_hist",
+                            height = "400px")
+          ),
+          column(3,
           )
           
         ),
         
+        hr(),
         
         fluidRow(
           
-          fluidRow(
+          #h4(textOutput("cor_title_text"),
+          #    align = "center"),
+          
+          wellPanel(
             
-            column(3,
-                   
+            fluidRow(
+              
+              column(2,
+              ),
+              column(8,
+                     h2("For a specific search term, when is the correlation highest and how
+                    does the correlation vary across countries?",
+                        align = "center")
+              ),
+              column(2,
+              )
+              
             ),
             
-            column(2,
-                   
-                   selectInput(
-                     "select_keyword",
-                     label = strong("Keyword"),
-                     choices = keyword_list,
-                     selected = "Loss of Smell",
-                     multiple = F
-                   )
+            fluidRow(
+              
+              column(4,
+              ),
+              column(4, align = "center",
+                     selectInput(
+                       "select_keyword",
+                       label = strong("Search Term"),
+                       choices = keyword_list,
+                       selected = "Loss of Smell",
+                       multiple = F
+                     )
+              ),
+              column(4,
+              )
+              
             ),
             
-            column(2,
-                   
-                   selectInput(
-                     "select_covid_type",
-                     label = strong("Cases/Deaths"),
-                     choices = c("Cases", "Deaths"),
-                     selected = "Cases",
-                     multiple = F
-                   )
+            ## Titles
+            fluidRow(
+              column(4,
+                     column(12, strong(textOutput("text_best_time_lag")), align = "center")
+              ),
+              column(8,
+                     column(12, strong(textOutput("text_cor_countries")), align = "center")
+              )
             ),
             
-            column(2,
-                   
-                   selectInput(
-                     "select_continent",
-                     label = strong("Continent"),
-                     choices = c("All",
-                                 "Asia",
-                                 "Africa",
-                                 "Europe",
-                                 "South America",
-                                 "Oceania",
-                                 "North America"),
-                     selected = "All",
-                     multiple = F
-                   )
-            ),
+            ## Hist 1
+            fluidRow(
+              column(4,
+                     
+                     plotlyOutput("cor_histogram_time_lag",
+                                  height = "200px")
+              ),
+              
+              ## Hist 2
+              column(4,
+                     
+                     plotlyOutput("cor_histogram",
+                                  height = "200px"),
+              ),
+              
+              ## Hist 3
+              column(4,
+                     plotlyOutput("cor_map",
+                                  height = "200px")
+              )
+            )
             
-          )
+          ) #           , style = "padding: 2px; height: 20px"
           
         ),
         
+        hr(),
+        
+        
+        fluidRow(
+          column(3,
+          ),
+          column(6,
+                 h2(textOutput("trends_title"), align = "center")
+          ),
+          column(3,
+          )
+        ),
+        
+        fluidRow(
+          column(1,
+          ),
+          column(10,
+                 strong(textOutput("trends_subtitle"), align = "center")
+          ),
+          column(1,
+          )
+        ),
+        
+        br(),
+
+        
+        fluidRow(
+          column(4,
+          ),
+          column(4,align = "center",
+                 uiOutput("ui_select_sort_by")
+          ),
+          column(4,
+          )
+        ),
         
         fluidRow(
           
-          column(8,
+          column(12,
                  
-                 column(12, align = "center",
-                        uiOutput("ui_select_sort_by")
-                 ),
+                 
                  
                  uiOutput("ui_line_graph")
                  
                  
-          ),
-          
-          column(4,
-                 
-                 wellPanel(
-                   
-                   h4(textOutput("cor_title_text"),
-                      align = "center"),
-                   
-                   column(12, strong(textOutput("text_best_time_lag")), align = "center"),
-                   
-                   br(),
-                   br(),
-                   br(),
-                   
-                   plotlyOutput("cor_histogram_time_lag",
-                                height = "200px"),
-                   
-                   br(),
-                   br(),
-                   
-                   column(12, strong(textOutput("text_cor_countries")), align = "center"),
-                   
-                   br(),
-                   br(),
-                   br(),
-                   
-                   plotlyOutput("cor_histogram",
-                                height = "200px"),
-                   
-                   plotlyOutput("cor_map",
-                                height = "200px")
-                   
-                   , style = "padding: 2px;"
-                 )
           )
+          
         )
       )
     ),
@@ -212,11 +317,11 @@ ui <- fluidPage(
            align = "center"),
         
         fluidRow(
-           column(8,
-                  "This page shows the change in search term activity. We compare the
+          column(8,
+                 "This page shows the change in search term activity. We compare the
                   average search activity from the past week compared with the week before.",
-                  offset = 2
-           ),
+                 offset = 2
+          ),
         ),
         
         fluidRow(
@@ -298,11 +403,11 @@ server = (function(input, output, session) {
   output$cor_table <- renderUI({
     
     data_for_table <- readRDS(file.path("precomputed_figures",
-                           paste0("data_hits_change_table",
-                                  "_keyword", input$select_term_change,
-                                  "_cases_deaths", "Cases",
-                                  "_continent", input$select_continent_change,
-                                  ".Rds")))
+                                        paste0("data_hits_change_table",
+                                               "_keyword", input$select_term_change,
+                                               "_cases_deaths", "Cases",
+                                               "_continent", input$select_continent_change,
+                                               ".Rds")))
     
     f_list <- list(
       `var1` = formatter("span", style = ~ style(color = "black")),
@@ -310,7 +415,7 @@ server = (function(input, output, session) {
       `var3` = formatter("span", style = ~ style(color = "black")),
       `var4` = formatter("span", style = ~ style(color = "black"))
     )
-
+    
     l <- formattable(
       data_for_table %>% as.data.table(), # [1:table_max,]
       align = c("l", "l", "l", "l"),
@@ -331,13 +436,74 @@ server = (function(input, output, session) {
   # * Line Graph ---------------------------------------------------------------
   output$line_graph <- renderPlot({
     
-    p <- readRDS(file.path("precomputed_figures", 
-                           paste0("fig_line_cor",
+    cases_deaths <<- input$select_covid_type
+    keyword_en <<- input$select_keyword
+    
+    p <- readRDS(file.path("precomputed_figures",
+                           paste0("fig_line",
                                   "_keyword", input$select_keyword,
                                   "_cases_deaths", input$select_covid_type,
                                   "_continent", input$select_continent,
                                   "_sort_by", input$select_sort_by,
                                   ".Rds")))
+    
+    #p 
+    
+    # 
+    # n_countries <- length(unique(line_graph_df$title))
+    # 
+    # plt_one_country <- function(df){
+    #   plot_ly(df) %>%
+    #     add_trace(x = ~date,
+    #               y = ~hits,
+    #               type = 'scatter',
+    #               mode = 'lines',
+    #               line = list(color = 'green')) %>%
+    #     add_trace(x = ~date,
+    #               y = ~covid_new,
+    #               type = 'bar',
+    #               marker = list(color = 'orange')) %>%
+    #     add_annotations(
+    #       text = ~unique(Country),
+    #       x = 0.5,
+    #       y = 1,
+    #       yref = "paper",
+    #       xref = "paper",
+    #       xanchor = "middle",
+    #       yanchor = "top",
+    #       showarrow = FALSE,
+    #       font = list(size = 14)
+    #     )
+    # }
+    # 
+    # dfa %>%
+    #   group_by(Country) %>%
+    #   do(mafig = plt_one_country(.)) %>%
+    #   subplot(nrows = n_countries) %>%
+    #   layout(
+    #     showlegend = FALSE,
+    #     #title = '',
+    #     width = 700,
+    #     height = n_countries*100,
+    #     hovermode = FALSE
+    #   ) 
+    # 
+    # 
+    
+    # list(src = file.path("precomputed_figures", 
+    #                      paste0("fig_line",
+    #                             "_keyword", input$select_keyword,
+    #                             "_cases_deaths", input$select_covid_type,
+    #                             "_continent", input$select_continent,
+    #                             "_sort_by", input$select_sort_by,
+    #                             ".png")),
+    #      contentType = 'image/png',
+    #      width = 400,
+    #      height = 250*19,
+    #      alt = "This is alternate text")
+    
+    #})
+    
     p
     
   }, bg="transparent")
@@ -405,6 +571,24 @@ server = (function(input, output, session) {
     
   })
   
+  # * Max Correlation Hist -----------------------------------------------------
+  
+  output$max_cor_hist <- renderPlot({
+    p <- readRDS(file.path("precomputed_figures",
+                           paste0("fig_max_cor_hist",
+                                  "_cases_deaths", input$select_covid_type,
+                                  "_continent", input$select_continent,
+                                  ".Rds")))
+    
+    p #%>%
+    #ggplotly(tooltip = "text") %>%
+    #layout(plot_bgcolor='transparent',
+    #       paper_bgcolor='transparent') %>%
+    #config(displayModeBar = F)
+    
+  })
+  
+  
   # * renderUIs ----------------------------------------------------------------
   output$ui_select_covid_cases <- renderUI({
     
@@ -426,6 +610,37 @@ server = (function(input, output, session) {
     
   })
   
+  output$trends_title <- renderText({
+    
+    paste0("Trends in ",
+           input$select_keyword,
+           " and COVID-19 ",
+           input$select_covid_type)
+    
+  })
+  
+  output$trends_subtitle <- renderText({
+    
+    paste0("For each country, we determine when search activity of ",
+           input$select_keyword,
+           " has the highest correlation with COVID-19 ",
+           tolower(input$select_covid_type), 
+           ". ",
+           "Does search activity some days in the past have the strongest correlation
+           with COVID ", tolower(input$select_covid_type), "? If so, search activity may
+           predict future ", tolower(input$select_covid_type), ".")
+    
+
+    
+  })
+  
+  output$which_keyword_title <- renderText({
+    
+    paste0("Which search terms are most correlated with COVID-19 ",
+           input$select_covid_type, "?")
+    
+  })
+  
   output$text_best_time_lag <- renderText({
     
     best_time_lag <- readRDS(file.path("precomputed_figures", 
@@ -440,7 +655,7 @@ server = (function(input, output, session) {
                   " is most strongly correlated with COVID ",
                   input$select_covid_type, " ",
                   abs(best_time_lag), " days ",
-                  ifelse(best_time_lag < 0, "before", "after"),
+                  ifelse(best_time_lag < 0, "into the past", "into the future"),
                   ".")
     
     txt
@@ -482,14 +697,18 @@ server = (function(input, output, session) {
   
   output$ui_line_graph <- renderUI({
     
-    n_states <- readRDS(file.path("precomputed_figures", paste0("stat_line_cor_N_countries",
-                                                                "_keyword", input$select_keyword,
-                                                                "_cases_deaths", input$select_covid_type,
-                                                                "_continent", input$select_continent,
-                                                                ".Rds")))
+    n_states <- readRDS(file.path("precomputed_figures", 
+                                  paste0("stat_line_cor_N_countries",
+                                         "_keyword", input$select_keyword,
+                                         "_cases_deaths", input$select_covid_type,
+                                         "_continent", input$select_continent,
+                                         ".Rds")))
+    
+    n_states_div <- ceiling(n_states/5)
     
     plotOutput("line_graph",
-               height = paste0(n_states*150,"px"))
+               height = paste0(n_states_div*180,"px"))
+    
   })
   
   output$ui_select_sort_by <- renderUI({

@@ -1,12 +1,13 @@
 # Precompute Figures
 
 # Settings
-LINE_COR_FIG <- F
-HIST_COR <- F
-HIST_TIME_LAG <- F
-MAP_COR <- F
+LINE_COR_FIG <- T
+HIST_COR <- T
+HIST_TIME_LAG <- T
+MAP_COR <- T
 CHANGE_TABLE <- TRUE
-CHANGE_MAP <- F
+CHANGE_MAP <- T
+MAX_COR_HIST <- T
 
 # Filepaths --------------------------------------------------------------------
 DASHBOARD_PATH <- file.path(dropbox_file_path, "Data", "google_trends", 
@@ -27,7 +28,7 @@ keyword_list <- unique(gtrends_df$keyword_en) %>% sort()
 saveRDS(keyword_list, file.path(FIGURES_PATH, paste0("keyword_list",
                                                      ".Rds")))
 
-for(keyword in c(keyword_list)){
+for(keyword in c("Loss of Smell", keyword_list)){
   for(cases_deaths in c("Cases",
                         "Deaths")){
     for(continent in c("All",
@@ -53,6 +54,9 @@ for(keyword in c(keyword_list)){
         cor_max_df <- readRDS(file.path(DASHBOARD_PATH, "correlations_max_lag.Rds"))
         world_sf   <- readRDS(file.path(DASHBOARD_PATH, "world_ne.Rds"))
         
+        # For figures that need all keywords
+        cor_max_allkeys_df <- cor_max_df
+        
         #GEO <- c("US", "BR", "FR", "ES", "MX", "PT")
         #gtrends_df <- gtrends_df[gtrends_df$geo %in% GEO,]
         #cor_df     <- cor_df[cor_df$geo %in% GEO,]
@@ -69,6 +73,8 @@ for(keyword in c(keyword_list)){
           gtrends_df <- gtrends_df[gtrends_df$geo %in% world_sf$geo,]
           cor_df     <- cor_df[cor_df$geo %in% world_sf$geo,]
           cor_max_df <- cor_max_df[cor_max_df$geo %in% world_sf$geo,]
+          cor_max_allkeys_df <- cor_max_allkeys_df[cor_max_allkeys_df$geo %in% world_sf$geo,]
+          
         }
         
         if(cases_deaths %in% c("Cases")){
@@ -80,6 +86,9 @@ for(keyword in c(keyword_list)){
           
           cor_max_df$time_lag_covid_cor_max <- cor_max_df$time_lag_cases_cor_max
           cor_max_df$cor_covid_new_max <- cor_max_df$cor_cases_new_max
+          
+          cor_max_allkeys_df$time_lag_covid_cor_max <- cor_max_allkeys_df$time_lag_cases_cor_max
+          cor_max_allkeys_df$cor_covid_new_max <- cor_max_allkeys_df$cor_cases_new_max
         }
         
         if(cases_deaths %in% c("Deaths")){
@@ -91,6 +100,9 @@ for(keyword in c(keyword_list)){
           
           cor_max_df$time_lag_covid_cor_max <- cor_max_df$time_lag_death_cor_max
           cor_max_df$cor_covid_new_max <- cor_max_df$cor_death_new_max
+          
+          cor_max_allkeys_df$time_lag_covid_cor_max <- cor_max_allkeys_df$time_lag_death_cor_max
+          cor_max_allkeys_df$cor_covid_new_max <- cor_max_allkeys_df$cor_death_new_max
         }
         
         # Prep Increase Data ---------------------------------------------------
@@ -185,27 +197,125 @@ for(keyword in c(keyword_list)){
           }
           
           GEO_BOTH <- intersect(gtrends_sub_df$geo, cor_df$geo)
-          
           if(length(GEO_BOTH) %in% 0) next
           
-          p_line <- ggplot(gtrends_sub_df[gtrends_sub_df$geo %in% GEO_BOTH,], 
+          
+          gtrends_sub_df$past_future <- ifelse(gtrends_sub_df$time_lag_cases_cor_max < 0, 
+                                               "past", "future")
+          # gtrends_sub_df$title <- paste0("<b>", gtrends_sub_df$Country, "</b><br><br>", 
+          #                                "<em>When we consider COVID cases<b> ",
+          #                                abs(gtrends_sub_df$time_lag_cases_cor_max), 
+          #                                "</b> days into the ",
+          #                                gtrends_sub_df$past_future, 
+          #                                ",<br>the correlation between search popularity and cases is <b>",
+          #                                round(gtrends_sub_df$cor_covid_new_best, 2),
+          #                                "</b></em>") 
+          
+          gtrends_sub_df$title <- paste0("<b>", gtrends_sub_df$Country, "</b><br>",
+                                         "<b>", abs(gtrends_sub_df$time_lag_cases_cor_max),
+                                         "</b> days into the ",
+                                         gtrends_sub_df$past_future,
+                                         ",<br>Correlation: <b>",
+                                         round(gtrends_sub_df$cor_covid_new_best, 2),
+                                         "</b>")
+          
+          
+          #####
+          gtrends_sub_df_lim <- gtrends_sub_df %>%
+            arrange(date) %>%
+            filter(geo %in% GEO_BOTH) %>%
+            dplyr::select(title, Country, date, hits, covid_new)
+          
+          
+          # plt_one_country <- function(df){
+          #   plot_ly(df) %>%
+          #     add_trace(x = ~date,
+          #               y = ~hits,
+          #               type = 'scatter',
+          #               mode = 'lines',
+          #               line = list(color = 'green')) %>%
+          #     add_trace(x = ~date,
+          #               y = ~covid_new,
+          #               type = 'bar',
+          #               marker = list(color = 'orange')) %>%
+          #     add_annotations(
+          #       text = ~unique(Country),
+          #       x = 0.5,
+          #       y = 1,
+          #       yref = "paper",
+          #       xref = "paper",
+          #       xanchor = "middle",
+          #       yanchor = "top",
+          #       showarrow = FALSE,
+          #       font = list(size = 14)
+          #     )
+          # }
+          # 
+          # 
+          # gtrends_sub_df %>%
+          #   filter(keyword_en %in% "Loss of Smell") %>%
+          #   filter(Country %in% c("Brazil", "Canada", "Zimbabwe")) %>%
+          #   arrange(date) %>%
+          #   group_by(title) %>%
+          #   do(mafig = plt_one_country(.)) %>%
+          #   subplot(nrows = 3) %>%
+          #   #subplot(nrows = length(GEO_BOTH)) %>%
+          #   layout(
+          #     showlegend = FALSE,
+          #     #title = '',
+          #     width = 500,
+          #     height = 2*250,
+          #     hovermode = FALSE
+          #   ) 
+          
+          
+          
+          saveRDS(gtrends_sub_df_lim, file.path(FIGURES_PATH, paste0("fig_line_data",
+                                                                     "_keyword", keyword,
+                                                                     "_cases_deaths", cases_deaths,
+                                                                     "_continent", continent,
+                                                                     "_sort_by", sort_by,
+                                                                     ".Rds")))
+          
+          
+          
+        
+          
+          p_line <- ggplot(gtrends_sub_df[gtrends_sub_df$geo %in% GEO_BOTH &
+                                          gtrends_sub_df$date %in% tail(sort(unique(gtrends_sub_df$date)), 20),], 
                            aes(x = date)) +
             geom_col(aes(y = covid_new, fill = paste("COVID-19", cases_deaths))) +
             geom_line(aes(y = hits, color = paste0("Search Popularity of ", keyword_en))) +
-            facet_wrap(~Country,
+            facet_wrap(~title,
                        scales = "free_y",
-                       ncol = 1) +
+                       ncol = 5) +
             scale_fill_manual(values = "orange1") +
             scale_color_manual(values = "green4") +
             labs(x = "", y = paste("COVID-19", cases_deaths),
                  fill = "", color = "",
-                 title = paste0("Trends in COVID ",tolower(cases_deaths),  
-                                "\nand search popularity of ",
-                                keyword, "\n \n")) +
+                 title = "") +
             theme_minimal() + 
             theme(legend.position="top",
                   legend.text = element_text(size=14),
-                  plot.title = element_text(size = 16, face = "bold"))
+                  strip.text = element_markdown(size = 14, hjust = 0))
+          
+          saveRDS(p_line, file.path(FIGURES_PATH, paste0("fig_line",
+                                                         "_keyword", keyword,
+                                                         "_cases_deaths", cases_deaths,
+                                                         "_continent", continent,
+                                                         "_sort_by", sort_by,
+                                                         ".Rds")))
+          
+          n_states <- length(unique(GEO_BOTH))
+          ggsave(p_line, filename = file.path(FIGURES_PATH, paste0("fig_line",
+                                                                   "_keyword", keyword,
+                                                                   "_cases_deaths", cases_deaths,
+                                                                   "_continent", continent,
+                                                                   "_sort_by", sort_by,
+                                                                   ".png")),
+                 height = n_states*4,
+                 width = 12,
+                 limitsize = FALSE)
           
           p_cor <- cor_df[cor_df$geo %in% GEO_BOTH,] %>%
             ggplot() +
@@ -232,11 +342,7 @@ for(keyword in c(keyword_list)){
                   legend.text = element_text(size=14),
                   plot.title = element_text(size = 16, face = "bold"))
           
-          p_all <- ggarrange(p_line,
-                             p_cor,
-                             ncol = 2)
-          
-          saveRDS(p_all, file.path(FIGURES_PATH, paste0("fig_line_cor",
+          saveRDS(p_cor, file.path(FIGURES_PATH, paste0("fig_cor",
                                                         "_keyword", keyword,
                                                         "_cases_deaths", cases_deaths,
                                                         "_continent", continent,
@@ -450,6 +556,40 @@ for(keyword in c(keyword_list)){
                                                     "_cases_deaths", cases_deaths,
                                                     "_continent", continent,
                                                     ".Rds")))
+        }
+        
+        # 7. Max Correlation Distribution --------------------------------------
+        if(MAX_COR_HIST){
+          
+          cor_max_allkeys_sum_df <- cor_max_allkeys_df %>%
+            group_by(keyword_en) %>%
+            summarise(cor_covid_new_max = mean(cor_covid_new_max)) %>%
+            ungroup()
+          
+          p <- ggplot() +
+            geom_violin(aes(x = reorder(keyword_en,
+                                        cor_covid_new_max),
+                            y = cor_covid_new_max),
+                        data = cor_max_allkeys_df,
+                        fill = "palegreen3") +
+            geom_point(aes(x = reorder(keyword_en,
+                                       cor_covid_new_max),
+                           y = cor_covid_new_max),
+                       data = cor_max_allkeys_sum_df,
+                       fill = "palegreen3") +
+            geom_hline(yintercept = 0) +
+            coord_flip() +
+            theme_minimal() +
+            labs(x = "",
+                 y = "Correlation") +
+            theme(axis.text.y = element_text(face = "bold", size = 14)) +
+            theme(axis.text.x = element_text(size = 14))
+          
+          saveRDS(p, file.path(FIGURES_PATH, paste0("fig_max_cor_hist",
+                                                    "_cases_deaths", cases_deaths,
+                                                    "_continent", continent,
+                                                    ".Rds")))
+          
         }
         
         

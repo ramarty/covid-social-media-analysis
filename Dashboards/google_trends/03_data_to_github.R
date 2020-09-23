@@ -8,7 +8,7 @@ OUT_PATH <- file.path(github_file_path, "Dashboards", "google_trends",
                       "precomputed_figures")
 
 i <- 1
-temp <- list.files(IN_PATH, pattern = "*.Rds") %>%
+temp <- list.files(IN_PATH, pattern = "*.Rds|*.png") %>%
   lapply(function(file_i){
     if((i %% 100) %in% 0) print(i)
     i <<- i + 1
@@ -26,7 +26,7 @@ OUT_PATH <- file.path(github_file_path, "Dashboards", "google_trends",
                       "data")
 
 i <- 1
-temp <- list.files(IN_PATH, pattern = "*.Rds") %>%
+temp <- list.files(IN_PATH, pattern = "*.Rds|.*png") %>%
   lapply(function(file_i){
     if((i %% 100) %in% 0) print(i)
     i <<- i + 1
