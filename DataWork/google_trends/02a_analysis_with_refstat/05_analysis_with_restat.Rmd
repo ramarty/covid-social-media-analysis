@@ -14,6 +14,11 @@ output:
     number_sections: true
 ---
 
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(background = "light", warning=FALSE, message=FALSE)
+```
+
 ## GOAL
 
 This script performs analysis of the google trends data for Brazil to develop an alarm system for covid19 cases at the state level.
@@ -62,15 +67,6 @@ Adjusting the dataset
 trends_df <- 
   trends_df %>% 
   rename(state = name)
-```
-
-```{r global_options, include=FALSE}
-knitr::opts_chunk$set(
-  fig.width = 8, 
-  fig.height = 8, 
-  background = "light", 
-  warning = FALSE, 
-  message = FALSE)
 ```
 
 
@@ -147,8 +143,7 @@ trends_df %>%
   labs(
     y = "Average hits per category", 
     x = "Date",
-    title = "Average growth rate of cases (in black)\nin comparison to Google Trends over time", 
-    caption = "Using hits - not relative to another state"
+    title = "Average growth rate of cases (in black)\nin comparison to Google Trends over time"
   ) + 
   coord_cartesian(ylim = c(0, 100)) +
   scale_color_discrete(name = "Search Category", labels = c("Coronavirus", "Symptoms", "1st Person Search")) +

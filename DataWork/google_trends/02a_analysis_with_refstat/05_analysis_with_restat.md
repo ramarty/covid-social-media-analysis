@@ -14,6 +14,9 @@ output:
     number_sections: true
 ---
 
+
+
+
 ## GOAL
 
 This script performs analysis of the google trends data for Brazil to develop an alarm system for covid19 cases at the state level.
@@ -28,400 +31,32 @@ trends_df <-
   readRDS(file.path(dropbox_file_path, "Data/google_trends/FinalData/brazil_with_refstate_analysis.Rds"))
 
 library(ggrepel)
-```
-
-```
-## Loading required package: ggplot2
-```
-
-```
-## Warning: package 'ggplot2' was built under R version 3.6.3
-```
-
-```r
 library(tidyverse)
-```
-
-```
-## -- Attaching packages --------------------------------------- tidyverse 1.3.0 --
-```
-
-```
-## v tibble  3.0.1     v dplyr   0.8.5
-## v tidyr   1.0.2     v stringr 1.4.0
-## v readr   1.3.1     v forcats 0.5.0
-## v purrr   0.3.4
-```
-
-```
-## Warning: package 'tibble' was built under R version 3.6.3
-```
-
-```
-## Warning: package 'tidyr' was built under R version 3.6.3
-```
-
-```
-## Warning: package 'purrr' was built under R version 3.6.3
-```
-
-```
-## Warning: package 'dplyr' was built under R version 3.6.3
-```
-
-```
-## Warning: package 'forcats' was built under R version 3.6.3
-```
-
-```
-## -- Conflicts ------------------------------------------ tidyverse_conflicts() --
-## x dplyr::filter() masks stats::filter()
-## x dplyr::lag()    masks stats::lag()
-```
-
-```r
 library(parallel)
 library(pbmcapply)
 library(ggplot2)
 library(jsonlite)
-```
-
-```
-## Warning: package 'jsonlite' was built under R version 3.6.3
-```
-
-```
-## 
-## Attaching package: 'jsonlite'
-```
-
-```
-## The following object is masked from 'package:purrr':
-## 
-##     flatten
-```
-
-```r
 library(stringr)
 library(raster)
-```
-
-```
-## Warning: package 'raster' was built under R version 3.6.3
-```
-
-```
-## Loading required package: sp
-```
-
-```
-## 
-## Attaching package: 'raster'
-```
-
-```
-## The following object is masked from 'package:dplyr':
-## 
-##     select
-```
-
-```
-## The following object is masked from 'package:tidyr':
-## 
-##     extract
-```
-
-```r
 library(ISOcodes)
-```
-
-```
-## Warning: package 'ISOcodes' was built under R version 3.6.3
-```
-
-```r
 library(stringi)
 library(lubridate)
-```
-
-```
-## Warning: package 'lubridate' was built under R version 3.6.3
-```
-
-```
-## 
-## Attaching package: 'lubridate'
-```
-
-```
-## The following objects are masked from 'package:raster':
-## 
-##     intersect, union
-```
-
-```
-## The following objects are masked from 'package:dplyr':
-## 
-##     intersect, setdiff, union
-```
-
-```
-## The following objects are masked from 'package:base':
-## 
-##     date, intersect, setdiff, union
-```
-
-```r
 library(purrr)
 library(tidytext)
-```
-
-```
-## Warning: package 'tidytext' was built under R version 3.6.3
-```
-
-```r
 library(quanteda)
-```
-
-```
-## Warning: package 'quanteda' was built under R version 3.6.3
-```
-
-```
-## Package version: 2.0.1
-```
-
-```
-## Parallel computing: 2 of 8 threads used.
-```
-
-```
-## See https://quanteda.io for tutorials and examples.
-```
-
-```
-## 
-## Attaching package: 'quanteda'
-```
-
-```
-## The following object is masked from 'package:utils':
-## 
-##     View
-```
-
-```r
 library(SentimentAnalysis)
-```
-
-```
-## Warning: package 'SentimentAnalysis' was built under R version 3.6.3
-```
-
-```
-## 
-## Attaching package: 'SentimentAnalysis'
-```
-
-```
-## The following object is masked from 'package:base':
-## 
-##     write
-```
-
-```r
 library(sentimentr)
-```
-
-```
-## Warning: package 'sentimentr' was built under R version 3.6.3
-```
-
-```r
 library(tm)
-```
-
-```
-## Warning: package 'tm' was built under R version 3.6.3
-```
-
-```
-## Loading required package: NLP
-```
-
-```
-## 
-## Attaching package: 'NLP'
-```
-
-```
-## The following objects are masked from 'package:quanteda':
-## 
-##     meta, meta<-
-```
-
-```
-## The following object is masked from 'package:ggplot2':
-## 
-##     annotate
-```
-
-```
-## 
-## Attaching package: 'tm'
-```
-
-```
-## The following objects are masked from 'package:quanteda':
-## 
-##     as.DocumentTermMatrix, stopwords
-```
-
-```r
 library(tokenizers)
-```
-
-```
-## Warning: package 'tokenizers' was built under R version 3.6.3
-```
-
-```r
 library(wordcloud)
-```
-
-```
-## Warning: package 'wordcloud' was built under R version 3.6.3
-```
-
-```
-## Loading required package: RColorBrewer
-```
-
-```r
 library(ggwordcloud)
-```
-
-```
-## Warning: package 'ggwordcloud' was built under R version 3.6.3
-```
-
-```r
 library(ggpubr)
-```
-
-```
-## Warning: package 'ggpubr' was built under R version 3.6.3
-```
-
-```
-## Loading required package: magrittr
-```
-
-```
-## 
-## Attaching package: 'magrittr'
-```
-
-```
-## The following object is masked from 'package:raster':
-## 
-##     extract
-```
-
-```
-## The following object is masked from 'package:purrr':
-## 
-##     set_names
-```
-
-```
-## The following object is masked from 'package:tidyr':
-## 
-##     extract
-```
-
-```
-## 
-## Attaching package: 'ggpubr'
-```
-
-```
-## The following object is masked from 'package:raster':
-## 
-##     rotate
-```
-
-```r
 library(dplyr)
 library(sf)
-```
-
-```
-## Warning: package 'sf' was built under R version 3.6.3
-```
-
-```
-## Linking to GEOS 3.6.1, GDAL 2.2.3, PROJ 4.9.3
-```
-
-```r
 library(readstata13)
-```
-
-```
-## Warning: package 'readstata13' was built under R version 3.6.3
-```
-
-```r
 library(forcats)
 library(tidyr)
 library(tidylog)
-```
-
-```
-## 
-## Attaching package: 'tidylog'
-```
-
-```
-## The following objects are masked from 'package:ggpubr':
-## 
-##     group_by, mutate
-```
-
-```
-## The following object is masked from 'package:raster':
-## 
-##     select
-```
-
-```
-## The following objects are masked from 'package:dplyr':
-## 
-##     add_count, add_tally, anti_join, count, distinct, distinct_all,
-##     distinct_at, distinct_if, filter, filter_all, filter_at, filter_if,
-##     full_join, group_by, group_by_all, group_by_at, group_by_if,
-##     inner_join, left_join, mutate, mutate_all, mutate_at, mutate_if,
-##     rename, rename_all, rename_at, rename_if, right_join, sample_frac,
-##     sample_n, select, select_all, select_at, select_if, semi_join,
-##     slice, summarise, summarise_all, summarise_at, summarise_if,
-##     summarize, summarize_all, summarize_at, summarize_if, tally,
-##     top_frac, top_n, transmute, transmute_all, transmute_at,
-##     transmute_if, ungroup
-```
-
-```
-## The following objects are masked from 'package:tidyr':
-## 
-##     drop_na, fill, gather, pivot_longer, pivot_wider, replace_na,
-##     spread, uncount
-```
-
-```
-## The following object is masked from 'package:stats':
-## 
-##     filter
 ```
 
 Adjusting the dataset
@@ -432,12 +67,6 @@ trends_df <-
   trends_df %>% 
   rename(state = name)
 ```
-
-```
-## rename: renamed one variable (state)
-```
-
-
 
 
 # Covid-19 per state
@@ -525,8 +154,7 @@ trends_df %>%
   labs(
     y = "Average hits per category", 
     x = "Date",
-    title = "Average growth rate of cases (in black)\nin comparison to Google Trends over time", 
-    caption = "Using hits - not relative to another state"
+    title = "Average growth rate of cases (in black)\nin comparison to Google Trends over time"
   ) + 
   coord_cartesian(ylim = c(0, 100)) +
   scale_color_discrete(name = "Search Category", labels = c("Coronavirus", "Symptoms", "1st Person Search")) +
@@ -807,6 +435,7 @@ trends_df %>%
 ```
 
 ![](05_analysis_with_restat_files/figure-html/unnamed-chunk-18-1.png)<!-- -->
+
 ## Looking at death rate
 
 
@@ -837,6 +466,41 @@ trends_df %>%
 
 ![](05_analysis_with_restat_files/figure-html/unnamed-chunk-19-1.png)<!-- -->
 
+## Evaluating how many days I can't smell appears before X deaths
+
+
+```r
+trends_df %>% 
+  left_join(states_cant_smell_date, by = "state") %>% 
+  mutate(
+    cant_smell_appears = if_else(!is.na(first_date_cant_smell), 1L, 0L) %>% as.character()
+  )
+```
+
+```
+## # A tibble: 165,228 x 33
+##    date        hits hits_with_comps~ keyword geo   time  gprop category
+##    <date>     <dbl>            <dbl> <chr>   <chr> <chr> <chr> <chr>   
+##  1 2020-01-01     0                0 ajuda ~ BR-MG 2020~ web   0       
+##  2 2020-01-02     0                0 ajuda ~ BR-MG 2020~ web   0       
+##  3 2020-01-03     0                0 ajuda ~ BR-MG 2020~ web   0       
+##  4 2020-01-04     0                0 ajuda ~ BR-MG 2020~ web   0       
+##  5 2020-01-05     0                0 ajuda ~ BR-MG 2020~ web   0       
+##  6 2020-01-06     0                0 ajuda ~ BR-MG 2020~ web   0       
+##  7 2020-01-07     0                0 ajuda ~ BR-MG 2020~ web   0       
+##  8 2020-01-08     0                0 ajuda ~ BR-MG 2020~ web   0       
+##  9 2020-01-09     0                0 ajuda ~ BR-MG 2020~ web   0       
+## 10 2020-01-10     0                0 ajuda ~ BR-MG 2020~ web   0       
+## # ... with 165,218 more rows, and 25 more variables: hits_compstate <dbl>,
+## #   hits_adj <dbl>, state <chr>, sub_code_red <chr>, region <fct>, cases <int>,
+## #   deaths <int>, estimate_2018_state <int>, census_2010_state <int>,
+## #   perc_change <dbl>, categories <chr>, case_rate <dbl>, death_rate <dbl>,
+## #   fatalities_per_case <dbl>, diff_date <dbl>, diff_growth_cases <int>,
+## #   diff_growth_deaths <int>, growth_rate_cases <dbl>,
+## #   growth_rate_deaths <dbl>, week_number <dbl>, day <int>, month <dbl>,
+## #   wday <ord>, first_date_cant_smell <date>, cant_smell_appears <chr>
+```
+
 
 # Event study: weeks since I can't smell
 We create a variable for the maximum number of days in a week with "I can't smell" 
@@ -859,7 +523,9 @@ week_geo <-
     mean_death_rate = mean(death_rate, na.rm = TRUE), 
     mean_fatalities_per_case = mean(fatalities_per_case, na.rm = TRUE), 
     mean_growth_rate_cases = mean(growth_rate_cases, na.rm = TRUE), 
-    mean_growth_rate_deaths = mean(growth_rate_deaths, na.rm = TRUE)
+    mean_growth_rate_deaths = mean(growth_rate_deaths, na.rm = TRUE), 
+    sum_cases = sum(cases, na.rm = TRUE), 
+    sum_deaths = sum(deaths, na.rm = TRUE)
   ) %>% 
   ungroup()
 
@@ -943,8 +609,7 @@ week_df %>%
     mean_deaths = mean(mean_deaths, na.rm = TRUE)
   ) %>% 
   ggplot() +
-  geom_line(aes(weeks_since_max_cant_smell, mean_cases, color = "Mean cases")) + 
-  geom_line(aes(weeks_since_max_cant_smell, mean_deaths, color = "Mean deaths")) +
+  geom_line(aes(weeks_since_max_cant_smell, mean_cases)) + 
   geom_vline(aes(xintercept = 0), linetype = "dashed") +
   geom_text(
     aes(
@@ -957,14 +622,13 @@ week_df %>%
   labs(
     title = "Average evolution of states relative to the week \nwith the most I can't smell appearances",
     x = "Weeks since maximum I can't smell appearances", 
-    y = "Mean cases or deaths per state", 
-    color = "Variable"
+    y = "Mean cases per state"
   ) +
   theme_light() + 
   coord_cartesian(xlim = c(-10, 8))
 ```
 
-![](05_analysis_with_restat_files/figure-html/unnamed-chunk-23-1.png)<!-- -->
+![](05_analysis_with_restat_files/figure-html/unnamed-chunk-24-1.png)<!-- -->
 
 ## Event study: case and death rate
 
@@ -990,7 +654,7 @@ week_df %>%
   theme_light()
 ```
 
-![](05_analysis_with_restat_files/figure-html/unnamed-chunk-24-1.png)<!-- -->
+![](05_analysis_with_restat_files/figure-html/unnamed-chunk-25-1.png)<!-- -->
 
 ## Event study: growth rate of cases and deaths
 
@@ -1016,16 +680,26 @@ week_df %>%
   )
 ```
 
-![](05_analysis_with_restat_files/figure-html/unnamed-chunk-25-1.png)<!-- -->
+![](05_analysis_with_restat_files/figure-html/unnamed-chunk-26-1.png)<!-- -->
 
 ## Event study at the state level with mean cases or deaths
 
 We now do the graphs at the state level
 
 ```r
+#we merge the state name to the data
+geo_names <- 
+  trends_df %>% 
+  count(geo, state) %>% 
+  select(-n)
+
+week_df <- 
+  week_df %>% 
+  left_join(geo_names, by = "geo")
+
 week_df %>% 
   filter(!is.na(weeks_since_max_cant_smell)) %>%
-  group_by(weeks_since_max_cant_smell, geo) %>% 
+  group_by(weeks_since_max_cant_smell, state) %>% 
   summarize(
     mean_cases = mean(mean_cases, na.rm = TRUE), 
     mean_deaths = mean(mean_deaths, na.rm = TRUE)
@@ -1034,7 +708,7 @@ week_df %>%
   geom_line(aes(weeks_since_max_cant_smell, mean_cases, color = "Mean cases")) + 
   geom_line(aes(weeks_since_max_cant_smell, mean_deaths, color = "Mean deaths")) + 
   geom_vline(aes(xintercept = 0), linetype = "dashed") +
-  facet_wrap(vars(geo)) + 
+  facet_wrap(vars(state)) + 
   labs(
     x = "Weeks since maximum days of I can't smell", 
     y = "Mean cases or deaths", 
@@ -1044,7 +718,7 @@ week_df %>%
   theme_light()
 ```
 
-![](05_analysis_with_restat_files/figure-html/unnamed-chunk-26-1.png)<!-- -->
+![](05_analysis_with_restat_files/figure-html/unnamed-chunk-27-1.png)<!-- -->
 
 ## Does the intensity in the number of days matters?
 
@@ -1086,7 +760,7 @@ week_df %>%
   coord_cartesian(xlim = c(-10, 10))
 ```
 
-![](05_analysis_with_restat_files/figure-html/unnamed-chunk-27-1.png)<!-- -->
+![](05_analysis_with_restat_files/figure-html/unnamed-chunk-28-1.png)<!-- -->
 
 
 ## Showing the actual dates instead
@@ -1095,26 +769,28 @@ We now do the graphs at the state level and show the actual dates instead
 
 ```r
 week_df %>% 
-  group_by(week_number, geo) %>% 
+  filter(!is.na(weeks_since_max_cant_smell)) %>%
+  group_by(week_number, state) %>% 
   summarize(
     mean_cases = mean(mean_cases, na.rm = TRUE), 
     mean_deaths = mean(mean_deaths, na.rm = TRUE), 
     week_max_days = mean(week_max_days, na.rm = TRUE)
   ) %>% 
   ggplot() +
-  geom_line(aes(week_number, mean_cases, color = "Mean cases")) + 
-  geom_line(aes(week_number, mean_deaths, color = "Mean deaths")) + 
+  geom_line(aes(week_number, mean_cases)) + 
   geom_vline(aes(xintercept = week_max_days), linetype = "dashed") +
-  facet_wrap(vars(geo)) + 
+  facet_wrap(vars(state)) + 
   labs(
     x = "Weeks since maximum days of I can't smell", 
-    y = "Mean cases or deaths", 
-    color = "Variable"
+    y = "Mean cases"
   ) +
-  theme_light()
+  theme_light() + 
+  scale_y_continuous(
+    labels = scales::unit_format(scale = 1/1000, suffix = "k")
+  ) 
 ```
 
-![](05_analysis_with_restat_files/figure-html/unnamed-chunk-28-1.png)<!-- -->
+![](05_analysis_with_restat_files/figure-html/unnamed-chunk-29-1.png)<!-- -->
 
 
 ```r
@@ -1139,6 +815,173 @@ week_df %>%
 ## 10 BR-MA                   2    26
 ## # ... with 17 more rows
 ```
+
+## Final graph
+
+We now do the graphs at the state level and show the actual dates instead
+
+```r
+week_df %>% 
+  filter(!is.na(weeks_since_max_cant_smell)) %>%
+  group_by(week_number, state) %>% 
+  summarize(
+    sum_cases = sum(sum_cases, na.rm = TRUE), 
+    week_max_days = mean(week_max_days, na.rm = TRUE)
+  ) %>% 
+  ggplot() +
+  geom_line(aes(week_number, sum_cases)) + 
+  geom_vline(aes(xintercept = week_max_days), linetype = "dashed") +
+  facet_wrap(vars(state)) + 
+  labs(
+    x = "Weeks since maximum days of I can't smell", 
+    y = "Cumulative COVID-19 cases"
+  ) +
+  theme_light()
+```
+
+![](05_analysis_with_restat_files/figure-html/unnamed-chunk-31-1.png)<!-- -->
+
+## Table of cases since the maximum I can't smell appearances
+
+
+```r
+week_df %>% 
+  filter(weeks_since_max_cant_smell == 0) %>% 
+  summarize(mean_cases = mean(mean_deaths))
+```
+
+```
+## # A tibble: 17 x 2
+##    geo   mean_cases
+##    <chr>      <dbl>
+##  1 BR-AL       59.3
+##  2 BR-AM       56.6
+##  3 BR-BA      636  
+##  4 BR-CE     1052. 
+##  5 BR-ES      804  
+##  6 BR-GO      291. 
+##  7 BR-MA      219. 
+##  8 BR-MG      855. 
+##  9 BR-MT      334. 
+## 10 BR-PA      266. 
+## 11 BR-PB       45.9
+## 12 BR-PE      977. 
+## 13 BR-PR       45.3
+## 14 BR-RJ     2571. 
+## 15 BR-RN      192. 
+## 16 BR-SC      104. 
+## 17 BR-SP     1605.
+```
+
+# Table of I can't smell and deaths
+
+## Date between I can't smell and deaths
+
+```r
+date_1_death <- 
+  trends_df %>% 
+  filter(keyword == "anosmia") %>%
+  mutate(deaths_positive = if_else(deaths > 0, 1L, 0L)) %>% 
+  filter(deaths_positive == 1L) %>% 
+  group_by(state) %>% 
+  summarize(
+    date_death_1 = min(date)
+  ) 
+# Now with 10 deaths
+date_10_deaths <- 
+  trends_df %>% 
+  filter(keyword == "anosmia") %>%
+  mutate(deaths_10 = if_else(deaths > 10, 1L, 0L)) %>% 
+  filter(deaths_10 == 1L) %>% 
+  group_by(state) %>% 
+  summarize(
+    date_death_10 = min(date)
+  ) 
+
+# Now with 20 deaths
+date_20_deaths <- 
+  trends_df %>% 
+  filter(keyword == "anosmia") %>%
+  mutate(deaths_20 = if_else(deaths > 20, 1L, 0L)) %>% 
+  filter(deaths_20 == 1L) %>% 
+  group_by(state) %>% 
+  summarize(
+    date_death_20 = min(date)
+  ) 
+# Now with 100 deaths
+date_100_deaths <- 
+  trends_df %>% 
+  filter(keyword == "anosmia") %>%
+  mutate(deaths_100 = if_else(deaths > 100, 1L, 0L)) %>% 
+  filter(deaths_100 == 1L) %>% 
+  group_by(state) %>% 
+  summarize(
+    date_death_100 = min(date)
+  ) 
+# Now with 500 deaths
+date_500_deaths <- 
+  trends_df %>% 
+  filter(keyword == "anosmia") %>%
+  mutate(deaths_500 = if_else(deaths > 500, 1L, 0L)) %>% 
+  filter(deaths_500 == 1L) %>% 
+  group_by(state) %>% 
+  summarize(
+    date_death_500 = min(date)
+  ) 
+# Now with 500 deaths
+date_1000_deaths <- 
+  trends_df %>% 
+  filter(keyword == "anosmia") %>%
+  mutate(deaths_1000 = if_else(deaths > 1000, 1L, 0L)) %>% 
+  filter(deaths_1000 == 1L) %>% 
+  group_by(state) %>% 
+  summarize(
+    date_death_1000 = min(date)
+  ) 
+
+dates_deaths_dataset <- 
+  date_1_death %>% 
+  left_join(date_10_deaths) %>% 
+  left_join(date_20_deaths) %>% 
+  left_join(date_100_deaths) %>% 
+  left_join(date_500_deaths) %>% 
+  left_join(date_1000_deaths) %>% 
+  left_join(states_cant_smell_date) 
+```
+
+
+
+```r
+dates_deaths_dataset <- 
+  dates_deaths_dataset %>% 
+  dplyr::select(state, first_date_cant_smell, starts_with("date"), everything()) 
+
+dates_deaths_dataset %>% 
+  filter(!is.na(first_date_cant_smell)) %>% 
+  summarize(
+    dates_since_death_1 = mean(date_death_1 - first_date_cant_smell, na.rm = TRUE), 
+    dates_since_death_10 = mean(date_death_10 - first_date_cant_smell, na.rm = TRUE), 
+    dates_since_death_20 = mean(date_death_20 - first_date_cant_smell, na.rm = TRUE), 
+    dates_since_death_100 = mean(date_death_100 - first_date_cant_smell, na.rm = TRUE), 
+    dates_since_death_500 = mean(date_death_500 - first_date_cant_smell, na.rm = TRUE)
+  )
+```
+
+```
+## # A tibble: 1 x 5
+##   dates_since_dea~ dates_since_dea~ dates_since_dea~ dates_since_dea~
+##   <drtn>           <drtn>           <drtn>           <drtn>          
+## 1 -25 days         -13.82353 days   -9.176471 days   9.588235 days   
+## # ... with 1 more variable: dates_since_death_500 <drtn>
+```
+
+```r
+write.csv(
+  dates_deaths_dataset, 
+  file.path(dropbox_file_path, "Documentation/google trends/Dates of deaths in Brazil.csv")
+  )
+```
+
 
 
 ## Correlations between I can't smell and covid cases
@@ -1216,3 +1059,5 @@ We replicate the table of correlations from day -3 to day 3 for each state
 #         panel.background = element_blank(),
 #         axis.ticks = element_blank())
 ```
+
+
