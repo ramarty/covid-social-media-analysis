@@ -365,73 +365,73 @@ ui <- fluidPage(
     ),
     
     # ** Changes in Search Term ---------------------------------------------------------------
-    tabPanel(
-      "Warning System",
-      tags$head(includeCSS("styles.css")),
-      
-      dashboardBody(
-        
-        h2("Warning System",
-           align = "center"),
-        
-        fluidRow(
-          column(8,
-                 "This page shows the change in search term activity. We compare the
-                  average search activity from the past week compared with the week before.",
-                 offset = 2
-          ),
-        ),
-        
-        fluidRow(
-          
-          column(4,
-                 # BLANK for offsetting
-          ),
-          
-          column(2,
-                 selectInput(
-                   "select_term_change",
-                   label = strong("Select Term"),
-                   choices = keyword_list,
-                   selected = "Loss of Smell",
-                   multiple = F
-                 )
-          ),
-          
-          column(2,
-                 selectInput(
-                   "select_continent_change",
-                   label = strong("Continent"),
-                   choices = c("All",
-                               "Asia",
-                               "Africa",
-                               "Europe",
-                               "South America",
-                               "Oceania",
-                               "North America"),
-                   selected = "All",
-                   multiple = F
-                 )
-          )
-          
-        ),
-        
-        fluidRow(
-          column(12,
-                 
-                 plotlyOutput("increase_map"),
-                 
-                 div(style = 'height:1000px; overflow-y: scroll',
-                     htmlOutput("cor_table"))
-                 
-          )
-          
-          
-        )
-        
-        
-      )
-    ),
+    # tabPanel(
+    #   "Warning System",
+    #   tags$head(includeCSS("styles.css")),
+    #   
+    #   dashboardBody(
+    #     
+    #     h2("Warning System",
+    #        align = "center"),
+    #     
+    #     fluidRow(
+    #       column(8,
+    #              "This page shows the change in search term activity. We compare the
+    #               average search activity from the past week compared with the week before.",
+    #              offset = 2
+    #       ),
+    #     ),
+    #     
+    #     fluidRow(
+    #       
+    #       column(4,
+    #              # BLANK for offsetting
+    #       ),
+    #       
+    #       column(2,
+    #              selectInput(
+    #                "select_term_change",
+    #                label = strong("Select Term"),
+    #                choices = keyword_list,
+    #                selected = "Loss of Smell",
+    #                multiple = F
+    #              )
+    #       ),
+    #       
+    #       column(2,
+    #              selectInput(
+    #                "select_continent_change",
+    #                label = strong("Continent"),
+    #                choices = c("All",
+    #                            "Asia",
+    #                            "Africa",
+    #                            "Europe",
+    #                            "South America",
+    #                            "Oceania",
+    #                            "North America"),
+    #                selected = "All",
+    #                multiple = F
+    #              )
+    #       )
+    #       
+    #     ),
+    #     
+    #     fluidRow(
+    #       column(12,
+    #              
+    #              plotlyOutput("increase_map"),
+    #              
+    #              div(style = 'height:1000px; overflow-y: scroll',
+    #                  htmlOutput("cor_table"))
+    #              
+    #       )
+    #       
+    #       
+    #     )
+    #     
+    #     
+    #   )
+    # ),
     
     # ** Information -----------------------------------------------------------
     tabPanel(
