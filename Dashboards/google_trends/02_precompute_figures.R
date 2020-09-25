@@ -2,12 +2,12 @@
 
 # Settings
 LINE_COR_FIG <- T
-HIST_COR <- T
-HIST_TIME_LAG <- T
-MAP_COR <- T
-CHANGE_TABLE <- TRUE
-CHANGE_MAP <- T
-MAX_COR_HIST <- T
+HIST_COR <- F
+HIST_TIME_LAG <- F
+MAP_COR <- F
+CHANGE_TABLE <- F
+CHANGE_MAP <- F
+MAX_COR_HIST <- F
 
 # Filepaths --------------------------------------------------------------------
 DASHBOARD_PATH <- file.path(dropbox_file_path, "Data", "google_trends", 
@@ -29,8 +29,7 @@ saveRDS(keyword_list, file.path(FIGURES_PATH, paste0("keyword_list",
                                                      ".Rds")))
 
 for(keyword in c("Loss of Smell", keyword_list)){
-  for(cases_deaths in c("Cases",
-                        "Deaths")){
+  for(cases_deaths in c("Cases")){ #                         "Deaths"
     for(continent in c("All",
                        "Asia",
                        "Africa",
@@ -188,17 +187,18 @@ for(keyword in c("Loss of Smell", keyword_list)){
           
           if(sort_by %in% "Correlation"){
             gtrends_sub_df$Country <- gtrends_sub_df$Country %>% 
+              as.character() %>%
               as.factor() %>% 
               reorder(-gtrends_sub_df$cor_covid_new_best)
             
             cor_df$Country <- cor_df$Country %>% 
+              as.character() %>%
               as.factor() %>% 
               reorder(-cor_df$cor_covid_new_best)
           }
           
           GEO_BOTH <- intersect(gtrends_sub_df$geo, cor_df$geo)
           if(length(GEO_BOTH) %in% 0) next
-          
           
           gtrends_sub_df$past_future <- ifelse(gtrends_sub_df$time_lag_cases_cor_max < 0, 
                                                "past", "future")
@@ -212,12 +212,25 @@ for(keyword in c("Loss of Smell", keyword_list)){
           #                                "</b></em>") 
           
           gtrends_sub_df$title <- paste0("<b>", gtrends_sub_df$Country, "</b><br>",
-                                         "<b>", abs(gtrends_sub_df$time_lag_cases_cor_max),
-                                         "</b> days into the ",
-                                         gtrends_sub_df$past_future,
-                                         ",<br>Correlation: <b>",
+                                         #"<b>", abs(gtrends_sub_df$time_lag_cases_cor_max),
+                                         #"</b> days into the ",
+                                         #gtrends_sub_df$past_future,
+                                         "<br>Correlation: <b>",
                                          round(gtrends_sub_df$cor_covid_new_best, 2),
                                          "</b>")
+          
+          if(sort_by %in% c("Cases", "Deaths")){
+            gtrends_sub_df$title <- gtrends_sub_df$title %>% 
+              as.factor() %>% 
+              reorder(-gtrends_sub_df$covid_total)
+          }
+          
+          if(sort_by %in% "Correlation"){
+            gtrends_sub_df$title <- gtrends_sub_df$title %>% 
+              as.character() %>%
+              as.factor() %>% 
+              reorder(-gtrends_sub_df$cor_covid_new_best)
+          }
           
           
           #####
@@ -277,12 +290,9 @@ for(keyword in c("Loss of Smell", keyword_list)){
                                                                      "_sort_by", sort_by,
                                                                      ".Rds")))
           
-          
-          
-        
-          
-          p_line <- ggplot(gtrends_sub_df[gtrends_sub_df$geo %in% GEO_BOTH &
-                                          gtrends_sub_df$date %in% tail(sort(unique(gtrends_sub_df$date)), 20),], 
+
+          # gtrends_sub_df$date %in% tail(sort(unique(gtrends_sub_df$date)), 20)
+          p_line <- ggplot(gtrends_sub_df[gtrends_sub_df$geo %in% GEO_BOTH,], 
                            aes(x = date)) +
             geom_col(aes(y = covid_new, fill = paste("COVID-19", cases_deaths))) +
             geom_line(aes(y = hits, color = paste0("Search Popularity of ", keyword_en))) +

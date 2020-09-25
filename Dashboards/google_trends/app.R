@@ -66,6 +66,8 @@ keyword_list <- readRDS(file.path("precomputed_figures",
                                   paste0("keyword_list",
                                          ".Rds")))
 
+
+
 # UI -==========================================================================
 ui <- fluidPage(
   
@@ -78,25 +80,60 @@ ui <- fluidPage(
     
     # ** Google Trends ---------------------------------------------------------
     tabPanel(
-      "Search Term Correlate with COVID-19",
+      "Purpose",
       tags$head(includeCSS("styles.css")),
       
       dashboardBody(
         
-        # h2("Search Terms Correlating with COVID-19 Cases and Deaths",
-        #    align = "center"),
+        fluidRow(
+          column(3,
+                 ),
+          column(6, align = "center",
+                 
+                 h2("Google Trends Data as Predictor of COVID-19"),
+                 hr(),
+                 h4("When people fall sick, many turn to Google before going to a doctor
+                 to understand their symptoms and see options for home treatments.
+                    This dashboard illustrates how search activity for specific symptoms
+                    strongly matches - and often preceds - trends in COVID-19 cases."),
+                 br(),
+                 h4("Trends in search popularity of COVID-19 symptoms can supplement 
+                    official COVID-19 data. This is particulrarly true in circumstances
+                    when testing or data may not be widely available. Moreover, given that
+                    Google trends information is updated in real time, sudden increases in 
+                    search activity can warn of potential growth in COVID-19 cases."),
+                 br(),
+                 h4("As an example, growth in the search popularity of 'Loss of Smell'
+                    preceded an increase in COVID-19 cases by about 10 days in the 
+                    United States in mid-June. The 
+                    dashboard shows this trend holds across many countries.")
+                 )
+        ),
         
-        # fluidRow(
-        #   column(8,
-        #          "This page shows (1) how well different Google search terms correlate with COVID-19 cases and deaths 
-        #          and (2) the time lag of Google search terms where the correlation is strongest. Trends in search terms 
-        #          correlated with COVID cases/deaths can be used to indicate possible increases or decreases in COVID cases/deaths.
-        #          Search term trends should not subsitute for official data; however, predictions may be useful when official 
-        #          data may take time to be captured.",
-        #          offset = 2
-        #   )
-        #   
-        # ),
+        fluidRow(
+          #column(12,
+          #       ),
+          column(12, align = "center",
+                 
+                 plotOutput("us_ex_fig",
+                            height = "350px",
+                            width = "700px")
+                 
+                 )
+          #column(2,
+          #),
+          
+          
+        )
+        
+      )
+    ),
+    
+    tabPanel(
+      "Search Term Correlate with COVID-19",
+      tags$head(includeCSS("styles.css")),
+      
+      dashboardBody(
         
         fluidRow(
           
@@ -573,12 +610,25 @@ server = (function(input, output, session) {
   
   # * Max Correlation Hist -----------------------------------------------------
   
-  output$max_cor_hist <- renderPlot({
+  output$us_ex_fig <- renderPlot({
     p <- readRDS(file.path("precomputed_figures",
                            paste0("fig_max_cor_hist",
                                   "_cases_deaths", input$select_covid_type,
                                   "_continent", input$select_continent,
                                   ".Rds")))
+    
+    p #%>%
+    #ggplotly(tooltip = "text") %>%
+    #layout(plot_bgcolor='transparent',
+    #       paper_bgcolor='transparent') %>%
+    #config(displayModeBar = F)
+    
+  })
+  
+  # * US Example Figure --------------------------------------------------------
+  
+  output$us_ex_fig <- renderPlot({
+    p <- readRDS(file.path("precomputed_figures", "us_ex_fig.Rds"))
     
     p #%>%
     #ggplotly(tooltip = "text") %>%
