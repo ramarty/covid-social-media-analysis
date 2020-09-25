@@ -378,6 +378,36 @@ ui <- fluidPage(
       dashboardBody(
         
         fluidRow(
+          
+          column(3,
+          ),
+          
+          column(3, align = "center",
+                 
+                 selectInput(
+                   "select_covid_type_map",
+                   label = strong("Cases/Deaths"),
+                   choices = c("Cases", "Deaths"),
+                   selected = "Cases",
+                   multiple = F
+                 )
+          ),
+          
+          column(3, align = "center",
+                 selectInput(
+                   "select_keyword_map",
+                   label = strong("Search Term"),
+                   choices = keyword_list,
+                   selected = "Loss of Smell",
+                   multiple = F
+                 )
+          ),
+          column(3,
+          )
+          
+        ),
+        
+        fluidRow(
           column(12, align = "center",
                  h2("Click Country on Map"))
         ),
@@ -500,16 +530,41 @@ ui <- fluidPage(
 # SERVER =======================================================================
 server = (function(input, output, session) {
   
-  # * Trends Map ---------------------------------------------------------------
+  # * Global Map ---------------------------------------------------------------
   output$global_map <- renderLeaflet({
+
+    if(F){
+      cor_sum_df <- cor_df %>%
+        dplyr::filter(type %in% "Cases") %>%
+        dplyr::filter(keyword_en %in% "Loss of Smell") 
+    }
+    
+    
+    cor_sum_df <- cor_df %>%
+      dplyr::filter(type %in% input$select_covid_type_map) %>%
+      dplyr::filter(keyword_en %in% input$select_keyword_map) 
+    cor_sum_df$name <- NULL  
+    
+    world_data <- merge(world, cor_sum_df, by = "geo", all.x=T, all.y=F)
+
+    
+    pal <- colorNumeric(
+      palette = "Reds",
+      domain = world_data$cor)
     
     leaflet() %>%
       addTiles() %>%
-      addPolygons(data = world)
-    
-
+      addPolygons(data = world_data,
+                  label = ~name,
+                  layerId = ~ name,
+                  stroke = F,
+                  fillOpacity = 1,
+                  color = ~pal(cor))
     
   })
+  
+  # * Country Trends -----------------------------------------------------------
+  
   
   # * Line Graph ---------------------------------------------------------------
   output$line_graph <- renderUI({
@@ -716,6 +771,8 @@ server = (function(input, output, session) {
   
   # * Correlation Map ------------------------------------------------------------------
   output$cor_map <- renderPlot({
+    world_sp$name <- NULL
+    
     if(F){
       cor_df <- cor_df %>%
         dplyr::filter(type %in% "Cases") %>%

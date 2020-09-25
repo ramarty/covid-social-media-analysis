@@ -31,7 +31,6 @@ world_sp$geo <- world_sp$geo %>% as.character()
 
 world_df <- world_sp@data
 
-world_sp$name <- NULL
 saveRDS(world_sp, file.path(DASHBOARD_PATH, "world.Rds"))
 
 # Correlations -----------------------------------------------------------------
