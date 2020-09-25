@@ -99,12 +99,12 @@ cor_max_death_df <- cor_df %>%
 cor_max_df <- bind_rows(cor_max_cases_df %>%
                           dplyr::rename(cor = cor_casesMA7_hitsMA7_max,
                                         lag = cor_casesMA7_hitsMA7_lag) %>%
-                          mutate(type = "cases"),
+                          mutate(type = "Cases"),
                         
                         cor_max_death_df %>%
                           dplyr::rename(cor = cor_deathMA7_hitsMA7_max,
                                         lag = cor_deathMA7_hitsMA7_lag) %>%
-                          mutate(type = "death"))
+                          mutate(type = "Deaths"))
 
 # Merge Correlations with main data --------------------------------------------
 gtrends_df <- merge(gtrends_df, cor_max_cases_df, by = c("geo", "keyword_en"), all.x=T, all.y=F)

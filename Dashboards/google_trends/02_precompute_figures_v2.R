@@ -2,12 +2,12 @@
 
 # Settings
 LINE_COR_FIG <- T
-HIST_COR <- F
-HIST_TIME_LAG <- F
+HIST_COR <- T
+HIST_TIME_LAG <- T
 MAP_COR <- F
 CHANGE_TABLE <- F
 CHANGE_MAP <- F
-MAX_COR_HIST <- F
+MAX_COR_HIST <- T
 
 # Filepaths --------------------------------------------------------------------
 DASHBOARD_PATH <- file.path(dropbox_file_path, "Data", "google_trends", 
@@ -132,7 +132,7 @@ for(keyword in c("Loss of Smell", keyword_list)){
             gtrends_sub_df$title <- gtrends_sub_df$title %>% 
               as.character() %>%
               as.factor() %>% 
-              reorder(-gtrends_sub_df$cor_covid_new_best)
+              reorder(-gtrends_sub_df$cor_covidMA7_hitsMA7_max)
           }
           
           
@@ -148,7 +148,10 @@ for(keyword in c("Loss of Smell", keyword_list)){
                                                                      "_sort_by", sort_by,
                                                                      ".Rds")))
           
-          p_line <- ggplot(gtrends_sub_df, 
+          
+          gtrends_sub_df$week <- gtrends_sub_df$date %>% lubridate::week()
+          
+          p_line <- ggplot(gtrends_sub_df[gtrends_sub_df$geo %in% c("US", "BR"),], 
                            aes(x = date)) +
             geom_col(aes(y = covid_new, fill = paste("COVID-19", cases_deaths))) +
             geom_line(aes(y = hits, color = paste0("Search Popularity of ", keyword_en))) +
@@ -171,56 +174,7 @@ for(keyword in c("Loss of Smell", keyword_list)){
                                                          "_continent", continent,
                                                          "_sort_by", sort_by,
                                                          ".Rds")))
-          
-          n_states <- length(unique(GEO_BOTH))
-          ggsave(p_line, filename = file.path(FIGURES_PATH, paste0("fig_line",
-                                                                   "_keyword", keyword,
-                                                                   "_cases_deaths", cases_deaths,
-                                                                   "_continent", continent,
-                                                                   "_sort_by", sort_by,
-                                                                   ".png")),
-                 height = n_states*4,
-                 width = 12,
-                 limitsize = FALSE)
-          
-          p_cor <- cor_df[cor_df$geo %in% GEO_BOTH,] %>%
-            ggplot() +
-            geom_col(aes(x = time_lag, y = cor_covid_new, fill = cor_covid_new)) + 
-            geom_vline(xintercept = 0,
-                       color = "black") +
-            scale_fill_gradient2(low =  "#1A9850",
-                                 mid = "#FFFFBF",
-                                 high = "#D73027",
-                                 midpoint = 0) +
-            labs(x = "Time Lag (Days)",
-                 y = "Correlation",
-                 fill = "Correlation",
-                 title = paste0("Strengh of correlation between COVID\n",
-                                tolower(cases_deaths), 
-                                " and search popularity of\n",
-                                keyword, 
-                                " across different time lags\nof search popularity.")
-            ) +
-            theme_minimal() +
-            facet_wrap(~Country,
-                       ncol = 1) +
-            theme(legend.position="top",
-                  legend.text = element_text(size=14),
-                  plot.title = element_text(size = 16, face = "bold"))
-          
-          saveRDS(p_cor, file.path(FIGURES_PATH, paste0("fig_cor",
-                                                        "_keyword", keyword,
-                                                        "_cases_deaths", cases_deaths,
-                                                        "_continent", continent,
-                                                        "_sort_by", sort_by,
-                                                        ".Rds")))
-          
-          saveRDS(length(unique(GEO_BOTH)), 
-                  file.path(FIGURES_PATH, paste0("stat_line_cor_N_countries",
-                                                 "_keyword", keyword,
-                                                 "_cases_deaths", cases_deaths,
-                                                 "_continent", continent,
-                                                 ".Rds")))
+        
         }
         
         # 2. Histogram of Correlation ------------------------------------------
