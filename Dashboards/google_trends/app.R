@@ -152,9 +152,9 @@ ui <- fluidPage(
       )
     ),
     
-    # ** Figures ---------------------------------------------------------------
+    # ** Global Level ----------------------------------------------------------
     tabPanel(
-      "Figures",
+      "Global Level",
       tags$head(includeCSS("styles.css")),
       
       dashboardBody(
@@ -289,20 +289,20 @@ ui <- fluidPage(
             fluidRow(
               column(4,
                      
-                     plotlyOutput("cor_histogram_time_lag",
+                     plotOutput("cor_histogram_time_lag",
                                   height = "200px")
               ),
               
               ## Hist 2
               column(4,
                      
-                     plotlyOutput("cor_histogram",
+                     plotOutput("cor_histogram",
                                   height = "200px"),
               ),
               
               ## Hist 3
               column(4,
-                     plotlyOutput("cor_map",
+                     plotOutput("cor_map",
                                   height = "200px")
               )
             )
@@ -367,6 +367,31 @@ ui <- fluidPage(
           )
           
         )
+      )
+    ),
+    
+    # ** Country Level ----------------------------------------------------------
+    tabPanel(
+      "Country Level",
+      tags$head(includeCSS("styles.css")),
+      
+      dashboardBody(
+        
+        fluidRow(
+          column(12, align = "center",
+                 h2("Click Country on Map"))
+        ),
+        
+        fluidRow(
+          
+          column(12, align = "center",
+                 
+                 leafletOutput("global_map")
+                 
+                 )
+          
+        )
+
       )
     ),
     
@@ -476,20 +501,13 @@ ui <- fluidPage(
 server = (function(input, output, session) {
   
   # * Trends Map ---------------------------------------------------------------
-  output$increase_map <- renderPlotly({
+  output$global_map <- renderLeaflet({
     
-    # p <- readRDS(file.path("precomputed_figures", 
-    #                        paste0("fig_hits_change_map",
-    #                               "_keyword", input$select_term_change,
-    #                               "_cases_deaths", "Cases",
-    #                               "_continent", input$select_continent_change,
-    #                               ".Rds")))
-    # 
-    # p %>%
-    #   ggplotly(tooltip = "text") %>%
-    #   layout(plot_bgcolor='transparent',
-    #          paper_bgcolor='transparent') %>%
-    #   config(displayModeBar = F)
+    leaflet() %>%
+      addTiles() %>%
+      addPolygons(data = world)
+    
+
     
   })
   
@@ -610,7 +628,7 @@ server = (function(input, output, session) {
   })
   
   # * Histogram - Time Lag Max Cor ---------------------------------------------
-  output$cor_histogram_time_lag <- renderPlotly({
+  output$cor_histogram_time_lag <- renderPlot({
     
     if(input$select_continent != "All"){
       cor_df <- cor_df %>%
@@ -636,16 +654,17 @@ server = (function(input, output, session) {
            y = "Number of Countries") +
       theme_minimal()
     
-    p %>%
-      ggplotly(tooltip = "text") %>%
-      layout(plot_bgcolor='transparent', paper_bgcolor='transparent') %>%
-      config(displayModeBar = F)
+    #p %>%
+    #  ggplotly(tooltip = "text") %>%
+    #  layout(plot_bgcolor='transparent', paper_bgcolor='transparent') %>%
+    #  config(displayModeBar = F)
+    p
     
-  })
+  }, bg = "transparent")
   
   
   # * Histogram - Correlation --------------------------------------------------
-  output$cor_histogram <- renderPlotly({
+  output$cor_histogram <- renderPlot({
     
     if(input$select_continent != "All"){
       cor_df <- cor_df %>%
@@ -686,35 +705,38 @@ server = (function(input, output, session) {
       theme_minimal() +
       theme(legend.position = "none")
     
-    p %>%
-      ggplotly(tooltip = "text") %>%
-      layout(plot_bgcolor='transparent', paper_bgcolor='transparent') %>%
-      config(displayModeBar = F)
+    #p %>%
+    #  ggplotly(tooltip = "text") %>%
+    #  layout(plot_bgcolor='transparent', paper_bgcolor='transparent') %>%
+    #  config(displayModeBar = F)
+    p
     
-  })
+  }, bg = "transparent")
   
   
   # * Correlation Map ------------------------------------------------------------------
-  output$cor_map <- renderPlotly({
+  output$cor_map <- renderPlot({
     if(F){
       cor_df <- cor_df %>%
         dplyr::filter(type %in% "Cases") %>%
         dplyr::filter(keyword_en %in% "Loss of Smell") 
     }  
     
+    #### Subset world
+    if(input$select_continent != "All"){
+      world <- world[world$continent %in% input$select_continent,]
+    }
+    
+    #### Subset cor
     cor_df <- cor_df %>%
       dplyr::filter(type %in% input$select_covid_type) %>%
       dplyr::filter(keyword_en %in% input$select_keyword) 
-      
+    
+    #### Merge
     world_data <- merge(world, cor_df, by = "geo", all.x=T, all.y=F)
-    
-    if(input$select_continent != "All"){
-      world_data <- world_data[world_data$continent %in% input$select_continent,]
-    }
-    
-    world_data$text <- paste0(world_data$name, "\n", world_data$cor %>% round(2))
-    
     world_data <- world_data %>% st_as_sf()
+
+    world_data$text <- paste0(world_data$name, "\n", world_data$cor %>% round(2))
     
     p <- ggplot() +
       geom_sf(data = world_data,
@@ -731,13 +753,14 @@ server = (function(input, output, session) {
             panel.background = element_blank(),
             axis.line = element_blank()) 
     
-    p %>%
-      ggplotly(tooltip = "text") %>%
-      layout(plot_bgcolor='transparent',
-             paper_bgcolor='transparent') %>%
-      config(displayModeBar = F)
+    #p %>%
+    #  ggplotly(tooltip = "text") %>%
+    #  layout(plot_bgcolor='transparent',
+    #         paper_bgcolor='transparent') %>%
+    #  config(displayModeBar = F)
+    p
     
-  })
+  }, bg = "transparent")
   
   # * Max Correlation Hist -----------------------------------------------------
   
