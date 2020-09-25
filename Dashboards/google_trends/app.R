@@ -66,7 +66,22 @@ keyword_list <- readRDS(file.path("precomputed_figures",
                                   paste0("keyword_list",
                                          ".Rds")))
 
+keywords_df <- read_csv(file.path("data", "covid_keywords.csv"))
 
+keywords_df <- keywords_df %>%
+  dplyr::rename(Portuguese = keyword_pt,
+                English = keyword_en,
+                Spanish = keyword_es,
+                French = keyword_fr,
+                Arabic = keyword_ar,
+                German = keyword_de,
+                Mandarin = keyword_zh,
+                Dutch = keyword_nl,
+                Italian = keyword_it,
+                Norwegian = keyword_no) %>%
+  dplyr::filter(scrape %in% c("yes")) %>%
+  dplyr::select(English, Spanish, Portuguese, French, Arabic, German, Mandarin,
+                Dutch, Italian, Norwegian) 
 
 # UI -==========================================================================
 ui <- fluidPage(
@@ -78,7 +93,7 @@ ui <- fluidPage(
     
     id = "nav",
     
-    # ** Google Trends ---------------------------------------------------------
+    # ** Landing Page ----------------------------------------------------------
     tabPanel(
       "Purpose",
       tags$head(includeCSS("styles.css")),
@@ -87,18 +102,23 @@ ui <- fluidPage(
         
         fluidRow(
           column(3,
-                 ),
+          ),
           column(6, align = "center",
+                 
                  
                  h2("Google Trends Data as Predictor of COVID-19"),
                  hr(),
-                 h4("When people fall sick, many turn to Google before going to a doctor
+                 HTML("<h4>When people fall sick, 
+                 <a href='https://blog.google/technology/health/using-symptoms-search-trends-inform-covid-19-research/'>many turn to Google</a>
+                 before going to a doctor
                  to understand their symptoms and see options for home treatments.
                     This dashboard illustrates how search activity for specific symptoms
-                    strongly matches - and often preceds - trends in COVID-19 cases."),
+                    strongly matches - and often preceds - trends in COVID-19 cases.</h4>"),
                  br(),
-                 h4("Trends in search popularity of COVID-19 symptoms can supplement 
-                    official COVID-19 data. This is particulrarly true in circumstances
+                 h4("Trends in search popularity of COVID-19 symptoms should not replace
+                 administrative data on cases. The relation between the two is strong
+                 but not perfect. However, Google data can supplement official data.
+                This is particulrarly true in circumstances
                     when testing or data may not be widely available. Moreover, given that
                     Google trends information is updated in real time, sudden increases in 
                     search activity can warn of potential growth in COVID-19 cases."),
@@ -107,7 +127,7 @@ ui <- fluidPage(
                     preceded an increase in COVID-19 cases by about 10 days in the 
                     United States in mid-June. The 
                     dashboard shows this trend holds across many countries.")
-                 )
+          )
         ),
         
         fluidRow(
@@ -119,7 +139,7 @@ ui <- fluidPage(
                             height = "350px",
                             width = "700px")
                  
-                 )
+          )
           #column(2,
           #),
           
@@ -129,8 +149,9 @@ ui <- fluidPage(
       )
     ),
     
+    # ** Figures ---------------------------------------------------------------
     tabPanel(
-      "Search Term Correlate with COVID-19",
+      "Figures",
       tags$head(includeCSS("styles.css")),
       
       dashboardBody(
@@ -316,7 +337,7 @@ ui <- fluidPage(
         ),
         
         br(),
-
+        
         
         fluidRow(
           column(4,
@@ -343,14 +364,14 @@ ui <- fluidPage(
       )
     ),
     
-    # ** Google Trends ---------------------------------------------------------
+    # ** Changes in Search Term ---------------------------------------------------------------
     tabPanel(
-      "Changes in Search Term",
+      "Warning System",
       tags$head(includeCSS("styles.css")),
       
       dashboardBody(
         
-        h2("Changes in Search Term",
+        h2("Warning System",
            align = "center"),
         
         fluidRow(
@@ -410,7 +431,37 @@ ui <- fluidPage(
         
         
       )
+    ),
+    
+    # ** Information -----------------------------------------------------------
+    tabPanel(
+      "Information",
+      tags$head(includeCSS("styles.css")),
+      
+      dashboardBody(
+        
+        fluidRow(
+          
+          column(3,
+          ),
+          column(6, align = "center",
+                 h2("Keywords"),
+                 
+                 div(style = 'overflow-x: scroll', tableOutput('keyword_table'))
+                 
+                 #tableOutput("keyword_table")
+                 
+          ),
+          column(3,
+                 
+          )
+          
+          
+        )
+        
+      )
     )
+    
   )
 )
 
@@ -638,6 +689,14 @@ server = (function(input, output, session) {
     
   })
   
+  # output$keyword_table <- DT::renderDataTable({
+  #   DT::datatable(keywords_df, 
+  #                 options = list(dom = 't'))
+  # })
+  
+  output$keyword_table <- renderTable({
+    keywords_df
+  })
   
   # * renderUIs ----------------------------------------------------------------
   output$ui_select_covid_cases <- renderUI({
@@ -680,7 +739,7 @@ server = (function(input, output, session) {
            with COVID ", tolower(input$select_covid_type), "? If so, search activity may
            predict future ", tolower(input$select_covid_type), ".")
     
-
+    
     
   })
   
