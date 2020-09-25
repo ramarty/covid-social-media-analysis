@@ -67,9 +67,7 @@ gtrends_spark_df <- readRDS(file.path("data", "gtrends_spark.Rds"))
 cor_df     <- readRDS(file.path("data", "correlations.Rds"))
 world      <- readRDS(file.path("data", "world.Rds"))
 
-keyword_list <- readRDS(file.path("precomputed_figures", 
-                                  paste0("keyword_list",
-                                         ".Rds")))
+keyword_list <- gtrends_df$keyword_en %>% unique()
 
 keywords_df <- read_csv(file.path("data", "covid_keywords.csv"))
 
@@ -200,7 +198,7 @@ ui <- fluidPage(
                    "select_continent",
                    label = strong("Continent"),
                    choices = c("All",
-                               unique(sort(world$continent))),
+                               unique(sort(cor_df$continent))),
                    selected = "All",
                    multiple = F
                  )
@@ -495,40 +493,6 @@ server = (function(input, output, session) {
     
   })
   
-  # * Trends Table --------------------------------------------------------
-  output$cor_table <- renderUI({
-    
-    data_for_table <- readRDS(file.path("precomputed_figures",
-                                        paste0("data_hits_change_table",
-                                               "_keyword", input$select_term_change,
-                                               "_cases_deaths", "Cases",
-                                               "_continent", input$select_continent_change,
-                                               ".Rds")))
-    
-    f_list <- list(
-      `var1` = formatter("span", style = ~ style(color = "black")),
-      `var2` = formatter("span", style = ~ style(color = "black")),
-      `var3` = formatter("span", style = ~ style(color = "black")),
-      `var4` = formatter("span", style = ~ style(color = "black"))
-    )
-    
-    l <- formattable(
-      data_for_table %>% as.data.table(), # [1:table_max,]
-      align = c("l", "l", "l", "l"),
-      f_list
-    ) %>% format_table(align = c("l", "l", "l", "l")) %>%
-      htmltools::HTML() %>%
-      div() %>%
-      # use new sparkline helper for adding dependency
-      spk_add_deps() %>%
-      # use column for bootstrap sizing control
-      # but could also just wrap in any tag or tagList
-      {column(width=12, .)}
-    
-    l
-    
-  })
-  
   # * Line Graph ---------------------------------------------------------------
   output$line_graph <- renderUI({
     
@@ -730,21 +694,48 @@ server = (function(input, output, session) {
   })
   
   
-  # * Histogram ----------------------------------------------------------------
+  # * Correlation Map ------------------------------------------------------------------
   output$cor_map <- renderPlotly({
+    if(F){
+      cor_df <- cor_df %>%
+        dplyr::filter(type %in% "Cases") %>%
+        dplyr::filter(keyword_en %in% "Loss of Smell") 
+    }  
     
-    # p <- readRDS(file.path("precomputed_figures", 
-    #                        paste0("fig_cor_map",
-    #                               "_keyword", input$select_keyword,
-    #                               "_cases_deaths", input$select_covid_type,
-    #                               "_continent", input$select_continent,
-    #                               ".Rds")))
-    # 
-    # p %>%
-    #   ggplotly(tooltip = "text") %>%
-    #   layout(plot_bgcolor='transparent',
-    #          paper_bgcolor='transparent') %>%
-    #   config(displayModeBar = F)
+    cor_df <- cor_df %>%
+      dplyr::filter(type %in% input$select_covid_type) %>%
+      dplyr::filter(keyword_en %in% input$select_keyword) 
+      
+    world_data <- merge(world, cor_df, by = "geo", all.x=T, all.y=F)
+    
+    if(input$select_continent != "All"){
+      world_data <- world_data[world_data$continent %in% input$select_continent,]
+    }
+    
+    world_data$text <- paste0(world_data$name, "\n", world_data$cor %>% round(2))
+    
+    world_data <- world_data %>% st_as_sf()
+    
+    p <- ggplot() +
+      geom_sf(data = world_data,
+              aes(fill = cor,
+                  text = text),
+              color = NA) +
+      scale_fill_gradient(low = "white",
+                          high = muted("red")) +
+      theme_void() +
+      theme(legend.position = "none") +
+      theme(panel.grid.major = element_blank(), 
+            panel.grid.minor = element_blank(),
+            panel.border = element_blank(),
+            panel.background = element_blank(),
+            axis.line = element_blank()) 
+    
+    p %>%
+      ggplotly(tooltip = "text") %>%
+      layout(plot_bgcolor='transparent',
+             paper_bgcolor='transparent') %>%
+      config(displayModeBar = F)
     
   })
   
@@ -787,13 +778,9 @@ server = (function(input, output, session) {
   # * US Example Figure --------------------------------------------------------
   
   output$us_ex_fig <- renderPlot({
-    p <- readRDS(file.path("precomputed_figures", "us_ex_fig.Rds"))
+    p <- readRDS(file.path("data", "us_ex_fig.Rds"))
     
-    p #%>%
-    #ggplotly(tooltip = "text") %>%
-    #layout(plot_bgcolor='transparent',
-    #       paper_bgcolor='transparent') %>%
-    #config(displayModeBar = F)
+    p 
     
   })
   
@@ -910,14 +897,7 @@ server = (function(input, output, session) {
     
   })
   
-  
-  
-  
-  
-  
-  
-  
-  
+
   output$ui_line_graph <- renderUI({
     
     n_states <- readRDS(file.path("precomputed_figures", 

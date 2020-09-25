@@ -9,14 +9,9 @@ keywords <- c("Corona Symptoms", "Coronavirus", "Coronavirus Symptoms",
               "Fever", "Tired")
 
 # World Shapefile --------------------------------------------------------------
-world_sp <- readOGR(file.path(dropbox_file_path, "Data", "world_shapefile", 
-                                 "TM_WORLD_BORDERS-0.3.shp"))
-
-#world_sp = ms_simplify(world_sp)
-
-#world_sp_s <- world_sp %>% gSimplify(tol = .005)
-#world_sp_s$id <- 1:length(world_sp_s)
-#world_sp_s@data <- world_sp@data
+world_sp <- readRDS(file.path(dropbox_file_path, "Data", "world_shapefile", 
+                            "FinalData",
+                            "TM_WORLD_BORDERS-0.3_simplified.Rds"))
 
 world_sp$name <- world_sp$name %>% as.character()
 world_sp$continent <- NA
@@ -26,12 +21,18 @@ world_sp$continent[world_sp$region %in% 150] <- "Europe"
 world_sp$continent[world_sp$region %in% 9] <- "Oceania"
 world_sp$continent[world_sp$region %in% 19] <- "Americas"
 
+world_sp <- world_sp[world_sp$name != "Antarctica",]
+
 world_sp@data <- world_sp@data %>%
   dplyr::select(iso2, name, continent) %>%
   dplyr::rename(geo = iso2)
 
+world_sp$geo <- world_sp$geo %>% as.character()
+
 world_df <- world_sp@data
 
+world_sp$name <- NULL
+world_sp$continent <- NULL
 saveRDS(world_sp, file.path(DASHBOARD_PATH, "world.Rds"))
 
 # Correlations -----------------------------------------------------------------
@@ -76,14 +77,14 @@ gtrends_sum_df <- gtrends_df %>%
   group_by(name, continent, keyword_en,
            cases_total, death_total) %>% 
   summarize(cases_new_spark = spk_chr(cases_new,
-                            lineColor = 'orange', 
-                            fillColor = 'orange',
-                            chartRangeMin = 0,
-                            chartRangeMax = 8,
-                            width = 180,
-                            height = 100,
-                            highlightLineColor = 'orange', 
-                            highlightSpotColor = 'orange'),
+                                      lineColor = 'orange', 
+                                      fillColor = 'orange',
+                                      chartRangeMin = 0,
+                                      chartRangeMax = 8,
+                                      width = 180,
+                                      height = 100,
+                                      highlightLineColor = 'orange', 
+                                      highlightSpotColor = 'orange'),
             death_new_spark = spk_chr(death_new,
                                       lineColor = 'orange', 
                                       fillColor = 'orange',
@@ -94,14 +95,14 @@ gtrends_sum_df <- gtrends_df %>%
                                       highlightLineColor = 'orange', 
                                       highlightSpotColor = 'orange'),
             hits_ma7_spark = spk_chr(hits_ma7,
-                                        lineColor = 'forestgreen', 
-                                        fillColor = 'forestgreen',
-                                        chartRangeMin = 0,
-                                        chartRangeMax = 8,
-                                        width = 180,
-                                        height = 100,
-                                        highlightLineColor = 'orange', 
-                                        highlightSpotColor = 'orange'),
+                                     lineColor = 'forestgreen', 
+                                     fillColor = 'forestgreen',
+                                     chartRangeMin = 0,
+                                     chartRangeMax = 8,
+                                     width = 180,
+                                     height = 100,
+                                     highlightLineColor = 'orange', 
+                                     highlightSpotColor = 'orange'),
             cor_casesMA7_hitsMA7_max = cor_casesMA7_hitsMA7_max[1], 
             cor_casesMA7_hitsMA7_lag = cor_casesMA7_hitsMA7_lag[1],
             cor_deathMA7_hitsMA7_max = cor_deathMA7_hitsMA7_max[1], 

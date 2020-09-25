@@ -2,7 +2,11 @@
 
 
 FIGURES_PATH <- file.path(dropbox_file_path, "Data", "google_trends", "DashboardData",
-                          "precomputed_figures")
+                          "data")
+
+gtrends_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
+                                "global_with_refstate",
+                                paste0("gl_gtrends_ref","US","_adj_cases_cor.Rds")))
 
 #### Add variables
 gtrends_df <- gtrends_df %>%
