@@ -51,26 +51,11 @@ for(keyword in c("Loss of Smell", keyword_list)){
         cor_df     <- readRDS(file.path(DASHBOARD_PATH, "correlations.Rds"))
         world      <- readRDS(file.path(DASHBOARD_PATH, "world.Rds"))
         
-        # For figures that need all keywords
-        #cor_max_allkeys_df <- cor_max_df
-        
-        #GEO <- c("US", "BR", "FR", "ES", "MX", "PT")
-        #gtrends_df <- gtrends_df[gtrends_df$geo %in% GEO,]
-        #cor_df     <- cor_df[cor_df$geo %in% GEO,]
-        #cor_max_df <- cor_max_df[cor_max_df$geo %in% GEO,]
-        
         # Subset ---------------------------------------------------------------
-        gtrends_df <- gtrends_df[gtrends_df$keyword_en %in% keyword,]
-        cor_df     <- cor_df[cor_df$keyword_en %in% keyword,]
-        
         if(continent != "All"){
           world <- world[world$continent %in% continent,]
-          
           gtrends_df <- gtrends_df[gtrends_df$geo %in% world_sf$geo,]
           cor_df     <- cor_df[cor_df$geo %in% world_sf$geo,]
-          #cor_max_df <- cor_max_df[cor_max_df$geo %in% world_sf$geo,]
-          #cor_max_allkeys_df <- cor_max_allkeys_df[cor_max_allkeys_df$geo %in% world_sf$geo,]
-          
         }
         
         if(cases_deaths %in% c("Cases")){
@@ -81,14 +66,6 @@ for(keyword in c("Loss of Smell", keyword_list)){
           
           cor_df <- cor_df %>%
             dplyr::filter(type %in% "cases") 
-          
-          #cor_df$covid_total <- cor_df$cases_total
-          
-          #cor_max_df$time_lag_covid_cor_max <- cor_max_df$time_lag_cases_cor_max
-          #cor_max_df$cor_covid_new_max <- cor_max_df$cor_cases_new_max
-          
-          #cor_max_allkeys_df$time_lag_covid_cor_max <- cor_max_allkeys_df$time_lag_cases_cor_max
-          #cor_max_allkeys_df$cor_covid_new_max <- cor_max_allkeys_df$cor_cases_new_max
         }
         
         if(cases_deaths %in% c("Deaths")){
@@ -100,33 +77,14 @@ for(keyword in c("Loss of Smell", keyword_list)){
           
           cor_df <- cor_df %>%
             dplyr::filter(type %in% "death") 
-          
         }
         
-        # Prep Increase Data ---------------------------------------------------
-        # last_14_days <- gtrends_df$date %>% 
-        #   unique %>% 
-        #   sort() %>% 
-        #   tail(14)
-        # 
-        # first_week  <- last_14_days %>% head(7)
-        # second_week <- last_14_days %>% tail(7)
-        # 
-        # gtrends_df$week <- NA
-        # gtrends_df$week[gtrends_df$date %in% first_week] <- 1
-        # gtrends_df$week[gtrends_df$date %in% second_week] <- 2
-        # 
-        # gtrends_df <- gtrends_df %>%
-        #   group_by(geo) %>%
-        #   mutate(week_1_hits = mean(hits[week %in% 1]),
-        #          week_2_hits = mean(hits[week %in% 2]),
-        #          
-        #          week_1_hits_ma7 = mean(hits_ma7[week %in% 1]),
-        #          week_2_hits_ma7 = mean(hits_ma7[week %in% 2])) %>%
-        #   ungroup() %>%
-        #   mutate(hits_change     = week_2_hits     - week_1_hits,
-        #          hits_ma7_change = week_2_hits_ma7 - week_1_hits_ma7) 
-        # 
+        #### Keyword
+        cor_all_df <- cor_df
+        
+        gtrends_df <- gtrends_df[gtrends_df$keyword_en %in% keyword,]
+        cor_df     <- cor_df[cor_df$keyword_en %in% keyword,]
+        
         # 0. Best Time Lag -----------------------------------------------------
         #### Stat
         time_lag_best <- cor_df$lag %>% mean() %>% round()
@@ -137,34 +95,10 @@ for(keyword in c("Loss of Smell", keyword_list)){
                                                               "_continent", continent,
                                                               ".Rds")))
         
-        # 
-        # #### Merge with gTrends and cor_df
-        # 
-        # gtrends_df$cases_hits_cor <- NULL
-        # gtrends_df$death_hits_cor <- NULL
-        # 
-        # cor_sub_df <- cor_df[cor_df$time_lag %in% time_lag_best,]
-        # cor_sub_varlim_df <- cor_sub_df %>%
-        #   distinct(geo, cor_covid_new) %>%
-        #   dplyr::rename(cor_covid_new_best = cor_covid_new)
-        # gtrends_df <- merge(gtrends_df, cor_sub_varlim_df, by = "geo")
-        # cor_df <- merge(cor_df, cor_sub_varlim_df, by = "geo")
-        # 
-        # ## Save dataframe (for using for text)
-        # cor_sub_df <- cor_df[cor_df$time_lag %in% time_lag_best,]
-        # cor_sub_df <- cor_sub_df %>%
-        #   distinct(Country, cor_covid_new) %>%
-        #   filter(!is.na(cor_covid_new))
-        # 
-        # saveRDS(cor_sub_df, file.path(FIGURES_PATH, paste0("stat_cor_countries",
-        #                                                    "_keyword", keyword,
-        #                                                    "_cases_deaths", cases_deaths,
-        #                                                    "_continent", continent,
-        #                                                    ".Rds")))
-        
         # 1. Line and Cor Figure -----------------------------------------------
         if(LINE_COR_FIG){
           
+          #### Rescale for left/right y axes
           gtrends_sub_df <- gtrends_df %>%
             mutate(hits = hits_ma7) %>%
             group_by(geo) %>%
@@ -175,6 +109,7 @@ for(keyword in c("Loss of Smell", keyword_list)){
           
           if(nrow(gtrends_sub_df) %in% 0) next
           
+          #### Title
           gtrends_sub_df$past_future <- ifelse(gtrends_sub_df$cor_covidMA7_hitsMA7_lag < 0, 
                                                "past", "future")
 
@@ -186,6 +121,7 @@ for(keyword in c("Loss of Smell", keyword_list)){
                                          round(gtrends_sub_df$cor_covidMA7_hitsMA7_max, 2),
                                          "</b>")
           
+          #### Sort
           if(sort_by %in% c("Cases", "Deaths")){
             gtrends_sub_df$title <- gtrends_sub_df$title %>% 
               as.factor() %>% 
@@ -290,14 +226,11 @@ for(keyword in c("Loss of Smell", keyword_list)){
         # 2. Histogram of Correlation ------------------------------------------
         if(HIST_COR){
           df <- cor_df %>%
-            filter(time_lag == time_lag_best) %>%
-            filter(!is.na(cor_covid_new)) %>%
-            dplyr::mutate(bins = round(cor_covid_new*100, digits=-1) / 100) %>%
+            dplyr::mutate(bins = round(cor*100, digits=-1) / 100) %>%
             distinct(geo, bins) %>%
             dplyr::group_by(bins) %>%
             dplyr::summarise(N = n()) %>%
-            ungroup() %>%
-            mutate(text = paste0("Correlation: ", bins, "\nN countries: ", N)) 
+            ungroup() 
           
           df_m <- seq(from = min(df$bins),
                       to = max(df$bins),
@@ -306,7 +239,10 @@ for(keyword in c("Loss of Smell", keyword_list)){
             dplyr::rename(bins = ".") %>%
             mutate(bins = bins %>% round(1))
           
-          df <- merge(df, df_m, by = "bins")  
+          df <- merge(df, df_m, by = "bins", all=T) %>%
+            mutate(N = replace_na(N, 0)) %>%
+            mutate(text = paste0("Correlation: ", bins, "\nN countries: ", N)) 
+          
           
           p <- ggplot(df) +
             geom_col(aes(x = bins %>% as.factor(), 
@@ -328,10 +264,10 @@ for(keyword in c("Loss of Smell", keyword_list)){
         }
         # 3. Time Lag Hist -----------------------------------------------------
         if(HIST_TIME_LAG){
-          p <- cor_max_df %>%
+          p <- cor_df %>%
             mutate(text = "FILLER") %>%
             ggplot() +
-            geom_histogram(aes(x = time_lag_covid_cor_max),
+            geom_histogram(aes(x = lag),
                            fill = "palegreen3",
                            color = "black",
                            text = text,
@@ -351,15 +287,16 @@ for(keyword in c("Loss of Smell", keyword_list)){
         # 4. Correlation Map ---------------------------------------------------
         if(MAP_COR){
           cor_sub_df <- cor_df %>%
-            filter(time_lag == time_lag_best) %>%
-            distinct(geo, cor_covid_new)
+            dplyr::select(geo, cor)
           
-          world_data_sf <- merge(world_sf, cor_sub_df, all.x = T, all.y = F)
-          world_data_sf$text <- paste0(world_data_sf$name, "\n", world_data_sf$cor_covid_new %>% round(2))
+          world_data <- merge(world, cor_sub_df, by = "geo", all.x = T, all.y = F)
+          world_data$text <- paste0(world_data$name, "\n", world_data$cor %>% round(2))
+          
+          world_data <- world_data %>% st_as_sf()
           
           p <- ggplot() +
-            geom_sf(data = world_data_sf,
-                    aes(fill = cor_covid_new,
+            geom_sf(data = world_data,
+                    aes(fill = cor,
                         text = text),
                     color = NA) +
             scale_fill_gradient(low = "white",
@@ -491,21 +428,21 @@ for(keyword in c("Loss of Smell", keyword_list)){
         # 7. Max Correlation Distribution --------------------------------------
         if(MAX_COR_HIST){
           
-          cor_max_allkeys_sum_df <- cor_max_allkeys_df %>%
+          cor_all_sum_df <- cor_all_df %>%
             group_by(keyword_en) %>%
-            summarise(cor_covid_new_max = mean(cor_covid_new_max)) %>%
+            dplyr::summarise(cor = mean(cor)) %>%
             ungroup()
           
           p <- ggplot() +
             geom_violin(aes(x = reorder(keyword_en,
-                                        cor_covid_new_max),
-                            y = cor_covid_new_max),
-                        data = cor_max_allkeys_df,
+                                        cor),
+                            y = cor),
+                        data = cor_all_df,
                         fill = "palegreen3") +
             geom_point(aes(x = reorder(keyword_en,
-                                       cor_covid_new_max),
-                           y = cor_covid_new_max),
-                       data = cor_max_allkeys_sum_df,
+                                       cor),
+                           y = cor),
+                       data = cor_all_sum_df,
                        fill = "palegreen3") +
             geom_hline(yintercept = 0) +
             coord_flip() +
