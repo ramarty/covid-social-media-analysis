@@ -59,7 +59,7 @@ library(htmltools)
 library(scales)
 library(lubridate)
 library(geosphere)
-#library(hrbrthemes)
+library(hrbrthemes)
 #hrbrthemes::import_roboto_condensed()
 
 gtrends_df <- readRDS(file.path("data", "gtrends.Rds"))
@@ -113,7 +113,7 @@ ui <- fluidPage(
                  hr(),
                  HTML("<h4>When people fall sick, 
                  <a href='https://blog.google/technology/health/using-symptoms-search-trends-inform-covid-19-research/'>many turn to Google</a>
-                 before going to a doctor
+                 before considering medical attention
                  to understand their symptoms and see options for home treatments.
                     This dashboard illustrates how search activity for specific symptoms
                     strongly matches - and often preceds - trends in COVID-19 cases.</h4>"),
@@ -290,20 +290,20 @@ ui <- fluidPage(
               column(4,
                      
                      plotOutput("cor_histogram_time_lag",
-                                  height = "200px")
+                                height = "200px")
               ),
               
               ## Hist 2
               column(4,
                      
                      plotOutput("cor_histogram",
-                                  height = "200px"),
+                                height = "200px"),
               ),
               
               ## Hist 3
               column(4,
                      plotOutput("cor_map",
-                                  height = "200px")
+                                height = "200px")
               )
             )
             
@@ -350,14 +350,14 @@ ui <- fluidPage(
         fluidRow(
           
           column(2,
-                 ),
+          ),
           
           column(8,
                  
                  
                  htmlOutput("line_graph"),
                  #div(style = 'height:1000px; overflow-y: scroll',
-                #     htmlOutput("line_graph")),
+                 #     htmlOutput("line_graph")),
                  
                  
                  
@@ -372,6 +372,7 @@ ui <- fluidPage(
     
     # ** Country Level ----------------------------------------------------------
     tabPanel(
+      id = "country_level",
       "Country Level",
       tags$head(includeCSS("styles.css")),
       
@@ -408,20 +409,24 @@ ui <- fluidPage(
         ),
         
         fluidRow(
-          column(12, align = "center",
-                 h2("Click Country on Map"))
-        ),
-        
-        fluidRow(
           
-          column(12, align = "center",
+          column(6, align = "center",
+                 
+                 h4("Click a Country on the Map"),
                  
                  leafletOutput("global_map")
                  
-                 )
+          ),
+          column(6, align = "center",
+                 
+                 h4(textOutput("country_name")),
+                 
+                 plotOutput("country_trends")
+                 
+          )
           
         )
-
+        
       )
     ),
     
@@ -514,7 +519,6 @@ ui <- fluidPage(
                  
           ),
           column(3,
-                 
           )
           
           
@@ -526,44 +530,198 @@ ui <- fluidPage(
   )
 )
 
-
 # SERVER =======================================================================
 server = (function(input, output, session) {
   
   # * Global Map ---------------------------------------------------------------
+  #### Data
+  # Reactive expression for the data subsetted to what the user selected
+  cor_df_react <- reactive({
+    
+    cor_df %>%
+      dplyr::filter(type %in% input$select_covid_type_map) %>%
+      dplyr::filter(keyword_en %in% input$select_keyword_map) 
+    
+  })
+  
+  
+  #### Basemap
   output$global_map <- renderLeaflet({
-
+    
+    #### Default: map that shows up first
+    #cor_sum_df <- cor_df %>%
+    #  dplyr::filter(type %in% "Cases") %>%
+    #  dplyr::filter(keyword_en %in% "Loss of Smell") 
+    
+    leaflet() %>%
+      addProviderTiles(providers$OpenStreetMap.Mapnik) 
+    
+  })
+  
+  observe({
+    
+    req(input$nav == "Country Level") # This makes leaflet show up; before no defaults.
+    
     if(F){
       cor_sum_df <- cor_df %>%
         dplyr::filter(type %in% "Cases") %>%
         dplyr::filter(keyword_en %in% "Loss of Smell") 
     }
     
+    cor_sum_df <- cor_df_react()
     
-    cor_sum_df <- cor_df %>%
-      dplyr::filter(type %in% input$select_covid_type_map) %>%
-      dplyr::filter(keyword_en %in% input$select_keyword_map) 
     cor_sum_df$name <- NULL  
     
     world_data <- merge(world, cor_sum_df, by = "geo", all.x=T, all.y=F)
-
     
     pal <- colorNumeric(
       palette = "Reds",
-      domain = world_data$cor)
+      domain = c(world_data$cor[!is.na(world_data$cor)], 0, 1))
     
-    leaflet() %>%
-      addTiles() %>%
-      addPolygons(data = world_data,
-                  label = ~name,
+    leafletProxy("global_map",
+                 data = world_data) %>%
+      clearShapes() %>%
+      clearControls() %>%
+      addPolygons(label = ~name,
                   layerId = ~ name,
                   stroke = F,
                   fillOpacity = 1,
-                  color = ~pal(cor))
+                  color = ~pal(cor)) %>%
+      addLegend("bottomright", 
+                pal = pal, 
+                values = c(world_data$cor[!is.na(world_data$cor)], 0, 1),
+                title = paste0("Correlation<br>between<br>",
+                               input$select_covid_type_map, 
+                               " and<br>Search<br>Activity"),
+                opacity = 1,
+                bins = c(0, 0.5, 1)
+      )
     
   })
   
   # * Country Trends -----------------------------------------------------------
+  country_data_react <- reactive({
+    
+    if(is.null(input$global_map_shape_click$id)){
+      country_name <- "United States"
+    } else{
+      country_name <- input$global_map_shape_click$id
+    }
+    
+    gtrends_sub_df <- gtrends_df %>%
+      dplyr::filter(name %in% country_name,
+                    keyword_en %in% input$select_keyword_map) 
+    
+    ## If nrow = 0, give 1 row with just name
+    if(nrow(gtrends_sub_df) == 0){
+      
+      gtrends_sub_df <- bind_rows(gtrends_sub_df,
+                                  data.frame(name = country_name))
+      
+    }
+    
+    gtrends_sub_df
+    
+  })
+  
+  observe({
+    
+    
+    output$country_trends <- renderPlot({
+      
+      color_cases <- "orange"
+      color_hits <- "forestgreen"
+      
+      #### Subset to country
+      if(F){
+        gtrends_sub_df <- gtrends_df %>%
+          filter(name %in% "United States",
+                 keyword_en %in% "Loss of Smell") 
+      }
+      
+      gtrends_sub_df <- country_data_react()
+      
+      #### Define case/death varibles
+      if(input$select_covid_type %in% "Cases"){
+        
+        gtrends_sub_df <- gtrends_sub_df %>%
+          dplyr::select(name, date, hits_ma7, hits, cases_new,
+                        cor_casesMA7_hitsMA7_max, cor_casesMA7_hitsMA7_lag,
+                        cases_total) %>%
+          dplyr::rename(Country = name,
+                        covid_new = cases_new,
+                        "Correlation" = cor_casesMA7_hitsMA7_max,
+                        "Correlation Lag" = cor_casesMA7_hitsMA7_lag)
+        
+      } 
+      if(input$select_covid_type %in% "Deaths"){
+        
+        gtrends_sub_df <- gtrends_sub_df %>%
+          dplyr::select(name, date, hits_ma7, hits, death_new,
+                        cor_deathMA7_hitsMA7_max, cor_deathMA7_hitsMA7_lag,
+                        death_total) %>%
+          dplyr::rename(Country = name,
+                        covid_new = death_new,
+                        "Correlation" = cor_deathMA7_hitsMA7_max,
+                        "Correlation Lag" = cor_deathMA7_hitsMA7_lag)
+      } 
+      
+      #### Prep hits
+      gtrends_sub_df$hits_fig <-  gtrends_sub_df$hits_ma7
+      
+      # multiplier so that max of hits is same as covid
+      multiplier <- max(gtrends_sub_df$covid_new, na.rm=T) / max(gtrends_sub_df$hits_fig, na.rm=T)
+      
+      gtrends_sub_df$hits_fig <- gtrends_sub_df$hits_fig * multiplier
+      
+      #### Figure
+      # Check if 1 row. If no data, previous step gives 1 row with "name" 
+      # variable filled in.
+      if(nrow(gtrends_sub_df) %in% 1){
+        p <- ggplot() +
+          labs(title = "No Data") +
+          theme_void() +
+          theme(plot.title = element_text(hjust = 0.5, face = "bold", size=16))
+      } else{
+        p <-       ggplot() +
+          geom_col(data = gtrends_sub_df,
+                   aes(x = date, y = covid_new),
+                   fill = color_cases) +
+          geom_line(data = gtrends_sub_df,
+                    aes(x = date, y = hits_fig),
+                    color = color_hits,
+                    size=1) +
+          labs(x = NULL,
+               y = input$select_covid_type_map) +
+          scale_y_continuous(sec.axis = sec_axis(~.*1, name = "Search\nPopularity",
+                                                 breaks = c(0, max(gtrends_sub_df$hits_fig, na.rm=T)),
+                                                 labels = c("Low", "High"))) +
+          theme_ipsum() +
+          theme(axis.title.y.left = element_text(angle = 0, 
+                                                 vjust = 0.5, 
+                                                 color=color_cases,
+                                                 face = "bold",
+                                                 size=16),
+                axis.title.y.right = element_text(angle = 0, 
+                                                  vjust = 0.5, 
+                                                  color=color_hits,
+                                                  face = "bold",
+                                                  size=16),
+                axis.text.y.left = element_text(color = color_cases,
+                                                size=16),
+                axis.text.y.right = element_text(color = color_hits,
+                                                 size=16),
+                axis.text = element_text(face = "bold", size=16),
+                plot.title = element_text(face = "bold", hjust = 0.5, size=18))
+      }
+      
+      p
+      
+      
+    })
+    
+  })
+  
   
   
   # * Line Graph ---------------------------------------------------------------
@@ -589,7 +747,6 @@ server = (function(input, output, session) {
                       "Correlation" = cor_casesMA7_hitsMA7_max,
                       "Correlation Lag" = cor_casesMA7_hitsMA7_lag)
       
-      print(head(gtrends_spark_df))
       
     } 
     if(input$select_covid_type %in% "Deaths"){
@@ -771,7 +928,7 @@ server = (function(input, output, session) {
   
   # * Correlation Map ------------------------------------------------------------------
   output$cor_map <- renderPlot({
-    world_sp$name <- NULL
+    world$name <- NULL
     
     if(F){
       cor_df <- cor_df %>%
@@ -792,7 +949,7 @@ server = (function(input, output, session) {
     #### Merge
     world_data <- merge(world, cor_df, by = "geo", all.x=T, all.y=F)
     world_data <- world_data %>% st_as_sf()
-
+    
     world_data$text <- paste0(world_data$name, "\n", world_data$cor %>% round(2))
     
     p <- ggplot() +
@@ -882,6 +1039,12 @@ server = (function(input, output, session) {
       value = 100,
       min = 0
     )
+    
+  })
+  
+  output$country_name <- renderText({
+    
+    country_data_react()$name[1]
     
   })
   
@@ -977,7 +1140,7 @@ server = (function(input, output, session) {
     
   })
   
-
+  
   output$ui_line_graph <- renderUI({
     
     n_states <- readRDS(file.path("precomputed_figures", 
