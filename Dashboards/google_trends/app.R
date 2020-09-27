@@ -383,7 +383,7 @@ ui <- fluidPage(
           column(3,
           ),
           
-          column(3, align = "center",
+          column(6, align = "center",
                  
                  selectInput(
                    "select_covid_type_map",
@@ -393,19 +393,15 @@ ui <- fluidPage(
                    multiple = F
                  )
           ),
-          
-          column(3, align = "center",
-                 selectInput(
-                   "select_keyword_map",
-                   label = strong("Search Term"),
-                   choices = keyword_list,
-                   selected = "Loss of Smell",
-                   multiple = F
-                 )
-          ),
           column(3,
           )
           
+        ),
+        
+        fluidRow(
+          column(12, align = "center",
+                 h3(textOutput("country_name"))
+          )
         ),
         
         fluidRow(
@@ -419,13 +415,37 @@ ui <- fluidPage(
           ),
           column(6, align = "center",
                  
-                 h4(textOutput("country_name")),
                  
-                 plotOutput("country_trends")
+                 
+                 
                  
           )
           
+        ),
+        
+        br(),
+        
+        wellPanel(
+          fluidRow(
+            column(6, align = "center", offset = 3,
+                   selectInput(
+                     "select_keyword_map",
+                     label = strong("Search Term"),
+                     choices = keyword_list,
+                     selected = "Loss of Smell",
+                     multiple = F
+                   )
+            )
+          ), 
+          fluidRow(
+            
+            plotOutput("country_trends",
+                       height = "300px")
+            
+          )
         )
+        
+        
         
       )
     ),
@@ -599,14 +619,25 @@ server = (function(input, output, session) {
     
   })
   
-  # * Country Trends -----------------------------------------------------------
-  country_data_react <- reactive({
+  # * Country Figures ----------------------------------------------------------
+  
+  # *** Country Name Reactive -----
+  country_name_react <- reactive({
     
     if(is.null(input$global_map_shape_click$id)){
       country_name <- "United States"
     } else{
       country_name <- input$global_map_shape_click$id
     }
+    
+    country_name
+    
+  })
+  
+  # *** Country Trends -----------------------------------------------------------
+  country_data_react <- reactive({
+
+    country_name <- country_name_react()
     
     gtrends_sub_df <- gtrends_df %>%
       dplyr::filter(name %in% country_name,
@@ -686,7 +717,8 @@ server = (function(input, output, session) {
         p <-       ggplot() +
           geom_col(data = gtrends_sub_df,
                    aes(x = date, y = covid_new),
-                   fill = color_cases) +
+                   fill = color_cases,
+                   color = color_cases) +
           geom_line(data = gtrends_sub_df,
                     aes(x = date, y = hits_fig),
                     color = color_hits,
@@ -718,7 +750,7 @@ server = (function(input, output, session) {
       p
       
       
-    })
+    }, bg = "transparent")
     
   })
   

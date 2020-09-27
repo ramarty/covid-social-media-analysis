@@ -1,5 +1,7 @@
 # Prepare Data for Dashboard
 
+# http://bl.ocks.org/timelyportfolio/33db1fb9e64257ef7149754bdff0b2e0
+
 library(rmapshaper)
 
 DASHBOARD_PATH <- file.path(dropbox_file_path, "Data", "google_trends", "DashboardData", "data")
@@ -10,8 +12,8 @@ keywords <- c("Corona Symptoms", "Coronavirus", "Coronavirus Symptoms",
 
 # World Shapefile --------------------------------------------------------------
 world_sp <- readRDS(file.path(dropbox_file_path, "Data", "world_shapefile", 
-                            "FinalData",
-                            "TM_WORLD_BORDERS-0.3_simplified.Rds"))
+                              "FinalData",
+                              "TM_WORLD_BORDERS-0.3_simplified.Rds"))
 
 world_sp$name <- world_sp$name %>% as.character()
 world_sp$continent <- NA
@@ -81,6 +83,7 @@ gtrends_sum_df <- gtrends_df %>%
                                       chartRangeMax = 8,
                                       width = 180,
                                       height = 100,
+                                      tooltipChartTitle = "COVID-19 Cases",
                                       highlightLineColor = 'orange', 
                                       highlightSpotColor = 'orange'),
             death_new_spark = spk_chr(death_new,
@@ -90,6 +93,7 @@ gtrends_sum_df <- gtrends_df %>%
                                       chartRangeMax = 8,
                                       width = 180,
                                       height = 100,
+                                      tooltipChartTitle = "COVID-19 Deaths",
                                       highlightLineColor = 'orange', 
                                       highlightSpotColor = 'orange'),
             hits_ma7_spark = spk_chr(hits_ma7,
@@ -99,12 +103,134 @@ gtrends_sum_df <- gtrends_df %>%
                                      chartRangeMax = 8,
                                      width = 180,
                                      height = 100,
+                                     tooltipChartTitle = "Search Activity",
                                      highlightLineColor = 'orange', 
                                      highlightSpotColor = 'orange'),
             cor_casesMA7_hitsMA7_max = cor_casesMA7_hitsMA7_max[1], 
             cor_casesMA7_hitsMA7_lag = cor_casesMA7_hitsMA7_lag[1],
             cor_deathMA7_hitsMA7_max = cor_deathMA7_hitsMA7_max[1], 
-            cor_deathMA7_hitsMA7_lag = cor_deathMA7_hitsMA7_lag[1],) 
+            cor_deathMA7_hitsMA7_lag = cor_deathMA7_hitsMA7_lag[1]) #%>%
+#ungroup() %>%
+#mutate(l = spk_composite(cases_new_spark, hits_ma7_spark))
+
+# COMPOSIT
+gtrends_df$group <- paste0(gtrends_df$name,
+                           gtrends_df$keyword_en)
+
+
+# 1. Merge data back in
+
+library(purrr)
+gtrends_spark_df <- gtrends_df %>%
+  filter(keyword_en %in% "Loss of Smell") %>%
+  arrange(date) %>%
+  split(.$group) %>% 
+  map_df(~{
+    l_cases <- sparkline(.x$cases_new,
+                         type='bar',
+                         barColor="orange",
+                         chartRangeMin = 0,
+                         chartRangeMax = 8,
+                         width = 80,
+                         height = 60,
+                         tooltipChartTitle = "COVID-19 Cases",
+                         highlightLineColor = 'orange', 
+                         highlightSpotColor = 'orange')
+    l_death <- sparkline(.x$death_new,
+                         type='bar',
+                         barColor="orange",
+                         chartRangeMin = 0,
+                         chartRangeMax = 8,
+                         width = 80,
+                         height = 60,
+                         tooltipChartTitle = "COVID-19 Deaths",
+                         highlightLineColor = 'orange', 
+                         highlightSpotColor = 'orange')
+    l_hits <- sparkline(.x$hits_ma7 %>% round(2),
+                        type="line",
+                        lineColor = 'green', 
+                        fillColor = NULL,
+                        chartRangeMin = 0,
+                        chartRangeMax = 8,
+                        width = 80,
+                        height = 60,
+                        tooltipChartTitle = "Search Popularity",
+                        highlightLineColor = 'green', 
+                        highlightSpotColor = 'green') 
+    l_cases_hits <- spk_composite(l_cases, 
+                                  l_hits)
+    l_death_hits <- spk_composite(l_death, 
+                                  l_hits) 
+    data.frame(l_cases = as.character(htmltools::as.tags(l_cases)), 
+               l_death = as.character(htmltools::as.tags(l_death)), 
+               l_hits = as.character(htmltools::as.tags(l_hits)), 
+               l_cases_hits = as.character(htmltools::as.tags(l_cases_hits)),
+               l_death_hits = as.character(htmltools::as.tags(l_death_hits)))
+  }, .id = 'Type') #%>% 
+#datatable(escape = F,
+#          rownames = F,
+#          options = list(fnDrawCallback = htmlwidgets::JS('function(){
+#                                             HTMLWidgets.staticRender();
+#                                                                          }'))) %>% 
+#spk_add_deps()
+
+
+gtrends_spark_df <- gtrends_sum_df %>%
+  dplyr::select(Type, l_cases, l_cases_hits)
+table_max <- nrow(gtrends_spark_df)
+
+l <- formattable(
+  gtrends_spark_df[1:table_max,] %>% as.data.table(),
+  align = c("l", "l", "l"),
+  f_list
+) %>% format_table(align = c("l", "l", "l")) %>%
+  htmltools::HTML() %>%
+  div() %>%
+  # use new sparkline helper for adding dependency
+  spk_add_deps() %>%
+  # use column for bootstrap sizing control
+  # but could also just wrap in any tag or tagList
+  {column(width=12, .)}
+
+l
+
+
+
+
+
+#l <- spk_composite(l2, 
+#                   l1
+
+gtrends_sum_df$cases_new_spark[1]
+
+sl1 <- sparkline(
+  c(5,4,5,-2,0,3),
+  type='bar',
+  barColor="#aaf",
+  chartRangeMin=-5,
+  chartRangeMax=10,
+  width = 180,
+  height = 100,
+  tooltipChartTitle = "Hits",
+  # set an id that will make it easier to refer
+  #  in the next sparkline
+  elementId="sparkline-for-composite"
+)
+
+sl2 <- sparkline(
+  c(4,1,5,7,9,9,8,7,6,6,4,7,8,4,3,2,2,5,6,7),
+  type="line",
+  fillColor = FALSE,
+  lineColor ='red',
+  width = 180,
+  height = 100,
+  chartRangeMin = -5,
+  chartRangeMax = 10,
+  tooltipChartTitle = "Cases"
+)
+
+# add sparkline as a composite
+spk_composite(sl1, sl2)
 
 saveRDS(gtrends_sum_df, file.path(DASHBOARD_PATH, "gtrends_spark.Rds"))
 
