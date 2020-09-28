@@ -118,13 +118,14 @@ ui <- fluidPage(
                     This dashboard illustrates how search activity for specific symptoms
                     strongly matches - and often preceds - trends in COVID-19 cases.</h4>"),
                  br(),
-                 h4("Trends in search popularity of COVID-19 symptoms should not replace
+                 
+                 HTML("<h4>Trends in search popularity of COVID-19 symptoms should not replace
                  administrative data on cases. The relation between the two is strong
-                 but not perfect. However, Google data can supplement official data.
+                 but <a href='https://www.nature.com/news/when-google-got-flu-wrong-1.12413'>not perfect</a>. However, Google data can supplement official data.
                 This is particulrarly true in circumstances
                     when testing or data may not be widely available. Moreover, given that
                     Google trends information is updated in real time, sudden increases in 
-                    search activity can warn of potential growth in COVID-19 cases."),
+                    search activity can warn of potential growth in COVID-19 cases.</h4>"),
                  br(),
                  h4("As an example, growth in the search popularity of 'Loss of Smell'
                     preceded an increase in COVID-19 cases by about 10 days in the 
@@ -215,8 +216,8 @@ ui <- fluidPage(
           column(3,
           ),
           column(6, align = "center",
-                 strong("The below figure shows the average correlation between different search
-               terms and COVID (black point) and the distribution across countries (green)."),
+                 strong("The below figure shows the distribution of the correlation between
+                 COVID-19 and search popularity of different search terms across countries."),
           ),
           column(3,
           )
@@ -227,7 +228,7 @@ ui <- fluidPage(
           ),
           column(6,
                  plotOutput("max_cor_hist",
-                            height = "400px")
+                            height = "600px")
           ),
           column(3,
           )
@@ -374,11 +375,11 @@ ui <- fluidPage(
                                       leafletOutput("cor_map_leaflet",
                                                     height = "700px")
                                       
-                                      )
+                               )
                              )
                              
                              
-                       
+                             
                              
                     ), selected = "Table View"
                     
@@ -424,7 +425,7 @@ ui <- fluidPage(
         
         fluidRow(
           
-          column(6, align = "center",
+          column(6, align = "left",
                  
                  h4("Click a Country on the Map"),
                  
@@ -433,7 +434,8 @@ ui <- fluidPage(
           ),
           column(6, align = "center",
                  
-                 
+                 strong("Correlation between"),
+                 plotOutput("country_cor"),
                  
                  
                  
@@ -446,13 +448,7 @@ ui <- fluidPage(
         wellPanel(
           fluidRow(
             column(6, align = "center", offset = 3,
-                   selectInput(
-                     "select_keyword_map",
-                     label = strong("Search Term"),
-                     choices = keyword_list,
-                     selected = "Loss of Smell",
-                     multiple = F
-                   )
+                   uiOutput("ui_select_keyword_map")
             )
           ), 
           fluidRow(
@@ -592,7 +588,8 @@ server = (function(input, output, session) {
     #  dplyr::filter(keyword_en %in% "Loss of Smell") 
     
     leaflet() %>%
-      addProviderTiles(providers$OpenStreetMap.Mapnik) 
+      addProviderTiles(providers$OpenStreetMap.Mapnik) %>%
+      setView(lat = 0, lng = 0, zoom = 1)
     
   })
   
@@ -600,21 +597,33 @@ server = (function(input, output, session) {
     
     req(input$nav == "Country Level") # This makes leaflet show up; before no defaults.
     
-    if(F){
-      cor_sum_df <- cor_df %>%
-        dplyr::filter(type %in% "Cases") %>%
-        dplyr::filter(keyword_en %in% "Loss of Smell") 
-    }
+    # if(F){
+    #   cor_sum_df <- cor_df %>%
+    #     dplyr::filter(type %in% "Cases") %>%
+    #     dplyr::filter(keyword_en %in% "Loss of Smell") 
+    # }
+    # 
+    # cor_sum_df <- cor_df_react()
+    # 
+    # cor_sum_df$name <- NULL  
     
-    cor_sum_df <- cor_df_react()
+    world$name <- NULL
     
-    cor_sum_df$name <- NULL  
+    cor_sum_df <- cor_df %>%
+      filter(type %in% input$select_covid_type_map) %>%
+      group_by(geo, name) %>%
+      summarise(keyword_en = keyword_en[which.max(cor)])
+    
+    cor_sum_df$keyword_en[cor_sum_df$keyword_en %in% "Coronavirus Symptoms"] <- "Coronavirus<br>Symptoms"
+    cor_sum_df$keyword_en[cor_sum_df$keyword_en %in% "Corona Symptoms"] <- "Corona<br>Symptoms"
     
     world_data <- merge(world, cor_sum_df, by = "geo", all.x=T, all.y=F)
     
-    pal <- colorNumeric(
-      palette = "Reds",
-      domain = c(world_data$cor[!is.na(world_data$cor)], 0, 1))
+    colors <- brewer.pal(n = length(unique(world_data$keyword_en)), 
+                         name = "Spectral")
+    
+    pal <- colorFactor(colors, 
+                       world_data$keyword_en[!is.na(world_data$keyword_en)])
     
     leafletProxy("global_map",
                  data = world_data) %>%
@@ -624,15 +633,12 @@ server = (function(input, output, session) {
                   layerId = ~ name,
                   stroke = F,
                   fillOpacity = 1,
-                  color = ~pal(cor)) %>%
+                  color = ~pal(keyword_en)) %>%
       addLegend("bottomright", 
                 pal = pal, 
-                values = c(world_data$cor[!is.na(world_data$cor)], 0, 1),
-                title = paste0("Correlation<br>between<br>",
-                               input$select_covid_type_map, 
-                               " and<br>Search<br>Activity"),
-                opacity = 1,
-                bins = c(0, 0.5, 1)
+                values = world_data$keyword_en[!is.na(world_data$keyword_en)],
+                title = "Search Term<br>With Highest<br>Correlation",
+                opacity = 1
       )
     
   })
@@ -651,6 +657,46 @@ server = (function(input, output, session) {
     country_name
     
   })
+  
+  # *** Country Correlation Figure ---------------------------------------------
+  output$country_cor <- renderPlot({
+    
+    country_name <- country_name_react()
+    
+    cor_df_sub <- cor_df[cor_df$name %in% country_name,]
+    cor_df_sub <- cor_df_sub[cor_df_sub$type %in% input$select_covid_type_map,]
+    
+    cor_df_sub$keyword_en <- cor_df_sub$keyword_en %>% as.character()
+    
+    
+    MIN_COR <- min(cor_df_sub$cor, na.rm=T)
+    MIN_COR <- ifelse(MIN_COR > 0, 0, MIN_COR)
+    
+    
+    print(MIN_COR)
+    
+    print(cor_df_sub)
+    
+    cor_df_sub %>% 
+      ggplot() +
+      geom_bar(aes(x = cor, 
+                   y = reorder(keyword_en, cor),
+                   fill = cor),
+               color = "black",
+               stat = "identity") +
+      labs(x = "Correlation",
+           y = "") +
+      scale_fill_gradient2(low = "blue",
+                           mid = "white", 
+                           high = "firebrick4",
+                           midpoint = 0) +
+      xlim(MIN_COR, 1) +
+      theme_minimal() +
+      theme(legend.position = "none") 
+    
+  })
+  
+  
   
   # *** Country Trends -----------------------------------------------------------
   country_data_react <- reactive({
@@ -675,7 +721,6 @@ server = (function(input, output, session) {
   
   observe({
     
-    
     output$country_trends <- renderPlot({
       
       color_cases <- "orange"
@@ -694,7 +739,7 @@ server = (function(input, output, session) {
       if(input$select_covid_type %in% "Cases"){
         
         gtrends_sub_df <- gtrends_sub_df %>%
-          dplyr::select(name, date, hits_ma7, hits, cases_new,
+          dplyr::select(name, date, hits_ma7, hits, cases_new,keyword_en,
                         cor_casesMA7_hitsMA7_max, cor_casesMA7_hitsMA7_lag,
                         cases_total) %>%
           dplyr::rename(Country = name,
@@ -706,7 +751,7 @@ server = (function(input, output, session) {
       if(input$select_covid_type %in% "Deaths"){
         
         gtrends_sub_df <- gtrends_sub_df %>%
-          dplyr::select(name, date, hits_ma7, hits, death_new,
+          dplyr::select(name, date, hits_ma7, hits, death_new, keyword_en,
                         cor_deathMA7_hitsMA7_max, cor_deathMA7_hitsMA7_lag,
                         death_total) %>%
           dplyr::rename(Country = name,
@@ -723,6 +768,12 @@ server = (function(input, output, session) {
       
       gtrends_sub_df$hits_fig <- gtrends_sub_df$hits_fig * multiplier
       
+      ### COVID 
+      
+      gtrends_sub_covid_df <- gtrends_sub_df %>%
+        dplyr::group_by(date, Country) %>%
+        dplyr::summarise(covid_new = mean(covid_new, na.rm=T))
+      
       #### Figure
       # Check if 1 row. If no data, previous step gives 1 row with "name" 
       # variable filled in.
@@ -733,13 +784,13 @@ server = (function(input, output, session) {
           theme(plot.title = element_text(hjust = 0.5, face = "bold", size=16))
       } else{
         p <-       ggplot() +
-          geom_col(data = gtrends_sub_df,
+          geom_col(data = gtrends_sub_covid_df,
                    aes(x = date, y = covid_new),
                    fill = color_cases,
                    color = color_cases) +
           geom_line(data = gtrends_sub_df,
-                    aes(x = date, y = hits_fig),
-                    color = color_hits,
+                    aes(x = date, y = hits_fig,
+                        color = keyword_en, group = keyword_en),
                     size=1) +
           labs(x = NULL,
                y = input$select_covid_type_map) +
@@ -776,8 +827,6 @@ server = (function(input, output, session) {
   
   # * Line Graph ---------------------------------------------------------------
   output$line_graph <- renderUI({
-    
-    
     
     #### Subset
     if(input$select_continent != "All"){
@@ -874,13 +923,22 @@ server = (function(input, output, session) {
       #   )
       # )
       
-      `Correlation` = color_tile2(c("#95C6D3", "#ECDC87", "#EA7E71"))
+      `Correlation` = formatter("span", style = ~ style(color = "black", font.weight = "bold"))
+      
+      
+      #`Correlation` = color_tile("#95C6D3", "#EA7E71")
       
     )
-  
+    
     # Make table
     # https://github.com/renkun-ken/formattable/issues/89
+    
+    
+    gtrends_spark_df <- gtrends_spark_df[!is.na(gtrends_spark_df$Correlation),]
+    #gtrends_spark_df <- gtrends_spark_df[!is.na(gtrends_spark_df$Trends),]
+    
     table_max <- nrow(gtrends_spark_df)
+    
     
     l <- formattable(
       gtrends_spark_df[1:table_max,] %>% as.data.table(),
@@ -890,10 +948,10 @@ server = (function(input, output, session) {
       htmltools::HTML() %>%
       div() %>%
       # use new sparkline helper for adding dependency
-      spk_add_deps() #%>%
+      spk_add_deps() %>%
       # use column for bootstrap sizing control
       # but could also just wrap in any tag or tagList
-      #{column(width=12, .)}
+      {column(width=12, .)}
     
     l
     
@@ -1059,7 +1117,7 @@ server = (function(input, output, session) {
         htmlwidgets::getDependency(name, pkg)
       )
     }
-
+    
     #### Subset world
     if(input$select_continent != "All"){
       world <- world[world$continent %in% input$select_continent,]
@@ -1114,7 +1172,7 @@ server = (function(input, output, session) {
                   stroke = F,
                   fillOpacity = 1,
                   color = ~pal(cor_covidMA7_hitsMA7_max)) %>%
-          onRender("function(el,x) {
+      onRender("function(el,x) {
       this.on('popupopen', function() {HTMLWidgets.staticRender();})
     }") %>%
       addLegend("topright",
@@ -1127,7 +1185,7 @@ server = (function(input, output, session) {
                 bins = c(0, 0.5, 1)
       ) %>%
       setView(zoom = 2, lat=0, lng=0)
-
+    
   })
   
   # * Max Correlation Hist -----------------------------------------------------
@@ -1145,24 +1203,34 @@ server = (function(input, output, session) {
       dplyr::summarise(cor = mean(cor)) %>%
       dplyr::ungroup()
     
+    
     ggplot() +
-      geom_violin(aes(x = reorder(keyword_en,
-                                  cor),
-                      y = cor),
-                  data = cor_df,
-                  fill = "palegreen3") +
-      geom_point(aes(x = reorder(keyword_en,
-                                 cor),
-                     y = cor),
-                 data = cor_all_sum_df,
-                 fill = "palegreen3") +
+      geom_dotplot(data = cor_df,
+                   aes(x = reorder(keyword_en,
+                                   cor),
+                       y = cor,
+                       fill = "=  One Country"),
+                   binaxis = "y", 
+                   stackdir = "center",
+                   dotsize = 2.5,
+                   binwidth = .01,
+                   color = "palegreen4") +
+      # geom_point(data = cor_all_sum_df,
+      #            aes(x = reorder(keyword_en,
+      #                            cor),
+      #                y = cor),
+      #            fill = "palegreen3") +
+      scale_fill_manual(values = c("palegreen3")) +
+      labs(fill = NULL) +
       geom_hline(yintercept = 0) +
       coord_flip() +
       theme_minimal() +
       labs(x = "",
            y = "Correlation") +
-      theme(axis.text.y = element_text(face = "bold", size = 14)) +
-      theme(axis.text.x = element_text(size = 14))
+      theme(axis.text.y = element_text(face = "bold", size = 14),
+            axis.text.x = element_text(size = 14),
+            legend.text = element_text(size = 14),
+            legend.position = "top")
     
   })
   
@@ -1185,6 +1253,27 @@ server = (function(input, output, session) {
   })
   
   # * renderUIs ----------------------------------------------------------------
+  output$ui_select_keyword_map <- renderUI({
+
+
+    keywords_df <- cor_df %>%
+      dplyr::filter(type %in% input$select_covid_type_map) %>%
+      dplyr::filter(name %in% country_name_react()) 
+    
+    keywords_df$keyword_en <- keywords_df$keyword_en %>% as.character()
+    
+    selectInput(
+      "select_keyword_map",
+      label = strong("Search Term"),
+      choices = keywords_df$keywords_en,
+      selected = keywords_df$keywords_en[which.max(keywords_df$cor)],
+      multiple = F
+    )
+    
+  })
+  
+  
+  
   output$ui_select_covid_cases <- renderUI({
     
     numericInput(
