@@ -86,6 +86,19 @@ keywords_df <- keywords_df %>%
   dplyr::select(English, Spanish, Portuguese, French, Arabic, German, Mandarin,
                 Dutch, Italian, Norwegian) 
 
+# FUNCTIONS ========
+
+# https://stackoverflow.com/questions/49885176/is-it-possible-to-use-more-than-2-colors-in-the-color-tile-function
+color_tile2 <- function (...) {
+  formatter("span", style = function(x) {
+    style(display = "block",
+          padding = "0 4px", 
+          font.weight = "bold",
+          `border-radius` = "4px", 
+          `background-color` = csscolor(matrix(as.integer(colorRamp(...)(normalize(as.numeric(x)))), 
+                                               byrow=TRUE, dimnames=list(c("red","green","blue"), NULL), nrow=3)))
+  })}
+
 # UI -==========================================================================
 ui <- fluidPage(
   
@@ -229,6 +242,8 @@ ui <- fluidPage(
           column(6,
                  plotOutput("max_cor_hist",
                             height = "600px")
+                
+               
           ),
           column(3,
           )
@@ -278,33 +293,50 @@ ui <- fluidPage(
             
             ## Titles
             fluidRow(
-              column(4,
+              column(5,
+                     column(12, 
+                            strong(HTML("We determine <em>when</em> the search term popularity 
+                                   is most correlated with COVID-19 cases/deaths. 
+                                   For example, the below figure shows that in
+                                   the United States the correlation is strongest
+                                   when we consider search term popularity
+                                   12 days into the past.")), 
+                            align = "center")),
+              column(3,
                      column(12, strong(textOutput("text_best_time_lag")), align = "center")
               ),
-              column(8,
+              column(4,
                      column(12, strong(textOutput("text_cor_countries")), align = "center")
               )
             ),
             
             ## Hist 1
             fluidRow(
-              column(4,
+              column(5,
                      
-                     plotOutput("cor_histogram_time_lag",
+                     plotOutput("us_ex_fig_arrow", 
                                 height = "200px")
+                     
+
               ),
               
               ## Hist 2
-              column(4,
+              column(3,
                      
-                     plotOutput("cor_histogram",
-                                height = "200px"),
+                     plotOutput("cor_histogram_time_lag",
+                                height = "200px")
+                     
+                
               ),
               
               ## Hist 3
               column(4,
-                     plotOutput("cor_map",
+
+                     plotOutput("cor_histogram",
                                 height = "200px")
+                     
+     
+                     
               )
             )
             
@@ -345,7 +377,25 @@ ui <- fluidPage(
                       
                     )),
                     
-                    tabPanel("Table View", 
+                    tabPanel("Map View", 
+                             
+                     
+                             
+                             
+                             
+                             
+                             fluidRow(
+                               column(12, align = "center", offset = 0,
+                                      
+                                      strong("Click a country on the map"),
+                                      leafletOutput("cor_map_leaflet",
+                                                    height = "700px")
+                                      
+                               )
+                             )
+                             
+                    ),
+                    tabPanel("Table View",
                              
                              fluidRow(
                                column(4,
@@ -364,27 +414,9 @@ ui <- fluidPage(
                                )
                                
                              )
+
                              
-                    ),
-                    tabPanel("Map View",
-                             
-                             fluidRow(
-                               column(10, align = "center", offset = 1,
-                                      
-                                      strong("Click a country on the map"),
-                                      leafletOutput("cor_map_leaflet",
-                                                    height = "700px")
-                                      
-                               )
-                             )
-                             
-                             
-                             
-                             
-                    ), selected = "Table View"
-                    
-                    
-        )
+                    ), selected = "Map View")
         
       )
     ),
@@ -418,47 +450,56 @@ ui <- fluidPage(
         ),
         
         fluidRow(
-          column(12, align = "center",
-                 h3(textOutput("country_name"))
-          )
-        ),
-        
-        fluidRow(
           
           column(6, align = "left",
                  
                  h4("Click a Country on the Map"),
                  
-                 leafletOutput("global_map")
+                 leafletOutput("global_map", height = "400px")
                  
           ),
+          
+          
           column(6, align = "center",
                  
-                 strong("Correlation between"),
-                 plotOutput("country_cor"),
                  
+                 wellPanel(
+                   fluidRow(
+                     column(12, align = "center",
+                            h3(textOutput("country_name"))
+                     )
+                   ),
+                   
+                   fluidRow(
+                     column(12, align = "center",
+                            
+                            strong(htmlOutput("trends_country_subtitle"), align="center"),
+                            
+                            htmlOutput("line_graph_country")
+                     )
+                     
+                     
+                   )
+                 )
                  
-                 
-          )
+                 )
           
-        ),
-        
-        br(),
-        
-        wellPanel(
-          fluidRow(
-            column(6, align = "center", offset = 3,
-                   uiOutput("ui_select_keyword_map")
-            )
-          ), 
-          fluidRow(
-            
-            plotOutput("country_trends",
-                       height = "300px")
-            
-          )
         )
         
+        # wellPanel(
+        #   fluidRow(
+        #     column(6, align = "center", offset = 3,
+        #            uiOutput("ui_select_keyword_map")
+        #     )
+        #   ), 
+        #   fluidRow(
+        #     
+        #     plotOutput("country_trends",
+        #                height = "300px")
+        #     
+        #   )
+        # )
+        # 
         
         
       )
@@ -568,24 +609,9 @@ ui <- fluidPage(
 server = (function(input, output, session) {
   
   # * Global Map ---------------------------------------------------------------
-  #### Data
-  # Reactive expression for the data subsetted to what the user selected
-  cor_df_react <- reactive({
-    
-    cor_df %>%
-      dplyr::filter(type %in% input$select_covid_type_map) %>%
-      dplyr::filter(keyword_en %in% input$select_keyword_map) 
-    
-  })
-  
   
   #### Basemap
   output$global_map <- renderLeaflet({
-    
-    #### Default: map that shows up first
-    #cor_sum_df <- cor_df %>%
-    #  dplyr::filter(type %in% "Cases") %>%
-    #  dplyr::filter(keyword_en %in% "Loss of Smell") 
     
     leaflet() %>%
       addProviderTiles(providers$OpenStreetMap.Mapnik) %>%
@@ -596,16 +622,6 @@ server = (function(input, output, session) {
   observe({
     
     req(input$nav == "Country Level") # This makes leaflet show up; before no defaults.
-    
-    # if(F){
-    #   cor_sum_df <- cor_df %>%
-    #     dplyr::filter(type %in% "Cases") %>%
-    #     dplyr::filter(keyword_en %in% "Loss of Smell") 
-    # }
-    # 
-    # cor_sum_df <- cor_df_react()
-    # 
-    # cor_sum_df$name <- NULL  
     
     world$name <- NULL
     
@@ -668,14 +684,8 @@ server = (function(input, output, session) {
     
     cor_df_sub$keyword_en <- cor_df_sub$keyword_en %>% as.character()
     
-    
     MIN_COR <- min(cor_df_sub$cor, na.rm=T)
     MIN_COR <- ifelse(MIN_COR > 0, 0, MIN_COR)
-    
-    
-    print(MIN_COR)
-    
-    print(cor_df_sub)
     
     cor_df_sub %>% 
       ggplot() +
@@ -696,132 +706,256 @@ server = (function(input, output, session) {
     
   })
   
-  
-  
   # *** Country Trends -----------------------------------------------------------
-  country_data_react <- reactive({
+  # country_data_react <- reactive({
+  #   
+  #   country_name <- country_name_react()
+  #   
+  #   gtrends_sub_df <- gtrends_df %>%
+  #     dplyr::filter(name %in% country_name,
+  #                   keyword_en %in% input$select_keyword_map) 
+  #   
+  #   ## If nrow = 0, give 1 row with just name
+  #   if(nrow(gtrends_sub_df) == 0){
+  #     
+  #     gtrends_sub_df <- bind_rows(gtrends_sub_df,
+  #                                 data.frame(name = country_name))
+  #     
+  #   }
+  #   
+  #   gtrends_sub_df
+  #   
+  # })
+  
+  #observe({
+  
+  output$country_trends <- renderPlot({
     
-    country_name <- country_name_react()
+    color_cases <- "orange"
+    color_hits <- "forestgreen"
     
-    gtrends_sub_df <- gtrends_df %>%
-      dplyr::filter(name %in% country_name,
-                    keyword_en %in% input$select_keyword_map) 
-    
-    ## If nrow = 0, give 1 row with just name
-    if(nrow(gtrends_sub_df) == 0){
-      
-      gtrends_sub_df <- bind_rows(gtrends_sub_df,
-                                  data.frame(name = country_name))
-      
+    #### Subset to country
+    if(F){
+      gtrends_sub_df <- gtrends_df %>%
+        filter(name %in% "United States",
+               keyword_en %in% "Loss of Smell") 
     }
     
-    gtrends_sub_df
+    print(head(gtrends_df))
+    print(country_name_react())
+    
+    gtrends_sub_df <- gtrends_df %>%
+      filter(name %in% country_name_react()) %>%
+      filter(keyword_en %in% input$select_keyword_map)
+    
+    #### Define case/death varibles
+    if(input$select_covid_type %in% "Cases"){
+      
+      gtrends_sub_df <- gtrends_sub_df %>%
+        dplyr::select(name, date, hits_ma7, hits, cases_new,keyword_en,
+                      cor_casesMA7_hitsMA7_max, cor_casesMA7_hitsMA7_lag,
+                      cases_total) %>%
+        dplyr::rename(Country = name,
+                      covid_new = cases_new,
+                      "Correlation" = cor_casesMA7_hitsMA7_max,
+                      "Correlation Lag" = cor_casesMA7_hitsMA7_lag)
+      
+    } 
+    if(input$select_covid_type %in% "Deaths"){
+      
+      gtrends_sub_df <- gtrends_sub_df %>%
+        dplyr::select(name, date, hits_ma7, hits, death_new, keyword_en,
+                      cor_deathMA7_hitsMA7_max, cor_deathMA7_hitsMA7_lag,
+                      death_total) %>%
+        dplyr::rename(Country = name,
+                      covid_new = death_new,
+                      "Correlation" = cor_deathMA7_hitsMA7_max,
+                      "Correlation Lag" = cor_deathMA7_hitsMA7_lag)
+    } 
+    
+    #### Prep hits
+    gtrends_sub_df$hits_fig <-  gtrends_sub_df$hits_ma7
+    
+    # multiplier so that max of hits is same as covid
+    multiplier <- max(gtrends_sub_df$covid_new, na.rm=T) / max(gtrends_sub_df$hits_fig, na.rm=T)
+    
+    gtrends_sub_df$hits_fig <- gtrends_sub_df$hits_fig * multiplier
+    
+    ### COVID 
+    
+    gtrends_sub_covid_df <- gtrends_sub_df %>%
+      dplyr::group_by(date, Country) %>%
+      dplyr::summarise(covid_new = mean(covid_new, na.rm=T))
+    
+    #### Figure
+    # Check if 1 row. If no data, previous step gives 1 row with "name" 
+    # variable filled in.
+    if(nrow(gtrends_sub_df) %in% 1){
+      p <- ggplot() +
+        labs(title = "No Data") +
+        theme_void() +
+        theme(plot.title = element_text(hjust = 0.5, face = "bold", size=16))
+    } else{
+      p <-       ggplot() +
+        geom_col(data = gtrends_sub_covid_df,
+                 aes(x = date, y = covid_new),
+                 fill = color_cases,
+                 color = color_cases) +
+        geom_line(data = gtrends_sub_df,
+                  aes(x = date, y = hits_fig),
+                  color = color_hits, 
+                  group = color_hits,
+                  size=1) +
+        labs(x = NULL,
+             y = input$select_covid_type_map) +
+        scale_y_continuous(sec.axis = sec_axis(~.*1, name = "Search\nPopularity",
+                                               breaks = c(0, max(gtrends_sub_df$hits_fig, na.rm=T)),
+                                               labels = c("Low", "High"))) +
+        theme_ipsum() +
+        theme(axis.title.y.left = element_text(angle = 0, 
+                                               vjust = 0.5, 
+                                               color=color_cases,
+                                               face = "bold",
+                                               size=16),
+              axis.title.y.right = element_text(angle = 0, 
+                                                vjust = 0.5, 
+                                                color=color_hits,
+                                                face = "bold",
+                                                size=16),
+              axis.text.y.left = element_text(color = color_cases,
+                                              size=16),
+              axis.text.y.right = element_text(color = color_hits,
+                                               size=16),
+              axis.text = element_text(face = "bold", size=16),
+              plot.title = element_text(face = "bold", hjust = 0.5, size=18))
+    }
+    
+    p
+    
+    
+  }, bg = "transparent")
+  
+  #})
+  
+  # **** Line Graph Country ----------------------------------------------------
+  output$line_graph_country <- renderUI({
+    
+    #### Subset
+    gtrends_spark_df <- gtrends_spark_df %>%
+      filter(name %in% country_name_react())
+    
+    #### COVID Names
+    if(input$select_covid_type_map %in% "Cases"){
+      gtrends_spark_df <- gtrends_spark_df %>%
+        dplyr::select(l_cases_hits, keyword_en,
+                      cor_casesMA7_hitsMA7_max, cor_casesMA7_hitsMA7_lag,
+                      cases_total) %>%
+        dplyr::rename("Search Term" = keyword_en,
+                      Trends = l_cases_hits,
+                      "Correlation" = cor_casesMA7_hitsMA7_max,
+                      "Correlation Lag" = cor_casesMA7_hitsMA7_lag)
+      
+      
+    } 
+    if(input$select_covid_type_map %in% "Deaths"){
+      
+      gtrends_spark_df <- gtrends_spark_df %>%
+        dplyr::select(l_death_hits, keyword_en,
+                      cor_deathMA7_hitsMA7_max, cor_deathMA7_hitsMA7_lag,
+                      death_total) %>%
+        dplyr::rename("Search Term" = keyword_en,
+                      Trends = l_death_hits,
+                      "Correlation" = cor_deathMA7_hitsMA7_max,
+                      "Correlation Lag" = cor_deathMA7_hitsMA7_lag)
+    } 
+    
+    gtrends_spark_df <- gtrends_spark_df %>%
+      dplyr::select("Search Term", "Trends", "Correlation", "Correlation Lag")
+    
+    ## Change height/width
+    gtrends_spark_df$Trends <- gtrends_spark_df$Trends %>% 
+      str_replace_all(":150", ":75") %>% 
+      str_replace_all(":200", ":150")
+    
+    #### Sort
+    gtrends_spark_df <- gtrends_spark_df %>%
+      arrange(-Correlation)
+    
+    #### Adjust Variables
+    gtrends_spark_df$Correlation <- gtrends_spark_df$Correlation %>% round(3)
+    
+    #### Make Table
+    bar_color <- "#FF9999"
+    
+    f_list <- list(
+      `Search Term` = formatter("span", style = ~ style(color = "black", font.weight = "bold", width = "2px")),
+      `Correlation Lag` = formatter("span", style = ~ style(color = "black", font.weight = "bold")),
+      `Correlation` = formatter(
+        "span",
+        style = x ~ style(
+          display = "inline-block",
+          direction = "lft",
+          font.weight = "bold",
+          #"border-radius" = "4px",
+          "padding-left" = "2px",
+          "background-color" = csscolor(bar_color),
+          width = percent(proportion(x)),
+          color = csscolor("black")
+        )
+      )
+      
+      #`Correlation` = formatter("span", style = ~ style(color = "black", font.weight = "bold"))
+    )
+    
+    gtrends_spark_df <- gtrends_spark_df[!is.na(gtrends_spark_df$Correlation),]
+    
+    table_max <- nrow(gtrends_spark_df)
+    
+    l <- formattable(
+      gtrends_spark_df[1:table_max,] %>% as.data.table(),
+      align = c("c", "c", "l", "l"),
+      f_list
+    ) %>% format_table(align = c("c", "c", "l", "l")) %>%
+      htmltools::HTML() %>%
+      div() %>%
+      # use new sparkline helper for adding dependency
+      spk_add_deps() %>%
+      # use column for bootstrap sizing control
+      # but could also just wrap in any tag or tagList
+      {column(width=12, .)}
+    
+    l
+    
     
   })
   
-  observe({
-    
-    output$country_trends <- renderPlot({
-      
-      color_cases <- "orange"
-      color_hits <- "forestgreen"
-      
-      #### Subset to country
-      if(F){
-        gtrends_sub_df <- gtrends_df %>%
-          filter(name %in% "United States",
-                 keyword_en %in% "Loss of Smell") 
-      }
-      
-      gtrends_sub_df <- country_data_react()
-      
-      #### Define case/death varibles
-      if(input$select_covid_type %in% "Cases"){
-        
-        gtrends_sub_df <- gtrends_sub_df %>%
-          dplyr::select(name, date, hits_ma7, hits, cases_new,keyword_en,
-                        cor_casesMA7_hitsMA7_max, cor_casesMA7_hitsMA7_lag,
-                        cases_total) %>%
-          dplyr::rename(Country = name,
-                        covid_new = cases_new,
-                        "Correlation" = cor_casesMA7_hitsMA7_max,
-                        "Correlation Lag" = cor_casesMA7_hitsMA7_lag)
-        
-      } 
-      if(input$select_covid_type %in% "Deaths"){
-        
-        gtrends_sub_df <- gtrends_sub_df %>%
-          dplyr::select(name, date, hits_ma7, hits, death_new, keyword_en,
-                        cor_deathMA7_hitsMA7_max, cor_deathMA7_hitsMA7_lag,
-                        death_total) %>%
-          dplyr::rename(Country = name,
-                        covid_new = death_new,
-                        "Correlation" = cor_deathMA7_hitsMA7_max,
-                        "Correlation Lag" = cor_deathMA7_hitsMA7_lag)
-      } 
-      
-      #### Prep hits
-      gtrends_sub_df$hits_fig <-  gtrends_sub_df$hits_ma7
-      
-      # multiplier so that max of hits is same as covid
-      multiplier <- max(gtrends_sub_df$covid_new, na.rm=T) / max(gtrends_sub_df$hits_fig, na.rm=T)
-      
-      gtrends_sub_df$hits_fig <- gtrends_sub_df$hits_fig * multiplier
-      
-      ### COVID 
-      
-      gtrends_sub_covid_df <- gtrends_sub_df %>%
-        dplyr::group_by(date, Country) %>%
-        dplyr::summarise(covid_new = mean(covid_new, na.rm=T))
-      
-      #### Figure
-      # Check if 1 row. If no data, previous step gives 1 row with "name" 
-      # variable filled in.
-      if(nrow(gtrends_sub_df) %in% 1){
-        p <- ggplot() +
-          labs(title = "No Data") +
-          theme_void() +
-          theme(plot.title = element_text(hjust = 0.5, face = "bold", size=16))
-      } else{
-        p <-       ggplot() +
-          geom_col(data = gtrends_sub_covid_df,
-                   aes(x = date, y = covid_new),
-                   fill = color_cases,
-                   color = color_cases) +
-          geom_line(data = gtrends_sub_df,
-                    aes(x = date, y = hits_fig,
-                        color = keyword_en, group = keyword_en),
-                    size=1) +
-          labs(x = NULL,
-               y = input$select_covid_type_map) +
-          scale_y_continuous(sec.axis = sec_axis(~.*1, name = "Search\nPopularity",
-                                                 breaks = c(0, max(gtrends_sub_df$hits_fig, na.rm=T)),
-                                                 labels = c("Low", "High"))) +
-          theme_ipsum() +
-          theme(axis.title.y.left = element_text(angle = 0, 
-                                                 vjust = 0.5, 
-                                                 color=color_cases,
-                                                 face = "bold",
-                                                 size=16),
-                axis.title.y.right = element_text(angle = 0, 
-                                                  vjust = 0.5, 
-                                                  color=color_hits,
-                                                  face = "bold",
-                                                  size=16),
-                axis.text.y.left = element_text(color = color_cases,
-                                                size=16),
-                axis.text.y.right = element_text(color = color_hits,
-                                                 size=16),
-                axis.text = element_text(face = "bold", size=16),
-                plot.title = element_text(face = "bold", hjust = 0.5, size=18))
-      }
-      
-      p
-      
-      
-    }, bg = "transparent")
-    
-  })
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
   
   
   
@@ -894,18 +1028,6 @@ server = (function(input, output, session) {
     #### Make Table
     #Country	Trends	Correlation	Correlation Lag
     
-    # https://stackoverflow.com/questions/49885176/is-it-possible-to-use-more-than-2-colors-in-the-color-tile-function
-    color_tile2 <- function (...) {
-      formatter("span", style = function(x) {
-        style(display = "block",
-              padding = "0 4px", 
-              font.weight = "bold",
-              `border-radius` = "4px", 
-              `background-color` = csscolor(matrix(as.integer(colorRamp(...)(normalize(as.numeric(x)))), 
-                                                   byrow=TRUE, dimnames=list(c("red","green","blue"), NULL), nrow=3)))
-      })}
-    
-    
     f_list <- list(
       `Country` = formatter("span", style = ~ style(color = "black", font.weight = "bold", width = "2px")),
       `Correlation Lag` = formatter("span", style = ~ style(color = "black", font.weight = "bold")),
@@ -924,21 +1046,11 @@ server = (function(input, output, session) {
       # )
       
       `Correlation` = formatter("span", style = ~ style(color = "black", font.weight = "bold"))
-      
-      
-      #`Correlation` = color_tile("#95C6D3", "#EA7E71")
-      
     )
     
-    # Make table
-    # https://github.com/renkun-ken/formattable/issues/89
-    
-    
     gtrends_spark_df <- gtrends_spark_df[!is.na(gtrends_spark_df$Correlation),]
-    #gtrends_spark_df <- gtrends_spark_df[!is.na(gtrends_spark_df$Trends),]
     
     table_max <- nrow(gtrends_spark_df)
-    
     
     l <- formattable(
       gtrends_spark_df[1:table_max,] %>% as.data.table(),
@@ -1163,6 +1275,8 @@ server = (function(input, output, session) {
       palette = "Reds",
       domain = c(world_data$cor_covidMA7_hitsMA7_max[!is.na(world_data$cor_covidMA7_hitsMA7_max)], 0, 1))
     
+    print(world_data[1,])
+    
     leaflet() %>%
       addTiles() %>%
       addPolygons(data = world_data,
@@ -1177,14 +1291,16 @@ server = (function(input, output, session) {
     }") %>%
       addLegend("topright",
                 pal = pal,
-                values = c(world_data$select_covid_type_map[!is.na(world_data$select_covid_type_map)], 0, 1),
+                values = c(world_data$select_covid_type[!is.na(world_data$select_covid_type)], 0, 1),
                 title = paste0("Correlation<br>between<br>",
-                               input$select_covid_type_map,
+                               input$select_covid_type,
                                " and<br>Search<br>Activity"),
                 opacity = 1,
                 bins = c(0, 0.5, 1)
-      ) %>%
-      setView(zoom = 2, lat=0, lng=0)
+      ) #%>%
+      #add_deps("sparkline") 
+      #browsable() %>%
+      #setView(zoom = 2, lat=0, lng=0)
     
   })
   
@@ -1197,12 +1313,17 @@ server = (function(input, output, session) {
         dplyr::filter(continent %in% input$select_continent) 
     }
     
-    cor_all_sum_df <- cor_df %>%
-      dplyr::filter(type %in% input$select_covid_type) %>%
-      dplyr::group_by(keyword_en) %>%
-      dplyr::summarise(cor = mean(cor)) %>%
-      dplyr::ungroup()
+    cor_df <- cor_df %>%
+      dplyr::filter(type %in% input$select_covid_type) 
     
+    # cor_all_sum_df <- cor_df %>%
+    #   dplyr::filter(type %in% input$select_covid_type) %>%
+    #   dplyr::group_by(keyword_en) %>%
+    #   dplyr::summarise(cor = mean(cor)) %>%
+    #   dplyr::ungroup()
+    # 
+    # 
+    # 
     
     ggplot() +
       geom_dotplot(data = cor_df,
@@ -1212,8 +1333,8 @@ server = (function(input, output, session) {
                        fill = "=  One Country"),
                    binaxis = "y", 
                    stackdir = "center",
-                   dotsize = 2.5,
-                   binwidth = .01,
+                   dotsize = 1.8,
+                   binwidth = .02,
                    color = "palegreen4") +
       # geom_point(data = cor_all_sum_df,
       #            aes(x = reorder(keyword_en,
@@ -1243,6 +1364,13 @@ server = (function(input, output, session) {
     
   })
   
+  output$us_ex_fig_arrow <- renderPlot({
+    p <- readRDS(file.path("data", "us_ex_fig_arrow.Rds"))
+    
+    p 
+    
+  }, bg = "transparent")
+  
   # output$keyword_table <- DT::renderDataTable({
   #   DT::datatable(keywords_df, 
   #                 options = list(dom = 't'))
@@ -1254,8 +1382,8 @@ server = (function(input, output, session) {
   
   # * renderUIs ----------------------------------------------------------------
   output$ui_select_keyword_map <- renderUI({
-
-
+    
+    
     keywords_df <- cor_df %>%
       dplyr::filter(type %in% input$select_covid_type_map) %>%
       dplyr::filter(name %in% country_name_react()) 
@@ -1265,8 +1393,8 @@ server = (function(input, output, session) {
     selectInput(
       "select_keyword_map",
       label = strong("Search Term"),
-      choices = keywords_df$keywords_en,
-      selected = keywords_df$keywords_en[which.max(keywords_df$cor)],
+      choices = keywords_df$keyword_en,
+      selected = keywords_df$keyword_en[which.max(keywords_df$cor)],
       multiple = F
     )
     
@@ -1287,7 +1415,7 @@ server = (function(input, output, session) {
   
   output$country_name <- renderText({
     
-    country_data_react()$name[1]
+    country_name_react()
     
   })
   
@@ -1306,6 +1434,18 @@ server = (function(input, output, session) {
            input$select_keyword,
            " and COVID-19 ",
            input$select_covid_type)
+    
+  })
+  
+  output$trends_country_subtitle <- renderText({
+    
+    paste0("The below table compare trends in <span style='color:orange;'>COVID-19 ",
+           tolower(input$select_covid_type), 
+           "</span> and the <span style='color:green;'>search popularity",
+           "</span> of different keywords. It shows the correlation and the number of
+           days in the past when the search popularity is most strongly 
+           correlated with COVID-19 ", tolower(input$select_covid_type), 
+           " (Correlation Lag).")
     
   })
   
