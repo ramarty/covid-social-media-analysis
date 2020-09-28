@@ -328,7 +328,7 @@ ui <- fluidPage(
           column(1,
           ),
           column(10,
-                 strong(textOutput("trends_subtitle"), align = "center")
+                 strong(htmlOutput("trends_subtitle"), align = "center")
           ),
           column(1,
           )
@@ -358,12 +358,8 @@ ui <- fluidPage(
                              
                              fluidRow(
                                
-                               column(2,
-                               ),
-                               column(8,
+                               column(8, align = "center", offset = 2,
                                       htmlOutput("line_graph"),
-                               ),
-                               column(2,
                                )
                                
                              )
@@ -847,46 +843,57 @@ server = (function(input, output, session) {
     gtrends_spark_df$keyword_en <- NULL
     
     #### Make Table
+    #Country	Trends	Correlation	Correlation Lag
+    
+    # https://stackoverflow.com/questions/49885176/is-it-possible-to-use-more-than-2-colors-in-the-color-tile-function
+    color_tile2 <- function (...) {
+      formatter("span", style = function(x) {
+        style(display = "block",
+              padding = "0 4px", 
+              font.weight = "bold",
+              `border-radius` = "4px", 
+              `background-color` = csscolor(matrix(as.integer(colorRamp(...)(normalize(as.numeric(x)))), 
+                                                   byrow=TRUE, dimnames=list(c("red","green","blue"), NULL), nrow=3)))
+      })}
+    
+    
     f_list <- list(
-      `name` = formatter("span", style = ~ style(color = "black")),
-      `value` = formatter(
-        "span",
-        style = x ~ style(
-          display = "inline-block",
-          direction = "lft",
-          font.weight = "bold",
-          #"border-radius" = "4px",
-          "padding-left" = "2px",
-          "background-color" = csscolor(customRed0),
-          width = percent(proportion(x)),
-          color = csscolor("black")
-        )
-      )
+      `Country` = formatter("span", style = ~ style(color = "black", font.weight = "bold", width = "2px")),
+      `Correlation Lag` = formatter("span", style = ~ style(color = "black", font.weight = "bold")),
+      # `Correlation` = formatter(
+      #   "span",
+      #   style = x ~ style(
+      #     display = "inline-block",
+      #     direction = "lft",
+      #     font.weight = "bold",
+      #     #"border-radius" = "4px",
+      #     "padding-left" = "2px",
+      #     "background-color" = csscolor(bar_color),
+      #     width = percent(proportion(x)),
+      #     color = csscolor("black")
+      #   )
+      # )
+      
+      `Correlation` = color_tile2(c("#95C6D3", "#ECDC87", "#EA7E71"))
+      
     )
-    
-    ### Apply varable names
-    #names(f_list)[1] <- admin_name
-    #names(f_list)[2] <- var_name
-    
-    #names(data_for_table)[1] <- admin_name
-    #names(data_for_table)[2] <- var_name
-    
+  
     # Make table
     # https://github.com/renkun-ken/formattable/issues/89
     table_max <- nrow(gtrends_spark_df)
     
     l <- formattable(
       gtrends_spark_df[1:table_max,] %>% as.data.table(),
-      align = c("l", "l", "l"),
+      align = c("c", "c", "l", "l"),
       f_list
-    ) %>% format_table(align = c("l", "l", "l")) %>%
+    ) %>% format_table(align = c("c", "c", "l", "l")) %>%
       htmltools::HTML() %>%
       div() %>%
       # use new sparkline helper for adding dependency
-      spk_add_deps() %>%
+      spk_add_deps() #%>%
       # use column for bootstrap sizing control
       # but could also just wrap in any tag or tagList
-      {column(width=12, .)}
+      #{column(width=12, .)}
     
     l
     
@@ -1068,9 +1075,11 @@ server = (function(input, output, session) {
     if(input$select_covid_type %in% "Cases"){
       gtrends_spark_df$l_covid_hits <- gtrends_spark_df$l_cases_hits
       gtrends_spark_df$cor_covidMA7_hitsMA7_max <- gtrends_spark_df$cor_casesMA7_hitsMA7_max
+      gtrends_spark_df$cor_covidMA7_hitsMA7_lag <- gtrends_spark_df$cor_casesMA7_hitsMA7_lag
     } else{
       gtrends_spark_df$l_covid_hits <- gtrends_spark_df$l_death_hits
       gtrends_spark_df$cor_covidMA7_hitsMA7_max <- gtrends_spark_df$cor_deathMA7_hitsMA7_max
+      gtrends_spark_df$cor_covidMA7_hitsMA7_lag <- gtrends_spark_df$cor_deathMA7_hitsMA7_lag
     }
     
     #### Merge
@@ -1083,7 +1092,14 @@ server = (function(input, output, session) {
       paste0("<br><b>Correlation:</b> ", world_data$cor_covidMA7_hitsMA7_max[!is.na(world_data$cor_covidMA7_hitsMA7_max)] %>%
                round(3))
     
-    world_data$popup <- paste0("<b>", world_data$name, "</b>", world_data$cor, "<br>", world_data$l_covid_hits)
+    world_data$cor_lag <- ""
+    world_data$cor_lag[!is.na(world_data$cor_covidMA7_hitsMA7_lag)] <-
+      paste0("<br><b>Correlation Lag:</b> ", world_data$cor_covidMA7_hitsMA7_lag[!is.na(world_data$cor_covidMA7_hitsMA7_lag)])
+    
+    world_data$popup <- paste0("<b>", world_data$name, "</b>", 
+                               world_data$cor, 
+                               world_data$cor_lag, 
+                               "<br>", world_data$l_covid_hits)
     
     pal <- colorNumeric(
       palette = "Reds",
@@ -1206,14 +1222,23 @@ server = (function(input, output, session) {
   
   output$trends_subtitle <- renderText({
     
-    paste0("For each country, we determine when search activity of ",
-           input$select_keyword,
-           " has the highest correlation with COVID-19 ",
+    paste0("We compare trends in <span style='color:orange;'>COVID-19 ",
            tolower(input$select_covid_type), 
-           ". ",
-           "Does search activity some days in the past have the strongest correlation
-           with COVID ", tolower(input$select_covid_type), "? If so, search activity may
-           predict future ", tolower(input$select_covid_type), ".")
+           "</span> and <span style='color:green;'>search popularity of ",
+           input$select_keyword, 
+           ".</span> We show the correlation between the two and the number of
+           days in the past when the search popularity is most strongly 
+           correlated with COVID-19 ", tolower(input$select_covid_type), 
+           " (Correlation Lag).")
+    # 
+    # paste0("For each country, we determine when search activity of ",
+    #        input$select_keyword,
+    #        " has the highest correlation with COVID-19 ",
+    #        tolower(input$select_covid_type), 
+    #        ". ",
+    #        "Does search activity some days in the past have the strongest correlation
+    #        with COVID ", tolower(input$select_covid_type), "? If so, search activity may
+    #        predict future ", tolower(input$select_covid_type), ".")
     
     
     

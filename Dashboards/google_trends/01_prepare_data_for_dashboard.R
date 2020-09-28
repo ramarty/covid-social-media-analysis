@@ -112,20 +112,14 @@ gtrends_sum_df <- gtrends_df %>%
             cor_casesMA7_hitsMA7_max = cor_casesMA7_hitsMA7_max[1], 
             cor_casesMA7_hitsMA7_lag = cor_casesMA7_hitsMA7_lag[1],
             cor_deathMA7_hitsMA7_max = cor_deathMA7_hitsMA7_max[1], 
-            cor_deathMA7_hitsMA7_lag = cor_deathMA7_hitsMA7_lag[1]) #%>%
-#ungroup() %>%
-#mutate(l = spk_composite(cases_new_spark, hits_ma7_spark))
+            cor_deathMA7_hitsMA7_lag = cor_deathMA7_hitsMA7_lag[1]) 
 
 # COMPOSIT
 gtrends_df$group <- paste0(gtrends_df$name,
                            gtrends_df$keyword_en)
 
-
-
-
-library(purrr)
 gtrends_spark_df <- gtrends_df %>%
-  filter(keyword_en %in% "Loss of Smell") %>%
+  #filter(keyword_en %in% "Loss of Smell") %>%
   arrange(date) %>%
   split(.$group) %>% 
   map_df(~{
@@ -169,17 +163,11 @@ gtrends_spark_df <- gtrends_df %>%
                l_hits = as.character(htmltools::as.tags(l_hits)), 
                l_cases_hits = as.character(htmltools::as.tags(l_cases_hits)),
                l_death_hits = as.character(htmltools::as.tags(l_death_hits)))
-  }, .id = 'Type') #%>% 
-#datatable(escape = F,
-#          rownames = F,
-#          options = list(fnDrawCallback = htmlwidgets::JS('function(){
-#                                             HTMLWidgets.staticRender();
-#                                                                          }'))) %>% 
-#spk_add_deps()
+  }, .id = 'Type') 
 
 ## Merge other data back in
 gtrends_sum_df <- gtrends_df %>%
-  filter(keyword_en %in% "Loss of Smell") %>%
+  #filter(keyword_en %in% "Loss of Smell") %>%
   group_by(group, name, keyword_en, continent, geo) %>%
   summarise(cases_total = max(cases_total, na.rm=T),
             death_total = max(death_total, na.rm=T),
