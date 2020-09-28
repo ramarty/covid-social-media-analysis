@@ -336,37 +336,59 @@ ui <- fluidPage(
         
         br(),
         
-        
-        fluidRow(
-          column(4,
-          ),
-          column(4,align = "center",
-                 uiOutput("ui_select_sort_by")
-          ),
-          column(4,
-          )
-        ),
-        
-        fluidRow(
-          
-          column(2,
-          ),
-          
-          column(8,
-                 
-                 
-                 htmlOutput("line_graph"),
-                 #div(style = 'height:1000px; overflow-y: scroll',
-                 #     htmlOutput("line_graph")),
-                 
-                 
-                 
-          ),
-          
-          column(2,
-          )
-          
+        tabsetPanel(type = "tabs",
+                    
+                    tabPanel(tags$div( 
+                      
+                      HTML(paste(tags$span(style="color:white", "--------------------------------------------------------------------------------------"), sep = "")) 
+                      
+                    )),
+                    
+                    tabPanel("Table View", 
+                             
+                             fluidRow(
+                               column(4,
+                               ),
+                               column(4,align = "center",
+                                      uiOutput("ui_select_sort_by")
+                               ),
+                               column(4,
+                               )
+                             ),
+                             
+                             fluidRow(
+                               
+                               column(2,
+                               ),
+                               column(8,
+                                      htmlOutput("line_graph"),
+                               ),
+                               column(2,
+                               )
+                               
+                             )
+                             
+                    ),
+                    tabPanel("Map View",
+                             
+                             fluidRow(
+                               column(10, align = "center", offset = 1,
+                                      
+                                      strong("Click a country on the map"),
+                                      leafletOutput("cor_map_leaflet",
+                                                    height = "700px")
+                                      
+                                      )
+                             )
+                             
+                             
+                       
+                             
+                    ), selected = "Table View"
+                    
+                    
         )
+        
       )
     ),
     
@@ -636,7 +658,7 @@ server = (function(input, output, session) {
   
   # *** Country Trends -----------------------------------------------------------
   country_data_react <- reactive({
-
+    
     country_name <- country_name_react()
     
     gtrends_sub_df <- gtrends_df %>%
@@ -852,7 +874,6 @@ server = (function(input, output, session) {
     # Make table
     # https://github.com/renkun-ken/formattable/issues/89
     table_max <- nrow(gtrends_spark_df)
-    print(head(gtrends_spark_df))
     
     l <- formattable(
       gtrends_spark_df[1:table_max,] %>% as.data.table(),
@@ -1008,6 +1029,90 @@ server = (function(input, output, session) {
     p
     
   }, bg = "transparent")
+  
+  # * Correlation Map - Leaflet ------------------------------------------------
+  output$cor_map_leaflet <- renderLeaflet({
+    gtrends_spark_df$name <- NULL
+    
+    # Step 1 convert htmlwidget to character representation of HTML components
+    as.character.htmlwidget <- function(x, ...) {
+      htmltools::HTML(
+        htmltools:::as.character.shiny.tag.list(
+          htmlwidgets:::as.tags.htmlwidget(
+            x
+          ),
+          ...
+        )
+      )
+    }
+    
+    add_deps <- function(dtbl, name, pkg = name) {
+      tagList(
+        dtbl,
+        htmlwidgets::getDependency(name, pkg)
+      )
+    }
+
+    #### Subset world
+    if(input$select_continent != "All"){
+      world <- world[world$continent %in% input$select_continent,]
+      gtrends_spark_df <- gtrends_spark_df[gtrends_spark_df$continent %in% input$select_continent,]
+      
+    }
+    
+    #### Subset Keyword
+    gtrends_spark_df <- gtrends_spark_df %>%
+      dplyr::filter(keyword_en %in% input$select_keyword) 
+    
+    #### COVID Type
+    if(input$select_covid_type %in% "Cases"){
+      gtrends_spark_df$l_covid_hits <- gtrends_spark_df$l_cases_hits
+      gtrends_spark_df$cor_covidMA7_hitsMA7_max <- gtrends_spark_df$cor_casesMA7_hitsMA7_max
+    } else{
+      gtrends_spark_df$l_covid_hits <- gtrends_spark_df$l_death_hits
+      gtrends_spark_df$cor_covidMA7_hitsMA7_max <- gtrends_spark_df$cor_deathMA7_hitsMA7_max
+    }
+    
+    #### Merge
+    world_data <- merge(world, gtrends_spark_df, by = "geo", all.x=T, all.y=F)
+    world_data <- world_data %>% st_as_sf()
+    
+    #### Prep Correlation
+    world_data$cor <- ""
+    world_data$cor[!is.na(world_data$cor_covidMA7_hitsMA7_max)] <-
+      paste0("<br><b>Correlation:</b> ", world_data$cor_covidMA7_hitsMA7_max[!is.na(world_data$cor_covidMA7_hitsMA7_max)] %>%
+               round(3))
+    
+    world_data$popup <- paste0("<b>", world_data$name, "</b>", world_data$cor, "<br>", world_data$l_covid_hits)
+    
+    pal <- colorNumeric(
+      palette = "Reds",
+      domain = c(world_data$cor_covidMA7_hitsMA7_max[!is.na(world_data$cor_covidMA7_hitsMA7_max)], 0, 1))
+    
+    leaflet() %>%
+      addTiles() %>%
+      addPolygons(data = world_data,
+                  popup = ~popup,
+                  popupOptions = popupOptions(minWidth = 200,
+                                              maxHeight = 150),
+                  stroke = F,
+                  fillOpacity = 1,
+                  color = ~pal(cor_covidMA7_hitsMA7_max)) %>%
+          onRender("function(el,x) {
+      this.on('popupopen', function() {HTMLWidgets.staticRender();})
+    }") %>%
+      addLegend("topright",
+                pal = pal,
+                values = c(world_data$select_covid_type_map[!is.na(world_data$select_covid_type_map)], 0, 1),
+                title = paste0("Correlation<br>between<br>",
+                               input$select_covid_type_map,
+                               " and<br>Search<br>Activity"),
+                opacity = 1,
+                bins = c(0, 0.5, 1)
+      ) %>%
+      setView(zoom = 2, lat=0, lng=0)
+
+  })
   
   # * Max Correlation Hist -----------------------------------------------------
   

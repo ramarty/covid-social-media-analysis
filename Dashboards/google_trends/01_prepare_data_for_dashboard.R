@@ -10,8 +10,8 @@ keywords <- c("Corona Symptoms", "Coronavirus", "Coronavirus Symptoms",
               "Loss of Smell", "I Can't Smell", "Loss of Taste",
               "Fever", "Tired")
 
-SPARK_HEIGHT <- 120
-SPARK_WIDTH <- 150
+SPARK_HEIGHT <- 150
+SPARK_WIDTH <- 200
 
 # World Shapefile --------------------------------------------------------------
 world_sp <- readRDS(file.path(dropbox_file_path, "Data", "world_shapefile", 
@@ -67,7 +67,7 @@ gtrends_df <- merge(gtrends_df, world_df, by = "geo")
 gtrends_df <- gtrends_df[gtrends_df$keyword_en %in% keywords,]
 
 gtrends_df <- gtrends_df %>%
-  dplyr::select(keyword_en, date, hits, hits_ma7, name, continent, cases_new, death_new,
+  dplyr::select(keyword_en, date, hits, hits_ma7, name, geo, continent, cases_new, death_new,
                 cor_casesMA7_hitsMA7_max, cor_casesMA7_hitsMA7_lag, cor_deathMA7_hitsMA7_max,
                 cor_deathMA7_hitsMA7_lag,
                 cases_total, death_total)
@@ -180,13 +180,13 @@ gtrends_spark_df <- gtrends_df %>%
 ## Merge other data back in
 gtrends_sum_df <- gtrends_df %>%
   filter(keyword_en %in% "Loss of Smell") %>%
-  group_by(group, name, keyword_en, continent) %>%
+  group_by(group, name, keyword_en, continent, geo) %>%
   summarise(cases_total = max(cases_total, na.rm=T),
-          death_total = max(death_total, na.rm=T),
-          cor_casesMA7_hitsMA7_lag = cor_casesMA7_hitsMA7_lag[1],
-          cor_casesMA7_hitsMA7_max = cor_casesMA7_hitsMA7_max[1],
-          cor_deathMA7_hitsMA7_lag = cor_deathMA7_hitsMA7_lag[1],
-          cor_deathMA7_hitsMA7_max = cor_deathMA7_hitsMA7_max[1]) %>%
+            death_total = max(death_total, na.rm=T),
+            cor_casesMA7_hitsMA7_lag = cor_casesMA7_hitsMA7_lag[1],
+            cor_casesMA7_hitsMA7_max = cor_casesMA7_hitsMA7_max[1],
+            cor_deathMA7_hitsMA7_lag = cor_deathMA7_hitsMA7_lag[1],
+            cor_deathMA7_hitsMA7_max = cor_deathMA7_hitsMA7_max[1]) %>%
   ungroup()
 
 gtrends_spark_df <- gtrends_spark_df %>%
@@ -196,62 +196,4 @@ gtrends_spark_df <- gtrends_spark_df %>%
   dplyr::select(-group)
 
 saveRDS(gtrends_spark_df, file.path(DASHBOARD_PATH, "gtrends_spark.Rds"))
-
-
-table_max <- nrow(gtrends_spark_df)
-
-l <- formattable(
-  gtrends_spark_df[1:table_max,] %>% as.data.table(),
-  align = c("l", "l", "l"),
-  f_list
-) %>% format_table(align = c("l", "l", "l")) %>%
-  htmltools::HTML() %>%
-  div() %>%
-  # use new sparkline helper for adding dependency
-  spk_add_deps() %>%
-  # use column for bootstrap sizing control
-  # but could also just wrap in any tag or tagList
-  {column(width=12, .)}
-
-l
-
-
-
-
-
-#l <- spk_composite(l2, 
-#                   l1
-
-gtrends_sum_df$cases_new_spark[1]
-
-sl1 <- sparkline(
-  c(5,4,5,-2,0,3),
-  type='bar',
-  barColor="#aaf",
-  chartRangeMin=-5,
-  chartRangeMax=10,
-  width = 180,
-  height = 100,
-  tooltipChartTitle = "Hits",
-  # set an id that will make it easier to refer
-  #  in the next sparkline
-  elementId="sparkline-for-composite"
-)
-
-sl2 <- sparkline(
-  c(4,1,5,7,9,9,8,7,6,6,4,7,8,4,3,2,2,5,6,7),
-  type="line",
-  fillColor = FALSE,
-  lineColor ='red',
-  width = 180,
-  height = 100,
-  chartRangeMin = -5,
-  chartRangeMax = 10,
-  tooltipChartTitle = "Cases"
-)
-
-# add sparkline as a composite
-spk_composite(sl1, sl2)
-
-saveRDS(gtrends_sum_df, file.path(DASHBOARD_PATH, "gtrends_spark.Rds"))
 
