@@ -10,6 +10,9 @@ keywords <- c("Corona Symptoms", "Coronavirus", "Coronavirus Symptoms",
               "Loss of Smell", "I Can't Smell", "Loss of Taste",
               "Fever", "Tired")
 
+SPARK_HEIGHT <- 120
+SPARK_WIDTH <- 150
+
 # World Shapefile --------------------------------------------------------------
 world_sp <- readRDS(file.path(dropbox_file_path, "Data", "world_shapefile", 
                               "FinalData",
@@ -118,7 +121,7 @@ gtrends_df$group <- paste0(gtrends_df$name,
                            gtrends_df$keyword_en)
 
 
-# 1. Merge data back in
+
 
 library(purrr)
 gtrends_spark_df <- gtrends_df %>%
@@ -131,8 +134,8 @@ gtrends_spark_df <- gtrends_df %>%
                          barColor="orange",
                          chartRangeMin = 0,
                          chartRangeMax = 8,
-                         width = 80,
-                         height = 60,
+                         width = SPARK_WIDTH,
+                         height = SPARK_HEIGHT,
                          tooltipChartTitle = "COVID-19 Cases",
                          highlightLineColor = 'orange', 
                          highlightSpotColor = 'orange')
@@ -141,8 +144,8 @@ gtrends_spark_df <- gtrends_df %>%
                          barColor="orange",
                          chartRangeMin = 0,
                          chartRangeMax = 8,
-                         width = 80,
-                         height = 60,
+                         width = SPARK_WIDTH,
+                         height = SPARK_HEIGHT,
                          tooltipChartTitle = "COVID-19 Deaths",
                          highlightLineColor = 'orange', 
                          highlightSpotColor = 'orange')
@@ -152,8 +155,8 @@ gtrends_spark_df <- gtrends_df %>%
                         fillColor = NULL,
                         chartRangeMin = 0,
                         chartRangeMax = 8,
-                        width = 80,
-                        height = 60,
+                        width = SPARK_WIDTH,
+                        height = SPARK_HEIGHT,
                         tooltipChartTitle = "Search Popularity",
                         highlightLineColor = 'green', 
                         highlightSpotColor = 'green') 
@@ -174,9 +177,27 @@ gtrends_spark_df <- gtrends_df %>%
 #                                                                          }'))) %>% 
 #spk_add_deps()
 
+## Merge other data back in
+gtrends_sum_df <- gtrends_df %>%
+  filter(keyword_en %in% "Loss of Smell") %>%
+  group_by(group, name, keyword_en, continent) %>%
+  summarise(cases_total = max(cases_total, na.rm=T),
+          death_total = max(death_total, na.rm=T),
+          cor_casesMA7_hitsMA7_lag = cor_casesMA7_hitsMA7_lag[1],
+          cor_casesMA7_hitsMA7_max = cor_casesMA7_hitsMA7_max[1],
+          cor_deathMA7_hitsMA7_lag = cor_deathMA7_hitsMA7_lag[1],
+          cor_deathMA7_hitsMA7_max = cor_deathMA7_hitsMA7_max[1]) %>%
+  ungroup()
 
-gtrends_spark_df <- gtrends_sum_df %>%
-  dplyr::select(Type, l_cases, l_cases_hits)
+gtrends_spark_df <- gtrends_spark_df %>%
+  dplyr::select(Type, l_cases_hits, l_death_hits) %>%
+  dplyr::rename(group = Type) %>%
+  left_join(gtrends_sum_df, by = "group") %>%
+  dplyr::select(-group)
+
+saveRDS(gtrends_spark_df, file.path(DASHBOARD_PATH, "gtrends_spark.Rds"))
+
+
 table_max <- nrow(gtrends_spark_df)
 
 l <- formattable(

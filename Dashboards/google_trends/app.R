@@ -759,6 +759,8 @@ server = (function(input, output, session) {
   # * Line Graph ---------------------------------------------------------------
   output$line_graph <- renderUI({
     
+    
+    
     #### Subset
     if(input$select_continent != "All"){
       gtrends_spark_df <- gtrends_spark_df %>%
@@ -770,12 +772,11 @@ server = (function(input, output, session) {
     
     if(input$select_covid_type %in% "Cases"){
       gtrends_spark_df <- gtrends_spark_df %>%
-        dplyr::select(name, cases_new_spark, hits_ma7_spark, 
+        dplyr::select(name, l_cases_hits, 
                       cor_casesMA7_hitsMA7_max, cor_casesMA7_hitsMA7_lag,
                       cases_total) %>%
         dplyr::rename(Country = name,
-                      Cases = cases_new_spark,
-                      "Search Activity" = hits_ma7_spark,
+                      Trends = l_cases_hits,
                       "Correlation" = cor_casesMA7_hitsMA7_max,
                       "Correlation Lag" = cor_casesMA7_hitsMA7_lag)
       
@@ -784,12 +785,11 @@ server = (function(input, output, session) {
     if(input$select_covid_type %in% "Deaths"){
       
       gtrends_spark_df <- gtrends_spark_df %>%
-        dplyr::select(name, death_new_spark, hits_ma7_spark, 
+        dplyr::select(name, l_death_hits,
                       cor_deathMA7_hitsMA7_max, cor_deathMA7_hitsMA7_lag,
                       death_total) %>%
         dplyr::rename(Country = name,
-                      Deaths = death_new_spark,
-                      "Search Activity" = hits_ma7_spark,
+                      Trends = l_death_hits,
                       "Correlation" = cor_deathMA7_hitsMA7_max,
                       "Correlation Lag" = cor_deathMA7_hitsMA7_lag)
     } 
@@ -852,6 +852,7 @@ server = (function(input, output, session) {
     # Make table
     # https://github.com/renkun-ken/formattable/issues/89
     table_max <- nrow(gtrends_spark_df)
+    print(head(gtrends_spark_df))
     
     l <- formattable(
       gtrends_spark_df[1:table_max,] %>% as.data.table(),
