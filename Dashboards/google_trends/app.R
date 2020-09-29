@@ -67,11 +67,14 @@ gtrends_spark_df <- readRDS(file.path("data", "gtrends_spark.Rds"))
 cor_df     <- readRDS(file.path("data", "correlations.Rds"))
 world      <- readRDS(file.path("data", "world.Rds"))
 
+LOAD_GTRENDS_INIT <- TRUE
+
 keyword_list <- gtrends_df$keyword_en %>% unique()
 
 keywords_df <- read_csv(file.path("data", "covid_keywords.csv"))
+languges_df <- read_csv(file.path("data", "countries_lang.csv"))
 
-keywords_df <- keywords_df %>%
+keywords_clean_df <- keywords_df %>%
   dplyr::rename(Portuguese = keyword_pt,
                 English = keyword_en,
                 Spanish = keyword_es,
@@ -438,8 +441,8 @@ ui <- fluidPage(
                  selectizeInput(
                    "select_country",
                    label = strong("Select Country"),
-                   choices = sort(world$name),
-                   selected = "United States",
+                   choices = c("", sort(world$name)),
+                   selected = "",
                    multiple = F
                  )#,
                  
@@ -462,24 +465,24 @@ ui <- fluidPage(
                      hr(),
                      
                      fluidRow(
-                     column(6, align = "center", offset = 3,
-                            selectInput(
-                              "select_covid_type_map",
-                              
-                              label = strong(HTML("<em>Examine COVID Cases or Deaths</em>")),
-                              choices = c("Cases", "Deaths"),
-                              selected = "Cases",
-                              multiple = F
-                            )
-                     )
+                       column(6, align = "center", offset = 3,
+                              selectInput(
+                                "select_covid_type_map",
+                                
+                                label = strong(HTML("<em>Examine COVID Cases or Deaths</em>")),
+                                choices = c("Cases", "Deaths"),
+                                selected = "Cases",
+                                multiple = F
+                              )
+                       )
                      ),
                      
                      fluidRow(
                        column(10, align = "center", offset = 1,
                               strong(htmlOutput("trends_country_subtitle"), align="center"),
                               htmlOutput("line_graph_country")
-                              )
-
+                       )
+                       
                      )
                      
                    )
@@ -501,10 +504,7 @@ ui <- fluidPage(
                             <a href='https://trends.google.com/trends/'>Google Trends website.</a></strong>"),
                      
                      br(),
-                     strong(" ***** This isn't working - yet! ***** "),
-                     
-                     
-                     
+
                      hr(),
                      
                      column(6, align = "center", offset = 3,
@@ -519,22 +519,14 @@ ui <- fluidPage(
                      ),
                      
                      
-                     column(12, align = "center", div(style = "height:400px;",
-                                                      
-                                                      #uiOutput("gtrends_html_trends"),
-                                                      tags$body(HTML('<script type="text/javascript" src="https://ssl.gstatic.com/trends_nrtr/2213_RC01/embed_loader.js"></script> <script type="text/javascript"> trends.embed.renderExploreWidget("TIMESERIES", {"comparisonItem":[{"keyword":"loss of smell","geo":"US","time":"today 3-m"}],"category":0,"property":""}, {"exploreQuery":"date=today%203-m&geo=US&q=loss%20of%20smell","guestPath":"https://trends.google.com:443/trends/embed/"}); </script> ')),
-                                                      
-                                                      #tags$body(HTML('<script type="text/javascript" src="https://ssl.gstatic.com/trends_nrtr/2213_RC01/embed_loader.js"></script> <script type="text/javascript"> trends.embed.renderExploreWidget("TIMESERIES", {"comparisonItem":[{"keyword":"loss of smell","geo":"KE","time":"today 12-m"}],"category":0,"property":""}, {"exploreQuery":"q=loss%20of%20smell&geo=US&date=today 12-m","guestPath":"https://trends.google.com:443/trends/embed/"}); </script>'))
-                                                      
-                                                      
-                     )
+                     column(12, align = "center", 
+                            
+                            tags$div(id="wrapper"),
+                            
+                            uiOutput("gtrends_html_trends"),
+                            
                      ),
-                     # column(12, align = "center",div(style = "height:300px;",
-                     #        
-                     #        
-                     # )
-                     
-                     
+
                    )
                  )
           )
@@ -627,7 +619,7 @@ ui <- fluidPage(
           column(6, offset = 3,
                  h2("Additional Research", align = "center"),
                  "INCLUDE 1-2 PARAGRAPH LIT REVIEW HERE WITH HYPERLINKS. ALSO INCLUDE LINK TO OUR PPT" 
-                 )
+          )
         ),
         
         fluidRow(
@@ -1416,72 +1408,37 @@ server = (function(input, output, session) {
   
   # * GTrends HTML - Trends/Map ----------------------------------------------------
   output$gtrends_html_trends <- renderUI({
-    #tags$body(HTML(
     
+    # Do this as doesn't appear on default.
+    if((input$select_country %in% "") & LOAD_GTRENDS_INIT){
+      updateSelectInput(session, "select_country",
+                  selected = "United States")
+      LOAD_GTRENDS_INIT <<- F
+    }
+    
+    ## Country
     geo <- world$geo[world$name %in% input$select_country] %>% as.character()
-    #search <- input$select_keyword_country %>% str_replace_all(" ", "%20")
     
-    tags$body(HTML('<script type="text/javascript" src="https://ssl.gstatic.com/trends_nrtr/2213_RC01/embed_loader.js"></script> <script type="text/javascript"> trends.embed.renderExploreWidget("TIMESERIES", {"comparisonItem":[{"keyword":"loss of smell","geo":"KE","time":"today 12-m"}],"category":0,"property":""}, {"exploreQuery":"q=loss%20of%20smell&geo=US&date=today 12-m","guestPath":"https://trends.google.com:443/trends/embed/"}); </script>'))
+    ## Search term
+    search_en <- input$select_keyword_country
+    language_code <- languges_df$Language_code_main[languges_df$Code %in% geo]
     
+    if(length(search_en) %in% 0) search_en <- "Loss of Smell"
+    if(length(language_code) %in% 0) language_code <- "en"
+    
+    print(search_en)
+    
+    search <- keywords_df[[paste0("keyword_", language_code)]][tolower(keywords_df$keyword_en) %in% tolower(search_en)]
+    search <- search %>% str_replace_all("'", "")
+    search_p20 <- search %>% str_replace_all(" ", "%20")
+    
+    tags$body(HTML(paste0('<script type="text/javascript" src="https://ssl.gstatic.com/trends_nrtr/2213_RC01/embed_loader.js"></script> <script type="text/javascript"> var divElem = document.getElementById("wrapper"); document.getElementById("wrapper").innerHTML = ""; trends.embed.renderExploreWidgetTo(divElem, "TIMESERIES", {"comparisonItem":[{"keyword":"',search,'","geo":"',geo,'","time":"today 3-m"}],"category":0,"property":""}, {"exploreQuery":"q=',search_p20,'&geo=',geo,'&date=today 3-m","guestPath":"https://trends.google.com:443/trends/embed/"}); </script>')))
   })
   
-  output$gtrends_html_map <- renderText({
-    
-    geo <- world$geo[world$name %in% input$select_country] %>% as.character()
-    search <- input$select_keyword_country %>% str_replace_all(" ", "%20")
-    
-    '<script type="text/javascript" src="https://ssl.gstatic.com/trends_nrtr/2213_RC01/embed_loader.js"></script> <script type="text/javascript"> trends.embed.renderExploreWidget("GEO_MAP", {"comparisonItem":[{"keyword":"loss of smell","geo":"US","time":"today 3-m"}],"category":0,"property":""}, {"exploreQuery":"date=today%203-m&geo=US&q=loss%20of%20smell","guestPath":"https://trends.google.com:443/trends/embed/"}); </script>'
-    
-  })
+
   
   
-  # * Real Time Leaflet ----------------------------------------------------------
-  output$realtime_map <- renderUI({
-    
-    #  world$gtrend_html <- '<script type="text/javascript" src="//www.google.com/trends/embed.js?hl=en-US&q=General+Motors&cmpt=q&content=1&cid=GEO_MAP_0_0&export=5&w=480&h=440"></script>'
-    #  world$gtrend_html1 <- paste0("<body><html>",
-    #                              world$gtrend_html,
-    #                              "</html></body>")
-    #  world$gtrend_html2 <- paste0("<body>",
-    #                              world$gtrend_html,
-    #                              "</body>")
-    #  #tags$body(HTML('<script type="text/javascript" src="https://ssl.gstatic.com/trends_nrtr/2213_RC01/embed_loader.js"></script> <script type="text/javascript"> trends.embed.renderExploreWidget("TIMESERIES", {"comparisonItem":[{"keyword":"loss of smell","geo":"US","time":"today 12-m"}],"category":0,"property":""}, {"exploreQuery":"q=loss%20of%20smell&geo=US&date=today 12-m","guestPath":"https://trends.google.com:443/trends/embed/"}); </script>'))
-    #  
-    #  
-    #  leaflet() %>%
-    #    addTiles() %>%
-    #    addPolygons(data = world,
-    #                popup = ~lapply(gtrend_html2, htmltools::HTML)) %>%
-    #    onRender("function(el,x) {
-    #    this.on('popupopen', function() {HTMLWidgets.staticRender();})
-    #  }")
-    #  
-    # 
-    # l <- leaflet() %>%
-    #   addTiles() %>%
-    #   addPolygons(data = world,
-    #               popup = ~HTML(gtrend_html)) # ,
-    #               #popup = ~ lapply(gtrend_html, htmltools::HTML),
-    #               popupOptions = popupOptions(minWidth = 200,
-    #                                           maxHeight = 250)) %>%
-    #   setView(zoom = 2, lat=0, lng=0) %>%
-    #   onRender("function(el,x) {
-    #    this.on('popupopen', function() {HTMLWidgets.staticRender();})
-    #  }") %>%
-    #    #%>%
-    #   #add_deps("sparkline") %>%
-    #   browsable()
-    # 
-    # 
-    # '<script type="text/javascript" src="//www.google.com/trends/embed.js?hl=en-US&q=General+Motors&cmpt=q&content=1&cid=GEO_MAP_0_0&export=5&w=480&h=440"></script>'
-    # 
-    #  
-  })
-  
-  
-  
-  
-  
+ 
   # * US Example Figure --------------------------------------------------------
   
   output$us_ex_fig <- renderPlot({
@@ -1509,7 +1466,7 @@ server = (function(input, output, session) {
                   "Fever", "Tired") %>%
       tolower()
     
-    keywords_df %>%
+    keywords_clean_df %>%
       filter(English %in% keywords)
   })
   

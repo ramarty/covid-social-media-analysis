@@ -1,22 +1,6 @@
 # Transfer dashboard data from OneDrive to Github
 
-# Move telecom data to github folder -------------------------------------------
-# IN_PATH <- file.path(dropbox_file_path, "Data", "google_trends", "DashboardData",
-#                      "precomputed_figures")
-# 
-# OUT_PATH <- file.path(github_file_path, "Dashboards", "google_trends", 
-#                       "precomputed_figures")
-# 
-# i <- 1
-# temp <- list.files(IN_PATH, pattern = "*.Rds|*.png") %>%
-#   lapply(function(file_i){
-#     if((i %% 100) %in% 0) print(i)
-#     i <<- i + 1
-#     
-#     file.copy(file.path(IN_PATH, file_i),
-#               paste0(OUT_PATH, "/"),
-#               overwrite=T)
-#   })
+
 
 # Move telecom data to github folder -------------------------------------------
 IN_PATH <- file.path(dropbox_file_path, "Data", "google_trends", "DashboardData",
@@ -37,6 +21,10 @@ temp <- list.files(IN_PATH, pattern = "*.Rds|.*png") %>%
   })
 
 #### Keywords
-keywords <- read_csv(file.path(dropbox_file_path, "Data", "google_trends", "covid_keywords.csv"))
-write.csv(keywords, file.path(github_file_path, "Dashboards", "google_trends", "data", "covid_keywords.csv"))
+keywords <- read_csv(file.path(dropbox_file_path, "Data", "google_trends", "covid_keywords.csv"), stringsAsFactors = F)
+write.csv(keywords, file.path(github_file_path, "Dashboards", "google_trends", "data", "covid_keywords.csv"), row.names = F)
+
+languages <- read.csv(file.path(dropbox_file_path, "Data", "country_primary_language", "countries_lang.csv"), stringsAsFactors = F)
+write.csv(languages, file.path(github_file_path, "Dashboards", "google_trends", "data", "countries_lang.csv"), row.names = F)
+
 
