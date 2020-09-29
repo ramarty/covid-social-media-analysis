@@ -241,7 +241,7 @@ ui <- fluidPage(
           ),
           column(6,
                  plotOutput("max_cor_hist",
-                            height = "600px")
+                            height = "550px")
                  
                  
           ),
@@ -1284,7 +1284,7 @@ server = (function(input, output, session) {
     
     #aa <<- world_data
     
-    leaflet(height = "800px") %>%
+    leaflet(height = "700px") %>%
       addTiles() %>%
       addPolygons(data = world_data,
                   popup = ~popup,
@@ -1343,7 +1343,7 @@ server = (function(input, output, session) {
                        fill = "=  One Country"),
                    binaxis = "y", 
                    stackdir = "center",
-                   dotsize = 1.8,
+                   dotsize = 1.5,
                    binwidth = .02,
                    color = "palegreen4") +
       # geom_point(data = cor_all_sum_df,
