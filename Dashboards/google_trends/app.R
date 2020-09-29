@@ -128,7 +128,7 @@ ui <- fluidPage(
                  <a href='https://blog.google/technology/health/using-symptoms-search-trends-inform-covid-19-research/'>many turn to Google</a>
                  before considering medical attention
                  to understand their symptoms and see options for home treatments.
-                    This dashboard illustrates how search activity for specific symptoms
+                    Using data from Jan 1 - July 30, 2020, this dashboard illustrates how search activity for specific symptoms
                     strongly matches - and often preceds - trends in COVID-19 cases.</h4>"),
                  br(),
                  
@@ -229,8 +229,7 @@ ui <- fluidPage(
           column(3,
           ),
           column(6, align = "center",
-                 strong("The below figure shows the distribution of the correlation between
-                 COVID-19 and search popularity of different search terms across countries."),
+                 strong(textOutput("cor_distribution_text")),
           ),
           column(3,
           )
@@ -432,23 +431,33 @@ ui <- fluidPage(
       
       dashboardBody(
         
+
+        
         fluidRow(
-          
-          column(3,
-          ),
-          
-          column(6, align = "center",
-                 
+        
+          column(6, align = "center", offset = 3,
+                
                  selectInput(
                    "select_covid_type_map",
-                   label = strong("Cases/Deaths"),
+                   
+                   label = strong(HTML("<em>Examine COVID Cases or Deaths</em>")),
                    choices = c("Cases", "Deaths"),
                    selected = "Cases",
                    multiple = F
                  )
           ),
-          column(3,
-          )
+
+        ),
+        
+        fluidRow(
+          
+          column(8, align = "center", offset = 2,
+                 
+                 
+                 h4("TEXT HERE")
+                 )
+          
+          
           
         ),
         
@@ -1392,10 +1401,19 @@ server = (function(input, output, session) {
   # })
   
   output$keyword_table <- renderTable({
-    keywords_df
+    keywords <- c("Corona Symptoms", "Coronavirus", "Coronavirus Symptoms",
+                  "Loss of Smell", "I Can't Smell", "Loss of Taste",
+                  "Fever", "Tired") %>%
+      tolower()
+    
+    keywords_df %>%
+      filter(English %in% keywords)
   })
   
   # * renderUIs ----------------------------------------------------------------
+  
+  
+  
   output$ui_select_keyword_map <- renderUI({
     
     
@@ -1431,6 +1449,14 @@ server = (function(input, output, session) {
   output$country_name <- renderText({
     
     country_name_react()
+    
+  })
+  
+  output$cor_distribution_text <- renderText({
+    
+    paste0("For each country, we correlate daily ",tolower(input$select_covid_type)," of COVID-19 and daily search
+                 popularity of different search terms. The below figure shows the distribution of the correlation between
+                 correlations across countries.")
     
   })
   
