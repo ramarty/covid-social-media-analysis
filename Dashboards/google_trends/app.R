@@ -242,8 +242,8 @@ ui <- fluidPage(
           column(6,
                  plotOutput("max_cor_hist",
                             height = "600px")
-                
-               
+                 
+                 
           ),
           column(3,
           )
@@ -317,7 +317,7 @@ ui <- fluidPage(
                      plotOutput("us_ex_fig_arrow", 
                                 height = "200px")
                      
-
+                     
               ),
               
               ## Hist 2
@@ -326,16 +326,16 @@ ui <- fluidPage(
                      plotOutput("cor_histogram_time_lag",
                                 height = "200px")
                      
-                
+                     
               ),
               
               ## Hist 3
               column(4,
-
+                     
                      plotOutput("cor_histogram",
                                 height = "200px")
                      
-     
+                     
                      
               )
             )
@@ -377,25 +377,22 @@ ui <- fluidPage(
                       
                     )),
                     
-                    tabPanel("Map View", 
-                             
-                     
-                             
-                             
-                             
+                    tabPanel(id = "map_view",
+                             "Map View", 
                              
                              fluidRow(
                                column(12, align = "center", offset = 0,
                                       
                                       strong("Click a country on the map"),
-                                      leafletOutput("cor_map_leaflet",
-                                                    height = "700px")
+                                      uiOutput("cor_map_leaflet",
+                                                    height = "1000px")
                                       
                                )
                              )
                              
                     ),
-                    tabPanel("Table View",
+                    tabPanel(id = "table_view",
+                             "Table View",
                              
                              fluidRow(
                                column(4,
@@ -414,9 +411,17 @@ ui <- fluidPage(
                                )
                                
                              )
-
                              
-                    ), selected = "Map View")
+                             
+                    ), selected = "Map View"),
+        
+        fluidRow(
+          column(12, align = "center",
+                 
+                 strong(htmlOutput("dummy_spark"))
+          
+          )
+        )
         
       )
     ),
@@ -482,7 +487,7 @@ ui <- fluidPage(
                    )
                  )
                  
-                 )
+          )
           
         )
         
@@ -741,9 +746,7 @@ server = (function(input, output, session) {
                keyword_en %in% "Loss of Smell") 
     }
     
-    print(head(gtrends_df))
-    print(country_name_react())
-    
+ 
     gtrends_sub_df <- gtrends_df %>%
       filter(name %in% country_name_react()) %>%
       filter(keyword_en %in% input$select_keyword_map)
@@ -981,7 +984,6 @@ server = (function(input, output, session) {
                       "Correlation" = cor_casesMA7_hitsMA7_max,
                       "Correlation Lag" = cor_casesMA7_hitsMA7_lag)
       
-      
     } 
     if(input$select_covid_type %in% "Deaths"){
       
@@ -996,24 +998,26 @@ server = (function(input, output, session) {
     } 
     
     #### Sort
-    if(input$select_sort_by %in% "Name"){
-      gtrends_spark_df <- gtrends_spark_df %>%
-        arrange(Country)
-    }
-    
-    if(input$select_sort_by %in% "Correlation"){
-      gtrends_spark_df <- gtrends_spark_df %>%
-        arrange(-Correlation)
-    }
-    
-    if(input$select_sort_by %in% "Cases"){
-      gtrends_spark_df <- gtrends_spark_df %>%
-        arrange(-cases_total)
-    }
-    
-    if(input$select_sort_by %in% "Deaths"){
-      gtrends_spark_df <- gtrends_spark_df %>%
-        arrange(-death_total)
+    if(!is.null(input$select_sort_by)){
+      if(input$select_sort_by %in% "Name"){
+        gtrends_spark_df <- gtrends_spark_df %>%
+          arrange(Country)
+      }
+      
+      if(input$select_sort_by %in% "Correlation"){
+        gtrends_spark_df <- gtrends_spark_df %>%
+          arrange(-Correlation)
+      }
+      
+      if(input$select_sort_by %in% "Cases"){
+        gtrends_spark_df <- gtrends_spark_df %>%
+          arrange(-cases_total)
+      }
+      
+      if(input$select_sort_by %in% "Deaths"){
+        gtrends_spark_df <- gtrends_spark_df %>%
+          arrange(-death_total)
+      }
     }
     
     #### Adjust Variables
@@ -1208,7 +1212,10 @@ server = (function(input, output, session) {
   }, bg = "transparent")
   
   # * Correlation Map - Leaflet ------------------------------------------------
-  output$cor_map_leaflet <- renderLeaflet({
+  output$cor_map_leaflet <- renderUI({
+    
+    #req(input$nav == "Map View") # This makes leaflet show up; before no defaults.
+    
     gtrends_spark_df$name <- NULL
     
     # Step 1 convert htmlwidget to character representation of HTML components
@@ -1277,6 +1284,8 @@ server = (function(input, output, session) {
     
     print(world_data[1,])
     
+    #aa <<- world_data
+    
     leaflet() %>%
       addTiles() %>%
       addPolygons(data = world_data,
@@ -1296,11 +1305,14 @@ server = (function(input, output, session) {
                                input$select_covid_type,
                                " and<br>Search<br>Activity"),
                 opacity = 1,
-                bins = c(0, 0.5, 1)
-      ) #%>%
-      #add_deps("sparkline") 
-      #browsable() %>%
-      #setView(zoom = 2, lat=0, lng=0)
+                bins = c(0, 0.5, 1)) %>%
+      setView(zoom = 2, lat=0, lng=0) %>%
+      add_deps("sparkline") %>%
+      browsable()
+      #) #%>%
+    #add_deps("sparkline") 
+    #browsable() %>%
+    #
     
   })
   
@@ -1353,6 +1365,11 @@ server = (function(input, output, session) {
             legend.text = element_text(size = 14),
             legend.position = "top")
     
+  })
+  
+  # * Dummy Sparkline ------------------------------------------------------------
+  output$dummy_spark <- renderUI({
+    gtrends_spark_df[1,]
   })
   
   # * US Example Figure --------------------------------------------------------
