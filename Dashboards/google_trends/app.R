@@ -382,10 +382,8 @@ ui <- fluidPage(
                              
                              fluidRow(
                                column(12, align = "center", offset = 0,
-                                      
                                       strong("Click a country on the map"),
-                                      uiOutput("cor_map_leaflet",
-                                                    height = "1000px")
+                                      uiOutput("cor_map_leaflet")
                                       
                                )
                              )
@@ -1286,7 +1284,7 @@ server = (function(input, output, session) {
     
     #aa <<- world_data
     
-    leaflet() %>%
+    leaflet(height = "800px") %>%
       addTiles() %>%
       addPolygons(data = world_data,
                   popup = ~popup,
