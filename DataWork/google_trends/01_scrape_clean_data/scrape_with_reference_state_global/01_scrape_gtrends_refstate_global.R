@@ -48,7 +48,7 @@ for(language in c("it", "ru", "sv", "el", "tr", "zh", "ar", "pt", "en", "es", "f
       
       out <- gtrends(term_i, 
                      geo = iso_i,
-                     time = "2020-01-01 2020-07-30",
+                     time = "2020-01-01 2020-09-20",
                      onlyInterest=T,
                      low_search_volume=T)
       
@@ -67,7 +67,7 @@ for(language in c("it", "ru", "sv", "el", "tr", "zh", "ar", "pt", "en", "es", "f
                             geo = c(iso_i, 
                                     comparison_iso) %>%
                               unique(),
-                            time = "2020-01-01 2020-07-30",
+                            time = "2020-01-01 2020-09-20",
                             onlyInterest=T,
                             low_search_volume=T)
       
