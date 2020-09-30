@@ -436,7 +436,7 @@ ui <- fluidPage(
       dashboardBody(
         
         fluidRow(
-          column(4, align = "center", offset = 4,
+          column(3, align = "center", offset = 3,
                  
                  selectizeInput(
                    "select_country",
@@ -445,95 +445,105 @@ ui <- fluidPage(
                    selected = "",
                    multiple = F
                  )#,
+          ),
+          
+          column(3, align = "center",
                  
-                 #h3(textOutput("country_name"))
+                 selectInput(
+                   "select_covid_type_map",
+                   
+                   label = strong(HTML("Examine COVID Cases or Deaths")),
+                   choices = c("Cases", "Deaths"),
+                   selected = "Cases",
+                   multiple = F
+                 )
                  
+          )
+          
+        ),
+        
+        br(),
+        
+        fluidRow(
+          column(6, align = "center", offset = 3,
+                 strong(htmlOutput("trends_country_subtitle"), align="center"),
+          )
+        ),
+        
+        br(),
+        
+        fluidRow(
+          column(6, align = "center", offset = 3,
+                 div(style = 'overflow-y: scroll; height:220px', htmlOutput("line_graph_country"))
+          )
+        ),
+        hr(),
+        
+        wellPanel(
+        fluidRow(
+          column(6, align = "center", offset = 3,
+                 
+                 selectInput(
+                   "select_keyword_country",
+                   label = strong("Select Search Term"),
+                   choices = keyword_list,
+                   selected = "Loss of Smell",
+                   multiple = F
+                 )
           )
         ),
         
         fluidRow(
-          
-          # HISTORIC DATA 
-          column(6, align = "center", 
+          column(6, align = "center", offset = 3,
                  
-                 wellPanel(
-                   fluidRow(
-                     
-                     h3("Historic Data Comparing COVID-19 and Search Term Popularity"),
-                     strong("Data: January 1 - July 31, 2020"),
-                     
-                     hr(),
-                     
-                     fluidRow(
-                       column(6, align = "center", offset = 3,
-                              selectInput(
-                                "select_covid_type_map",
-                                
-                                label = strong(HTML("<em>Examine COVID Cases or Deaths</em>")),
-                                choices = c("Cases", "Deaths"),
-                                selected = "Cases",
-                                multiple = F
-                              )
-                       )
-                     ),
-                     
-                     fluidRow(
-                       column(10, align = "center", offset = 1,
-                              strong(htmlOutput("trends_country_subtitle"), align="center"),
-                              htmlOutput("line_graph_country")
-                       )
-                       
-                     )
-                     
-                   )
+                 textOutput("translation_text")
                  )
-                 
-          ),
-          
-          # Real Time Data
-          
-          column(6, align = "center", 
-                 
-                 wellPanel(
-                   fluidRow(
-                     
-                     h3("Trends in Search Term Populairty in Past 90 Days"),
-                     HTML("<strong>The below figure shows trends at the country level in 
-                            the past 90 days. Trends at subnation levels and at
-                            different time spans can be explored on the 
-                            <a href='https://trends.google.com/trends/'>Google Trends website.</a></strong>"),
-                     
-                     br(),
-
-                     hr(),
-                     
-                     column(6, align = "center", offset = 3,
-                            
-                            selectInput(
-                              "select_keyword_country",
-                              label = strong("Select Search Term"),
-                              choices = keyword_list,
-                              selected = "Loss of Smell",
-                              multiple = F
-                            )
-                     ),
-                     
-                     
-                     column(12, align = "center", 
-                            
-                            tags$div(id="wrapper"),
-                            
-                            uiOutput("gtrends_html_trends"),
-                            
-                     ),
-
-                   )
-                 )
-          )
-          
-          
-          
         ),
+        
+        fluidRow(
+          column(4, align = "center",
+                 
+                 h3("Trends in COVID-19 and Search Interest"),
+                 strong("Jan 1 - July 31, 2020")
+                 
+                 ),
+          column(8, align = "center",
+                 
+                 h3("Search Interest in Past 90 Days"),
+                 HTML("<strong>Trends at different time spans and at subnational levels can be
+                            explored on the 
+                            <a href='https://trends.google.com/trends/'>Google Trends website.</a></strong>"),
+                 
+                 
+                 )
+        ),
+        
+        fluidRow(
+          
+          column(4, align = "center", 
+
+                 br(),
+                 strong(textOutput("line_graph_country_key_title")),
+                 plotOutput("line_graph_country_key",
+                            height = "200px")
+                 ),
+          
+          column(4, align = "center",
+                 tags$div(id="wrapper"),
+                 
+                 uiOutput("gtrends_html_trends")
+                 ),
+          column(4, align = "center",
+                 tags$div(id="wrapper2"),
+                 uiOutput("gtrends_html_map")
+          )
+        )
+        )
+
+        
+        
+        
+
         
       )
     ),
@@ -881,6 +891,94 @@ server = (function(input, output, session) {
   
   #})
   
+  # **** Line Graph Country - One Keyword --------------------------------------
+  output$line_graph_country_key_title <- renderText({
+    
+    cor <- cor_df %>%
+      filter(name %in% input$select_country) %>%
+      filter(type %in% input$select_covid_type_map) %>%
+      filter(keyword_en %in% input$select_keyword_country) 
+    
+    paste0("COVID-19 ", input$select_covid_type_map, " and 
+           search interest of ", input$select_keyword_country, 
+           " have a ", 
+           cor$cor %>% round(3), 
+           " correlation when considering search term
+           popularity ",
+           abs(cor$lag), " days into the ",
+           ifelse(cor$lag < 0, "past", "future."))
+
+  })
+  
+  
+  output$line_graph_country_key <- renderPlot({
+    
+    if(F){
+      gtrends_sub_df <- gtrends_df %>%
+        filter(keyword_en %in% "Loss of Smell") %>%
+        filter(name %in% "United States")
+    }
+    
+    gtrends_sub_df <- gtrends_df %>%
+      filter(keyword_en %in% input$select_keyword_country) %>%
+      filter(name %in% input$select_country)
+
+    #### COVID Names
+    if(input$select_covid_type_map %in% "Cases"){
+      gtrends_sub_df <- gtrends_sub_df %>%
+        dplyr::select(keyword_en, date, hits_ma7, cases_new) %>%
+        dplyr::rename(covid_new = cases_new)
+      
+      
+    } 
+    if(input$select_covid_type_map %in% "Deaths"){
+      gtrends_sub_df <- gtrends_sub_df %>%
+        dplyr::select(keyword_en, date, hits_ma7, death_new) %>%
+        dplyr::rename(covid_new = death_new)
+    } 
+    
+    multiplier <- max(gtrends_sub_df$covid_new, na.rm=T) / max(gtrends_sub_df$hits_ma7, na.rm=T)
+    gtrends_sub_df$hits_ma7_adj <- gtrends_sub_df$hits_ma7 * multiplier
+    
+    color_cases <- "orange"
+    color_hits <- "forestgreen"
+    
+    p <- gtrends_sub_df %>%
+      ggplot() +
+      geom_col(aes(x = date, y = covid_new),
+               fill = color_cases,
+               color = color_cases) +
+      geom_line(aes(x = date, y = hits_ma7_adj),
+                color = color_hits,
+                size = 1) +
+      labs(x = NULL, 
+           y = input$select_covid_type_map) +
+      scale_y_continuous(sec.axis = sec_axis(~.*1, name = "Search Interest",
+                                             breaks = c(0, max(gtrends_sub_df$hits_ma7_adj, na.rm=T)),
+                                             labels = c("Low", "High"))) +
+      theme_minimal() +
+      theme(axis.title.y.left = element_text(#angle = 0, 
+                                             #vjust = 0.5, 
+                                             color=color_cases,
+                                             face = "bold",
+                                             size=13),
+            axis.title.y.right = element_text(#angle = 0, 
+                                              #vjust = 0.5, 
+                                              color=color_hits,
+                                              face = "bold",
+                                              size=13),
+            axis.text.y.left = element_text(color = color_cases,
+                                            size=13),
+            axis.text.y.right = element_text(color = color_hits,
+                                             size=13),
+            axis.text = element_text(face = "bold", size=13),
+            plot.title = element_text(face = "bold", hjust = 0.5, size=13))
+    
+    p
+
+  }, bg = "transparent")
+  
+  
   # **** Line Graph Country ----------------------------------------------------
   output$line_graph_country <- renderUI({
     
@@ -918,8 +1016,8 @@ server = (function(input, output, session) {
     
     ## Change height/width
     gtrends_spark_df$Trends <- gtrends_spark_df$Trends %>% 
-      str_replace_all(":150", ":75") %>% 
-      str_replace_all(":200", ":120")
+      str_replace_all(":150", ":25") %>% # height
+      str_replace_all(":200", ":100") # width
     
     #### Sort
     gtrends_spark_df <- gtrends_spark_df %>%
@@ -1412,7 +1510,7 @@ server = (function(input, output, session) {
     # Do this as doesn't appear on default.
     if((input$select_country %in% "") & LOAD_GTRENDS_INIT){
       updateSelectInput(session, "select_country",
-                  selected = "United States")
+                        selected = "United States")
       LOAD_GTRENDS_INIT <<- F
     }
     
@@ -1426,8 +1524,6 @@ server = (function(input, output, session) {
     if(length(search_en) %in% 0) search_en <- "Loss of Smell"
     if(length(language_code) %in% 0) language_code <- "en"
     
-    print(search_en)
-    
     search <- keywords_df[[paste0("keyword_", language_code)]][tolower(keywords_df$keyword_en) %in% tolower(search_en)]
     search <- search %>% str_replace_all("'", "")
     search_p20 <- search %>% str_replace_all(" ", "%20")
@@ -1435,10 +1531,63 @@ server = (function(input, output, session) {
     tags$body(HTML(paste0('<script type="text/javascript" src="https://ssl.gstatic.com/trends_nrtr/2213_RC01/embed_loader.js"></script> <script type="text/javascript"> var divElem = document.getElementById("wrapper"); document.getElementById("wrapper").innerHTML = ""; trends.embed.renderExploreWidgetTo(divElem, "TIMESERIES", {"comparisonItem":[{"keyword":"',search,'","geo":"',geo,'","time":"today 3-m"}],"category":0,"property":""}, {"exploreQuery":"q=',search_p20,'&geo=',geo,'&date=today 3-m","guestPath":"https://trends.google.com:443/trends/embed/"}); </script>')))
   })
   
+  output$translation_text <- renderText({
+    
+    geo <- world$geo[world$name %in% input$select_country] %>% as.character()
+    
+    search_en <- input$select_keyword_country
+    language_code <- languges_df$Language_code_main[languges_df$Code %in% geo]
+    
+    if(length(search_en) %in% 0) search_en <- "Loss of Smell"
+    if(length(language_code) %in% 0) language_code <- "en"
+    
+    search <- keywords_df[[paste0("keyword_", language_code)]][tolower(keywords_df$keyword_en) %in% tolower(search_en)]
+    search <- search %>% str_replace_all("'", "")
+    search_p20 <- search %>% str_replace_all(" ", "%20")
+    
+    print(language_code)
+    
+    if(language_code %in% "en"){
+      out <- ""
+    } else{
+      out <- paste0("'", search_en, "' translated into ",
+             languges_df$Language_main[languges_df$Code %in% geo],": ",
+             search)
+    }
+    
+    out 
+    
+    
+  })
+  
+  # * GTrends HTML - Trends/Map ----------------------------------------------------
+  output$gtrends_html_map <- renderUI({
+    
+    # Do this as doesn't appear on default.
+    if((input$select_country %in% "") & LOAD_GTRENDS_INIT){
+      updateSelectInput(session, "select_country",
+                        selected = "United States")
+      LOAD_GTRENDS_INIT <<- F
+    }
+    
+    ## Country
+    geo <- world$geo[world$name %in% input$select_country] %>% as.character()
+    
+    ## Search term
+    search_en <- input$select_keyword_country
+    language_code <- languges_df$Language_code_main[languges_df$Code %in% geo]
+    
+    if(length(search_en) %in% 0) search_en <- "Loss of Smell"
+    if(length(language_code) %in% 0) language_code <- "en"
+    
+    search <- keywords_df[[paste0("keyword_", language_code)]][tolower(keywords_df$keyword_en) %in% tolower(search_en)]
+    search <- search %>% str_replace_all("'", "")
+    search_p20 <- search %>% str_replace_all(" ", "%20")
+    
+    tags$body(HTML(paste0('<script type="text/javascript" src="https://ssl.gstatic.com/trends_nrtr/2213_RC01/embed_loader.js"></script> <script type="text/javascript"> var divElem = document.getElementById("wrapper2"); document.getElementById("wrapper2").innerHTML = ""; trends.embed.renderExploreWidgetTo(divElem, "GEO_MAP", {"comparisonItem":[{"keyword":"',search,'","geo":"',geo,'","time":"today 3-m"}],"category":0,"property":""}, {"exploreQuery":"q=',search_p20,'&geo=',geo,'&date=today 3-m","guestPath":"https://trends.google.com:443/trends/embed/"}); </script>')))
+  })
+  
 
-  
-  
- 
   # * US Example Figure --------------------------------------------------------
   
   output$us_ex_fig <- renderPlot({
@@ -1554,13 +1703,11 @@ server = (function(input, output, session) {
   
   output$trends_country_subtitle <- renderText({
     
-    paste0("The below table compare trends in <span style='color:orange;'>COVID-19 ",
+    paste0("The table compares trends in <span style='color:orange;'>COVID-19 ",
            tolower(input$select_covid_type), 
-           "</span> and the <span style='color:green;'>search popularity",
-           "</span> of different keywords. It shows the correlation and the number of
-           days in the past when the search popularity is most strongly 
-           correlated with COVID-19 ", tolower(input$select_covid_type), 
-           " (Correlation Lag).")
+           "</span> and the <span style='color:green;'>search term interest",
+           "</span>. It shows the correlation when the correlation is 
+           highest (correlation lag).")
     
   })
   
