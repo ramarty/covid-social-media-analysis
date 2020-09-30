@@ -441,7 +441,7 @@ ui <- fluidPage(
                  selectizeInput(
                    "select_country",
                    label = strong("Select Country"),
-                   choices = c("", sort(world$name)),
+                   choices = c("", sort(cor_df$name)),
                    selected = "",
                    multiple = F
                  )#,
@@ -1418,7 +1418,7 @@ server = (function(input, output, session) {
                                "<br>", world_data$l_covid_hits)
     
     pal <- colorNumeric(
-      palette = "Reds",
+      palette = "RdYlGn",
       domain = c(world_data$cor_covidMA7_hitsMA7_max[!is.na(world_data$cor_covidMA7_hitsMA7_max)], 0, 1))
     
     #aa <<- world_data
@@ -1544,8 +1544,6 @@ server = (function(input, output, session) {
     search <- keywords_df[[paste0("keyword_", language_code)]][tolower(keywords_df$keyword_en) %in% tolower(search_en)]
     search <- search %>% str_replace_all("'", "")
     search_p20 <- search %>% str_replace_all(" ", "%20")
-    
-    print(language_code)
     
     if(language_code %in% "en"){
       out <- ""
