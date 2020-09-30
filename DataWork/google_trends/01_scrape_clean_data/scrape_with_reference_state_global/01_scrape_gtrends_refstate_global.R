@@ -25,10 +25,12 @@ for(language in c("it", "ru", "sv", "el", "tr", "zh", "ar", "pt", "en", "es", "f
   # Clean keyword
   keywords_vec <- keywords[[paste0("keyword_", language)]] %>% tolower() %>% as.character()
   keywords_vec <- keywords_vec[keywords_vec != ""]
+  keywords_vec <- keywords_vec %>% str_replace_all("\\n", "") # some have newline
   
   # ISO Codes ------------------------------------------------------------------
   # Grab iso/country codes where the selected language is the main language
   iso2 <- languages$Code[languages$Language_code_main %in% language]
+  iso2 <- iso2[!is.na(iso2)]
   
   # Function to Scrape Data ----------------------------------------------------
   extract_trends <- function(iso_i,
