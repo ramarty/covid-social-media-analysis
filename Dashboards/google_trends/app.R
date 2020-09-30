@@ -84,10 +84,14 @@ keywords_clean_df <- keywords_df %>%
                 Mandarin = keyword_zh,
                 Dutch = keyword_nl,
                 Italian = keyword_it,
-                Norwegian = keyword_no) %>%
+                Norwegian = keyword_no,
+                Swedish = keyword_sv,
+                Russian = keyword_ru,
+                Greek = keyword_el,
+                Turkish = keyword_tr) %>%
   dplyr::filter(scrape %in% c("yes")) %>%
   dplyr::select(English, Spanish, Portuguese, French, Arabic, German, Mandarin,
-                Dutch, Italian, Norwegian) 
+                Dutch, Italian, Norwegian, Swedish, Russian, Greek, Turkish) 
 
 # FUNCTIONS ========
 gtpath <- ""
@@ -143,7 +147,7 @@ ui <- fluidPage(
                     when testing or data may not be widely available. Moreover, given that
                     Google trends information is updated in real time, sudden increases in 
                     search activity can warn of potential growth in COVID-19 cases.</h4>"),
-                 hr(),
+                  br(),
                  h4("As an example, growth in the search popularity of 'Loss of Smell'
                     preceded an increase in COVID-19 cases by about 10 days in the 
                     United States in mid-June. The 
