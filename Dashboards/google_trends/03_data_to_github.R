@@ -21,8 +21,8 @@ temp <- list.files(IN_PATH, pattern = "*.Rds|.*png") %>%
   })
 
 #### Keywords
-keywords <- read_csv(file.path(dropbox_file_path, "Data", "google_trends", "covid_keywords.csv"), stringsAsFactors = F)
-write.csv(keywords, file.path(github_file_path, "Dashboards", "google_trends", "data", "covid_keywords.csv"), row.names = F)
+keywords <- read_csv(file.path(dropbox_file_path, "Data", "google_trends", "covid_keywords.csv"))
+write.csv(keywords, file.path(github_file_path, "Dashboards", "google_trends", "data", "covid_keywords.csv"))
 
 languages <- read.csv(file.path(dropbox_file_path, "Data", "country_primary_language", "countries_lang.csv"), stringsAsFactors = F)
 write.csv(languages, file.path(github_file_path, "Dashboards", "google_trends", "data", "countries_lang.csv"), row.names = F)

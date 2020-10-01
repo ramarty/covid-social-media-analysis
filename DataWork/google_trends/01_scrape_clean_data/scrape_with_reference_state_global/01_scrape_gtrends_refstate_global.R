@@ -12,7 +12,8 @@ languages <- read.csv(file.path(dropbox_file_path,
                                 "Data", "country_primary_language", "countries_lang.csv"),
                       stringsAsFactors = F) 
 
-for(language in c("it", "ru", "sv", "el", "tr", "zh", "ar", "pt", "en", "es", "fr", "de", "nl", "no")){
+# "en", "es", "fr",
+for(language in c("it", "ru", "sv", "el", "tr", "zh", "ar", "pt", "de", "nl", "no")){
   
   # Terms to Scrape --------------------------------------------------------------
   keywords <- read.csv(file.path(dropbox_file_path, "Data", "google_trends", "covid_keywords.csv"),

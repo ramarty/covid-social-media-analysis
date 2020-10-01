@@ -1,14 +1,12 @@
 # Prepare Data for Dashboard
 
-# http://bl.ocks.org/timelyportfolio/33db1fb9e64257ef7149754bdff0b2e0
-
-library(rmapshaper)
-
+#### PARAMETERS
 DASHBOARD_PATH <- file.path(dropbox_file_path, "Data", "google_trends", "DashboardData", "data")
 
 keywords <- c("Corona Symptoms", "Coronavirus", "Coronavirus Symptoms",
+              "covid symptoms", "covid-19", "how to treat coronavirus",
               "Loss of Smell", "I Can't Smell", "Loss of Taste",
-              "Fever", "Tired")
+              "Fever", "Tired", "Cough", "My Eyes Hurt")
 
 SPARK_HEIGHT <- 150
 SPARK_WIDTH <- 200

@@ -37,18 +37,18 @@ p <- ggplot() +
   geom_line(data=df, aes(x = date, y = hits_ma7*1200), color=color_hits,
             size=1) +
   
-  geom_line(data= df %>% 
-              filter(date >= as.Date("2020-06-16"),
-                     date <= as.Date("2020-07-25")), 
-            aes(x = date, y = cases_new_ma7), 
-            color=color_cases,
-            size=3) +
-  geom_line(data= df %>% 
-              filter(date >= as.Date("2020-06-07"),
-                     date <= as.Date("2020-07-15")), 
-            aes(x = date, y = hits_ma7*1200), 
-            color=color_hits,
-            size=3) +
+  # geom_line(data= df %>% 
+  #             filter(date >= as.Date("2020-06-16"),
+  #                    date <= as.Date("2020-07-25")), 
+  #           aes(x = date, y = cases_new_ma7), 
+  #           color=color_cases,
+  #           size=3) +
+  # geom_line(data= df %>% 
+  #             filter(date >= as.Date("2020-06-07"),
+  #                    date <= as.Date("2020-07-15")), 
+  #           aes(x = date, y = hits_ma7*1200), 
+  #           color=color_hits,
+  #           size=3) +
   
   geom_vline(xintercept = as.Date("2020-06-16"),
              size = 2,

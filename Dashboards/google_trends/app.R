@@ -136,7 +136,7 @@ ui <- fluidPage(
                  <a href='https://blog.google/technology/health/using-symptoms-search-trends-inform-covid-19-research/'>many turn to Google</a>
                  before considering medical attention
                  to understand their symptoms and see options for home treatments.
-                    Using data from Jan 1 - July 31, 2020, this dashboard illustrates how search activity for specific symptoms
+                    Using data from Jan 1 - September 20, 2020, this dashboard illustrates how search activity for specific symptoms
                     strongly matches - and often preceds - trends in COVID-19 cases.</h4>"),
                  br(),
                  
@@ -508,7 +508,7 @@ ui <- fluidPage(
           column(4, align = "center",
                  
                  h3("Trends in COVID-19 and Search Interest"),
-                 strong("Jan 1 - July 31, 2020")
+                 strong("Jan 1 - September 20, 2020")
                  
                  ),
           column(8, align = "center",
@@ -632,7 +632,12 @@ ui <- fluidPage(
         fluidRow(
           column(6, offset = 3,
                  h2("Additional Research", align = "center"),
-                 "INCLUDE 1-2 PARAGRAPH LIT REVIEW HERE WITH HYPERLINKS. ALSO INCLUDE LINK TO OUR PPT" 
+                 
+                 "*** PARAGRAPH LIT REVIEW. ***",
+                 HTML("While the dashboard shows country level results, the project
+                 team also found that Google search term interest also correlates
+                 with COVID-19 at the subnational level using Brazil as a <a href='https://drive.google.com/file/d/1xVI04a2BvTIzcOdlZ1piCNywd8dsI4IN/view?usp=sharing'>case study.</a>")
+   
           )
         ),
         
@@ -642,16 +647,12 @@ ui <- fluidPage(
                  "We translate search terms into different languages and use the
                  the primary language of each country. The below table shows
                  the translations for the keywords.", 
+                 br(),
                  div(style = 'overflow-x: scroll', tableOutput('keyword_table'))
           )
-        ),
-        
-        fluidRow(
-          column(6, offset = 3,
-                 h2("Country Languages", align = "center"),
-                 "INDICATE FOR EACH COUNTRY WHICH LANGUAGE WE USED." 
-          )
         )
+        
+
         
         
         
@@ -1421,34 +1422,39 @@ server = (function(input, output, session) {
                                world_data$cor_lag, 
                                "<br>", world_data$l_covid_hits)
     
+    # https://stackoverflow.com/questions/61175878/r-leaflet-highcharter-tooltip-label
     pal <- colorNumeric(
       palette = "RdYlGn",
       domain = c(world_data$cor_covidMA7_hitsMA7_max[!is.na(world_data$cor_covidMA7_hitsMA7_max)], 0, 1))
     
-    #aa <<- world_data
+    aa <<- world_data
     
     leaflet(height = "700px") %>%
       addTiles() %>%
       addPolygons(data = world_data,
-                  popup = ~popup,
+                  label = ~lapply(popup, HTML),
                   popupOptions = popupOptions(minWidth = 200,
                                               maxHeight = 150),
                   stroke = F,
                   fillOpacity = 1,
                   color = ~pal(cor_covidMA7_hitsMA7_max)) %>%
       onRender("function(el,x) {
-      this.on('popupopen', function() {HTMLWidgets.staticRender();})
+      this.on('tooltipopen', function() {HTMLWidgets.staticRender();})
     }") %>%
+    #   onRender("function(el,x) {
+    #   this.on('popupopen', function() {HTMLWidgets.staticRender();})
+    # }") %>%
       addLegend("topright",
                 pal = pal,
                 values = c(world_data$select_covid_type[!is.na(world_data$select_covid_type)], 0, 1),
                 title = paste0("Correlation<br>between<br>",
-                               input$select_covid_type,
+                               #input$select_covid_type,
                                " and<br>Search<br>Activity"),
                 opacity = 1,
                 bins = c(0, 0.5, 1)) %>%
       setView(zoom = 2, lat=0, lng=0) %>%
-      add_deps("sparkline") %>%
+      #add_deps("sparkline") %>%
+      add_deps("highchart", 'highcharter') %>%
       browsable()
     #) #%>%
     #add_deps("sparkline") 
@@ -1612,9 +1618,7 @@ server = (function(input, output, session) {
   # })
   
   output$keyword_table <- renderTable({
-    keywords <- c("Corona Symptoms", "Coronavirus", "Coronavirus Symptoms",
-                  "Loss of Smell", "I Can't Smell", "Loss of Taste",
-                  "Fever", "Tired") %>%
+    keywords <- unique(gtrends_df$keyword_en) %>%
       tolower()
     
     keywords_clean_df %>%
