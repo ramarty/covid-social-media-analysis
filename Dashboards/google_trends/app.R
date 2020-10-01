@@ -1427,7 +1427,7 @@ server = (function(input, output, session) {
       palette = "RdYlGn",
       domain = c(world_data$cor_covidMA7_hitsMA7_max[!is.na(world_data$cor_covidMA7_hitsMA7_max)], 0, 1))
     
-    aa <<- world_data
+    #aa <<- world_data
     
     leaflet(height = "700px") %>%
       addTiles() %>%
@@ -1448,7 +1448,7 @@ server = (function(input, output, session) {
                 pal = pal,
                 values = c(world_data$select_covid_type[!is.na(world_data$select_covid_type)], 0, 1),
                 title = paste0("Correlation<br>between<br>",
-                               #input$select_covid_type,
+                               input$select_covid_type,
                                " and<br>Search<br>Activity"),
                 opacity = 1,
                 bins = c(0, 0.5, 1)) %>%
