@@ -389,7 +389,7 @@ ui <- fluidPage(
                              
                              fluidRow(
                                column(12, align = "center", offset = 0,
-                                      strong("Click a country on the map"),
+                                      #strong("Click a country on the map"),
                                       uiOutput("cor_map_leaflet")
                                       
                                )
