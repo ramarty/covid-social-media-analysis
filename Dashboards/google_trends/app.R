@@ -389,7 +389,7 @@ ui <- fluidPage(
                              
                              fluidRow(
                                column(12, align = "center", offset = 0,
-                                      #strong("Click a country on the map"),
+                                      strong("Click a country on the map"),
                                       uiOutput("cor_map_leaflet")
                                       
                                )
@@ -1453,8 +1453,8 @@ server = (function(input, output, session) {
                 opacity = 1,
                 bins = c(0, 0.5, 1)) %>%
       setView(zoom = 2, lat=0, lng=0) %>%
-      #add_deps("sparkline") %>%
-      add_deps("highchart", 'highcharter') %>%
+      add_deps("sparkline") %>%
+      #add_deps("highchart", 'highcharter') %>%
       browsable()
     #) #%>%
     #add_deps("sparkline") 
