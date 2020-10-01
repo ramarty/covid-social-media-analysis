@@ -13,7 +13,7 @@ languages <- read.csv(file.path(dropbox_file_path,
                       stringsAsFactors = F) 
 
 # "en", "es", "fr",
-for(language in c("it", "ru", "sv", "el", "tr", "zh", "ar", "pt", "de", "nl", "no")){
+for(language in c("fr", "es", "it", "ru", "sv", "el", "tr", "zh", "ar", "pt", "de", "nl", "no")){
   
   # Terms to Scrape --------------------------------------------------------------
   keywords <- read.csv(file.path(dropbox_file_path, "Data", "google_trends", "covid_keywords.csv"),
@@ -37,7 +37,7 @@ for(language in c("it", "ru", "sv", "el", "tr", "zh", "ar", "pt", "de", "nl", "n
   extract_trends <- function(iso_i,
                              term_i, 
                              comparison_iso, 
-                             sleep_time = 10,
+                             sleep_time = 16,
                              also_scrape_without_cstate = T){
     
     print(iso_i)
