@@ -6,7 +6,8 @@ DASHBOARD_PATH <- file.path(dropbox_file_path, "Data", "google_trends", "Dashboa
 keywords <- c("Corona Symptoms", "Coronavirus", "Coronavirus Symptoms",
               "covid symptoms", "covid-19", "how to treat coronavirus",
               "Loss of Smell", "I Can't Smell", "Loss of Taste",
-              "Fever", "Tired", "Cough", "My Eyes Hurt")
+              "Fever", "Tired", "Cough", "My Eyes Hurt",
+              "Anxiety", "Depression", "Insomnia", "Loneliness", "Panic", "Suicide")
 
 SPARK_HEIGHT <- 150
 SPARK_WIDTH <- 200
