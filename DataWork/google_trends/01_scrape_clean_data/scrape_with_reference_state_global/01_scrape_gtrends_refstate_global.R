@@ -12,16 +12,22 @@ languages <- read.csv(file.path(dropbox_file_path,
                                 "Data", "country_primary_language", "countries_lang.csv"),
                       stringsAsFactors = F) 
 
-# "en", "es", "fr",
-for(language in c("fr", "es", "it", "ru", "sv", "el", "tr", "zh", "ar", "pt", "de", "nl", "no")){
+language_codes_all <- languages$Language_code_main %>% unique()
+language_codes_all <- language_codes_all[!is.na(language_codes_all)]
+language_codes_all <- language_codes_all[language_codes_all != ""]
+language_codes_all <- language_codes_all %>% sort()
+
+for(language in language_codes_all){
   
   # Terms to Scrape --------------------------------------------------------------
-  keywords <- read.csv(file.path(dropbox_file_path, "Data", "google_trends", "covid_keywords.csv"),
-                       stringsAsFactors = F)
+  keywords <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", 
+                                 "keywords", "FinalData", "covid_keywords_alllanguages.Rds"))
   
   keywords <- keywords %>%
     arrange(priority_to_scrape) %>%
     filter(scrape %in% "yes")
+  
+  keywords <- keywords[keywords$keyword_en %in% c("loss of smell", "I can't smell"),]
 
   # Clean keyword
   keywords_vec <- keywords[[paste0("keyword_", language)]] %>% tolower() %>% as.character()
