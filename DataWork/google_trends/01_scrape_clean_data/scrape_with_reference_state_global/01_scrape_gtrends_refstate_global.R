@@ -6,37 +6,44 @@ comparison_iso <- "US"
 overwrite_files <- F
 language <- "pt" 
 
+# Load file that indicates which language to use for each country. Contains 
+# a language code and country code
 languages <- read.csv(file.path(dropbox_file_path, 
                                 "Data", "country_primary_language", "countries_lang.csv"),
                       stringsAsFactors = F) 
 
-for(language in c("it", "zh", "ar", "pt", "en", "es", "fr", "de", "nl", "it", "no")){
+language_codes_all <- languages$Language_code_main %>% unique()
+language_codes_all <- language_codes_all[!is.na(language_codes_all)]
+language_codes_all <- language_codes_all[language_codes_all != ""]
+language_codes_all <- language_codes_all %>% sort()
+
+for(language in language_codes_all){
   
   # Terms to Scrape --------------------------------------------------------------
-  keywords <- read.csv(file.path(dropbox_file_path, "Data", "google_trends", "covid_keywords.csv"),
-                       stringsAsFactors = F)
+  keywords <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", 
+                                 "keywords", "FinalData", "covid_keywords_alllanguages.Rds"))
   
   keywords <- keywords %>%
-    arrange(priority_to_scrape)
+    arrange(priority_to_scrape) %>%
+    filter(scrape %in% "yes")
   
-  keywords <- keywords[keywords$scrape %in% "yes",]
-  
+  keywords <- keywords[keywords$keyword_en %in% c("loss of smell", "I can't smell"),]
+
   # Clean keyword
   keywords_vec <- keywords[[paste0("keyword_", language)]] %>% tolower() %>% as.character()
   keywords_vec <- keywords_vec[keywords_vec != ""]
+  keywords_vec <- keywords_vec %>% str_replace_all("\\n", "") # some have newline
   
-  # ISO Codes --------------------------------------------------------------------
-  #isocodes <- ISO_3166_1 # from ISOcodes package
-  
-  #iso2 <- isocodes$Alpha_2
-  
+  # ISO Codes ------------------------------------------------------------------
+  # Grab iso/country codes where the selected language is the main language
   iso2 <- languages$Code[languages$Language_code_main %in% language]
+  iso2 <- iso2[!is.na(iso2)]
   
-  # Function to Scrape Data ------------------------------------------------------
+  # Function to Scrape Data ----------------------------------------------------
   extract_trends <- function(iso_i,
                              term_i, 
                              comparison_iso, 
-                             sleep_time = 10,
+                             sleep_time = 16,
                              also_scrape_without_cstate = T){
     
     print(iso_i)
@@ -48,7 +55,7 @@ for(language in c("it", "zh", "ar", "pt", "en", "es", "fr", "de", "nl", "it", "n
       
       out <- gtrends(term_i, 
                      geo = iso_i,
-                     time = "2020-01-01 2020-07-30",
+                     time = "2020-01-01 2020-09-20",
                      onlyInterest=T,
                      low_search_volume=T)
       
@@ -67,7 +74,7 @@ for(language in c("it", "zh", "ar", "pt", "en", "es", "fr", "de", "nl", "it", "n
                             geo = c(iso_i, 
                                     comparison_iso) %>%
                               unique(),
-                            time = "2020-01-01 2020-07-30",
+                            time = "2020-01-01 2020-09-20",
                             onlyInterest=T,
                             low_search_volume=T)
       

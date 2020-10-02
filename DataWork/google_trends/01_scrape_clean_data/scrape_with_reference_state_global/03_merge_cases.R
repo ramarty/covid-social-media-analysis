@@ -9,7 +9,7 @@ gtrends_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "Fin
                                 paste0("gl_gtrends_ref",comparison_iso,"_adj.Rds")))
 
 cases_df <- read.csv(file.path(dropbox_file_path, "Data", "global_admin_data", 
-                               "RawData", "WHO-COVID-19-global-data_1.csv"),
+                               "RawData", "WHO-COVID-19-global-data.csv"),
                      stringsAsFactors = F)
 
 # Merge ------------------------------------------------------------------------
