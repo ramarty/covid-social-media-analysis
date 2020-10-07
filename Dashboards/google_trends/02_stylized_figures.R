@@ -21,7 +21,7 @@ df <- data.frame(date = dates,
 
 df_cor <- data.frame(NULL)
 
-for(shift_i in -22:22){
+for(shift_i in -21:21){
   print(shift_i)
   
   if(shift_i < 0){
@@ -60,21 +60,22 @@ for(shift_i in -22:22){
                                            labels = c("Low", "High"))) +
     labs(y = "COVID-19\nCases") +
     theme(axis.title.y.left = element_text(angle = 0, 
-      vjust = 0.5, 
-      color=color_cases,
-      face = "bold",
-      size=13),
-      axis.title.y.right = element_text(angle = 0, 
-        vjust = 0.5, 
-        color=color_hits,
-        face = "bold",
-        size=13),
-      axis.text.y.left = element_text(color = color_cases,
-                                      size=13),
-      axis.text.y.right = element_text(color = color_hits,
-                                       size=13),
-      axis.text = element_text(face = "bold", size=10),
-      legend.text = element_text(face = "bold", size=10))
+                                           vjust = 0.5, 
+                                           color=color_cases,
+                                           face = "bold",
+                                           size=13),
+          axis.title.y.right = element_text(angle = 0, 
+                                            vjust = 0.5, 
+                                            color=color_hits,
+                                            face = "bold",
+                                            size=13),
+          axis.text.y.left = element_text(color = color_cases,
+                                          size=13),
+          axis.text.y.right = element_text(color = color_hits,
+                                           size=13),
+          axis.text = element_text(face = "bold", size=10),
+          legend.text = element_text(face = "bold", size=10)) +
+    theme(legend.position = "none")
   
   
   fig_col <- ggplot() +
@@ -97,18 +98,33 @@ for(shift_i in -22:22){
   
   title <- paste0("The best correlation is ",
                   best_cor,
-                  " with a ",best_lag, " day shift.\n",
-                  "This correlation is ",
-                  zscore, 
-                  " standard deviations above the average correlation (z-score).")
+                  " with a ",best_lag, " day shift")
+  # title <- paste0("The best correlation is ",
+  #                 best_cor,
+  #                 " with a ",best_lag, " day shift.\n",
+  #                 "This correlation is ",
+  #                 zscore, 
+  #                 " standard deviations above the average correlation (z-score).")
   
   fig_all <- ggarrange(fig_line, fig_col, widths = c(0.6, 0.4)) %>%
     annotate_figure(fig_all, top = text_grob(title, color = "black", face = "bold", size = 14))
-
+  
   ggsave(fig_all, filename = file.path(dropbox_file_path, "Data", "google_trends", "Outputs", 
                                        "cor_gif", "images", 
                                        paste0("image_", shift_i+100, ".png")),
          height = 4, width = 12)
   
 }
+
+library(magick)
+library(magrittr)
+
+file.path(dropbox_file_path, "Data", "google_trends", "Outputs", 
+          "cor_gif", "images") %>% 
+  list.files(pattern = '*.png', full.names = TRUE) %>%
+  image_read() %>% # reads each path file
+  image_join() %>% # joins image
+  image_animate(fps=0.4) %>% # animates, can opt for number of loops
+  image_write("~/Desktop/FileName.gif") # write to current dir
+
 

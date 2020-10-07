@@ -125,13 +125,17 @@ ui <- fluidPage(
       dashboardBody(
         
         fluidRow(
-          column(3,
-          ),
-          column(6, align = "center",
+          column(12, align = "center",
+                 h1("Google Trends Data as Predictor of COVID-19")
+                 )
+        ),
+        
+        fluidRow(
+          column(6, align = "center", offset = 3,
                  
-                 
-                 h2("Google Trends Data as Predictor of COVID-19"),
                  hr(),
+                 h2("Overview"),
+                 
                  HTML("<h4>When people fall sick, 
                  <a href='https://blog.google/technology/health/using-symptoms-search-trends-inform-covid-19-research/'>many turn to Google</a>
                  before considering medical attention
@@ -147,7 +151,35 @@ ui <- fluidPage(
                     when testing or data may not be widely available. Moreover, given that
                     Google trends information is updated in real time, sudden increases in 
                     search activity can warn of potential growth in COVID-19 cases.</h4>"),
-                  br(),
+          )
+        ),
+        fluidRow(
+          column(6, align = "center", offset = 3,
+                 hr(),
+                 h2("Determining correlation and prediction between COVID-19 and Google search term interest"),
+                 HTML("<h4>For each search term, we seek to understand (1) the strength of the correlation
+                      between COVID-19 cases or deaths and Google search term interest and (2) when the correlation
+                      is strongest. In other words, do Google search trends occur before similar trends in cases?</h4>"),
+                 br(),
+                 HTML("<h4>To understand this, we shift search interest -21 to 21 days from its actual date. We use the 'shift'
+                      with the best correlation. Using all estimated correlations, we calculate the z-score of the best correlation. <b>High z-scores</b>
+                      indicate greater confidence in the optimal shift. The below figure illustrates the approach.</h4>"),
+                 br()
+          )
+        ),
+        
+        fluidRow(
+          column(12, align = "center",
+                 img(src="cor.gif", width='70%')
+          )
+        ),
+        
+        
+        fluidRow(
+          column(6, align = "center", offset = 3,
+                 hr(),
+                 h2("Example"),
+                 
                  h4("As an example, growth in the search popularity of 'Loss of Smell'
                     preceded an increase in COVID-19 cases by about 10 days in the 
                     United States in mid-June. The 
@@ -484,70 +516,70 @@ ui <- fluidPage(
         hr(),
         
         wellPanel(
-        fluidRow(
-          column(6, align = "center", offset = 3,
-                 
-                 selectInput(
-                   "select_keyword_country",
-                   label = strong("Select Search Term"),
-                   choices = keyword_list,
-                   selected = "Loss of Smell",
-                   multiple = F
-                 )
-          )
-        ),
-        
-        fluidRow(
-          column(6, align = "center", offset = 3,
-                 
-                 textOutput("translation_text")
-                 )
-        ),
-        
-        fluidRow(
-          column(4, align = "center",
-                 
-                 h3("Trends in COVID-19 and Search Interest"),
-                 strong("Jan 1 - September 20, 2020")
-                 
-                 ),
-          column(8, align = "center",
-                 
-                 h3("Search Interest in Past 90 Days"),
-                 HTML("<strong>Trends at different time spans and at subnational levels can be
+          fluidRow(
+            column(6, align = "center", offset = 3,
+                   
+                   selectInput(
+                     "select_keyword_country",
+                     label = strong("Select Search Term"),
+                     choices = keyword_list,
+                     selected = "Loss of Smell",
+                     multiple = F
+                   )
+            )
+          ),
+          
+          fluidRow(
+            column(6, align = "center", offset = 3,
+                   
+                   textOutput("translation_text")
+            )
+          ),
+          
+          fluidRow(
+            column(4, align = "center",
+                   
+                   h3("Trends in COVID-19 and Search Interest"),
+                   strong("Jan 1 - September 20, 2020")
+                   
+            ),
+            column(8, align = "center",
+                   
+                   h3("Search Interest in Past 90 Days"),
+                   HTML("<strong>Trends at different time spans and at subnational levels can be
                             explored on the 
                             <a href='https://trends.google.com/trends/'>Google Trends website.</a></strong>"),
-                 
-                 
-                 )
-        ),
-        
-        fluidRow(
+                   
+                   
+            )
+          ),
           
-          column(4, align = "center", 
-
-                 br(),
-                 strong(textOutput("line_graph_country_key_title")),
-                 plotOutput("line_graph_country_key",
-                            height = "200px")
-                 ),
-          
-          column(4, align = "center",
-                 tags$div(id="wrapper"),
-                 
-                 uiOutput("gtrends_html_trends")
-                 ),
-          column(4, align = "center",
-                 tags$div(id="wrapper2"),
-                 uiOutput("gtrends_html_map")
+          fluidRow(
+            
+            column(4, align = "center", 
+                   
+                   br(),
+                   strong(textOutput("line_graph_country_key_title")),
+                   plotOutput("line_graph_country_key",
+                              height = "200px")
+            ),
+            
+            column(4, align = "center",
+                   tags$div(id="wrapper"),
+                   
+                   uiOutput("gtrends_html_trends")
+            ),
+            column(4, align = "center",
+                   tags$div(id="wrapper2"),
+                   uiOutput("gtrends_html_map")
+            )
           )
         )
-        )
-
         
         
         
-
+        
+        
         
       )
     ),
@@ -637,7 +669,7 @@ ui <- fluidPage(
                  HTML("While the dashboard shows country level results, the project
                  team also found that Google search term interest also correlates
                  with COVID-19 at the subnational level using Brazil as a <a href='https://drive.google.com/file/d/1xVI04a2BvTIzcOdlZ1piCNywd8dsI4IN/view?usp=sharing'>case study.</a>")
-   
+                 
           )
         ),
         
@@ -652,7 +684,7 @@ ui <- fluidPage(
           )
         )
         
-
+        
         
         
         
@@ -912,7 +944,7 @@ server = (function(input, output, session) {
            popularity ",
            abs(cor$lag), " days into the ",
            ifelse(cor$lag < 0, "past", "future."))
-
+    
   })
   
   
@@ -927,7 +959,7 @@ server = (function(input, output, session) {
     gtrends_sub_df <- gtrends_df %>%
       filter(keyword_en %in% input$select_keyword_country) %>%
       filter(name %in% input$select_country)
-
+    
     #### COVID Names
     if(input$select_covid_type_map %in% "Cases"){
       gtrends_sub_df <- gtrends_sub_df %>%
@@ -963,24 +995,24 @@ server = (function(input, output, session) {
                                              labels = c("Low", "High"))) +
       theme_minimal() +
       theme(axis.title.y.left = element_text(#angle = 0, 
-                                             #vjust = 0.5, 
-                                             color=color_cases,
-                                             face = "bold",
-                                             size=13),
-            axis.title.y.right = element_text(#angle = 0, 
-                                              #vjust = 0.5, 
-                                              color=color_hits,
-                                              face = "bold",
-                                              size=13),
-            axis.text.y.left = element_text(color = color_cases,
-                                            size=13),
-            axis.text.y.right = element_text(color = color_hits,
-                                             size=13),
-            axis.text = element_text(face = "bold", size=13),
-            plot.title = element_text(face = "bold", hjust = 0.5, size=13))
+        #vjust = 0.5, 
+        color=color_cases,
+        face = "bold",
+        size=13),
+        axis.title.y.right = element_text(#angle = 0, 
+          #vjust = 0.5, 
+          color=color_hits,
+          face = "bold",
+          size=13),
+        axis.text.y.left = element_text(color = color_cases,
+                                        size=13),
+        axis.text.y.right = element_text(color = color_hits,
+                                         size=13),
+        axis.text = element_text(face = "bold", size=13),
+        plot.title = element_text(face = "bold", hjust = 0.5, size=13))
     
     p
-
+    
   }, bg = "transparent")
   
   
@@ -1441,9 +1473,9 @@ server = (function(input, output, session) {
       onRender("function(el,x) {
       this.on('tooltipopen', function() {HTMLWidgets.staticRender();})
     }") %>%
-    #   onRender("function(el,x) {
-    #   this.on('popupopen', function() {HTMLWidgets.staticRender();})
-    # }") %>%
+      #   onRender("function(el,x) {
+      #   this.on('popupopen', function() {HTMLWidgets.staticRender();})
+      # }") %>%
       addLegend("topright",
                 pal = pal,
                 values = c(world_data$select_covid_type[!is.na(world_data$select_covid_type)], 0, 1),
@@ -1559,8 +1591,8 @@ server = (function(input, output, session) {
       out <- ""
     } else{
       out <- paste0("'", search_en, "' translated into ",
-             languges_df$Language_main[languges_df$Code %in% geo],": ",
-             search)
+                    languges_df$Language_main[languges_df$Code %in% geo],": ",
+                    search)
     }
     
     out 
@@ -1595,7 +1627,7 @@ server = (function(input, output, session) {
     tags$body(HTML(paste0('<script type="text/javascript" src="https://ssl.gstatic.com/trends_nrtr/2213_RC01/embed_loader.js"></script> <script type="text/javascript"> var divElem = document.getElementById("wrapper2"); document.getElementById("wrapper2").innerHTML = ""; trends.embed.renderExploreWidgetTo(divElem, "GEO_MAP", {"comparisonItem":[{"keyword":"',search,'","geo":"',geo,'","time":"today 3-m"}],"category":0,"property":""}, {"exploreQuery":"q=',search_p20,'&geo=',geo,'&date=today 3-m","guestPath":"https://trends.google.com:443/trends/embed/"}); </script>')))
   })
   
-
+  
   # * US Example Figure --------------------------------------------------------
   
   output$us_ex_fig <- renderPlot({
