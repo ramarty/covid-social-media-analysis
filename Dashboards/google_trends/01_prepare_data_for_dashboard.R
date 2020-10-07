@@ -57,6 +57,8 @@ gtrends_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "Fin
                                 "global_with_refstate",
                                 paste0("gl_gtrends_ref","US","_adj_cases_cor.Rds")))
 
+gtrends_df <- gtrends_df[!is.na(gtrends_df$keyword_en),]
+
 gtrends_df$keyword_en <- gtrends_df$keyword_en %>% tools::toTitleCase()
 gtrends_df$keyword_en[gtrends_df$keyword_en %in% "i Can't Smell"] <- "I Can't Smell"
 

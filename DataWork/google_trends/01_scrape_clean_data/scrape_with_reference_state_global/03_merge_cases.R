@@ -37,3 +37,6 @@ saveRDS(gtrends_cases_df, file.path(dropbox_file_path, "Data", "google_trends", 
                               "global_with_refstate",
                               paste0("gl_gtrends_ref",comparison_iso,"_adj_cases.Rds")))
 
+
+
+#unique(gtrends_df$geo)[!unique(gtrends_df$geo) %in% unique(cases_df$geo)]
