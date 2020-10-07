@@ -20,12 +20,11 @@ begin_day <- c("2020-02-01",
                "2020-05-01",
                "2020-06-01",
                "2020-07-01",
-               "2020-08-01") %>%
-  as.Date()
+               "2020-08-01")
 
 for(begin_day_i in begin_day){
   
-  print(paste(begin_day_i))
+  print(begin_day_i)
   
   # Load Data --------------------------------------------------------------------
   gtrends_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
@@ -70,7 +69,7 @@ for(begin_day_i in begin_day){
   gtrends_long_df <- gtrends_df %>%
     
     ## Restrict to after February
-    filter(date >= begin_day_i) %>%
+    filter(date >= as.Date(begin_day_i)) %>%
     
     ## To Long
     dplyr::select(c("geo", "keyword_en", "date", "cases_new_ma7", "death_new_ma7", 
@@ -139,7 +138,7 @@ for(begin_day_i in begin_day){
   # Export -----------------------------------------------------------------------
   saveRDS(gtrends_df, file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
                                 "global_with_refstate",
-                                paste0("gl_gtrends_ref",comparison_iso,"_adj_cases_cor_since_",begin_day_i,".Rds")))
+                                paste0("gl_gtrends_ref","US","_adj_cases_cor_since_",begin_day_i,".Rds")))
   
   saveRDS(cor_max_df, file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
                                 "global_with_refstate",

@@ -42,11 +42,11 @@ for(shift_i in -21:21){
     geom_line(aes(x = date, y = cases, 
                   color = "Cases",
                   linetype = "Cases"),
-              size = 0.5) +
+              size = 1) +
     geom_line(aes(x = date, y = hits, 
                   color = "Hits",
                   linetype = "Hits"),
-              size = 0.5) +
+              size = 1) +
     geom_line(aes(x = date, y = hits_shift, 
                   color = "Hits - Shifted",
                   linetype = "Hits - Shifted")) +
@@ -107,11 +107,11 @@ for(shift_i in -21:21){
   #                 " standard deviations above the average correlation (z-score).")
   
   fig_all <- ggarrange(fig_line, fig_col, widths = c(0.6, 0.4)) %>%
-    annotate_figure(fig_all, top = text_grob(title, color = "black", face = "bold", size = 14))
+    annotate_figure(top = text_grob(title, color = "black", face = "bold", size = 14))
   
   ggsave(fig_all, filename = file.path(dropbox_file_path, "Data", "google_trends", "Outputs", 
                                        "cor_gif", "images", 
-                                       paste0("image_", shift_i+100, ".png")),
+                                       paste0("image_", shift_i+30, ".png")),
          height = 4, width = 12)
   
 }
@@ -122,9 +122,11 @@ library(magrittr)
 file.path(dropbox_file_path, "Data", "google_trends", "Outputs", 
           "cor_gif", "images") %>% 
   list.files(pattern = '*.png', full.names = TRUE) %>%
+  sort() %>%
   image_read() %>% # reads each path file
   image_join() %>% # joins image
-  image_animate(fps=0.4) %>% # animates, can opt for number of loops
-  image_write("~/Desktop/FileName.gif") # write to current dir
+  image_animate(fps=2) %>% # animates, can opt for number of loops
+  image_write(file.path(dropbox_file_path, "Data", "google_trends", "Outputs", 
+                        "cor_gif", "cor.gif")) 
 
 

@@ -159,11 +159,13 @@ ui <- fluidPage(
                  h2("Determining correlation and prediction between COVID-19 and Google search term interest"),
                  HTML("<h4>For each search term, we seek to understand (1) the strength of the correlation
                       between COVID-19 cases or deaths and Google search term interest and (2) when the correlation
-                      is strongest. In other words, do Google search trends occur before similar trends in cases?</h4>"),
-                 br(),
-                 HTML("<h4>To understand this, we shift search interest -21 to 21 days from its actual date. We use the 'shift'
-                      with the best correlation. Using all estimated correlations, we calculate the z-score of the best correlation. <b>High z-scores</b>
-                      indicate greater confidence in the optimal shift. The below figure illustrates the approach.</h4>"),
+                      is strongest. In other words, do Google search trends occur before similar trends in cases?
+                      To understand this, we shift search interest -21 to 21 days from its actual date. We use the 'shift'
+                      with the best correlation.</h4>"),
+                # br(),
+                 #HTML("<h4>To understand this, we shift search interest -21 to 21 days from its actual date. We use the 'shift'
+                #      with the best correlation. Using all estimated correlations, we calculate the z-score of the best correlation. <b>High z-scores</b>
+                #      indicate greater confidence in the optimal shift. The below figure illustrates the approach.</h4>"),
                  br()
           )
         ),
