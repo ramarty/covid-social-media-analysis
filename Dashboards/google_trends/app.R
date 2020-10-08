@@ -175,7 +175,7 @@ ui <- fluidPage(
                  HTML("<ul>
                       <li><h4><b>Maximum Correlation</b></h4></li>
                       <li><h4><b>Lead/Lag Days:</b> The number of days search interest was shifted to obtain the maximum correlation</h4></li>
-                      <li><h4><b>Z-Score:</b> How different the maximum correlation is from other correlations. We calcualte the <b> z-score </b>, 
+                      <li><h4><b>Z-Score of Lead/Lag Days:</b> How different the maximum correlation is from other correlations. We calcualte the <b> z-score </b>, 
                  or the number of standard deviations the maximum correlation is from the average correlation.</li> 
                  <ul>
                  <li><h4><b>Large z-scores</b> indicate that the chosen lead/lag day is certain</h4></li>
@@ -736,7 +736,7 @@ server = (function(input, output, session) {
                                input$select_covid_type,
                                " and<br>Search<br>Activity"),
                 opacity = 1,
-                bins = c(0, 0.5, 1)) %>%
+                bins = c(-1, -.5, 0, 0.5, 1)) %>%
       setView(zoom = 2, lat=0, lng=0) %>%
       add_deps("sparkline") %>%
       #add_deps("highchart", 'highcharter') %>%
@@ -977,16 +977,30 @@ server = (function(input, output, session) {
       ungroup() %>%
       mutate(cor = round(cor*10, 0)/10) %>%
       group_by(cor) %>%
-      summarise(N = n())
+      summarise(N = n()) %>%
+      mutate(cor = cor %>% as.factor())
     
-    cor_sum_df %>%
+
+  seq(from=-1, to=1, by=.1) %>%
+      as.data.frame() %>%
+      dplyr::rename(cor = ".") %>%
+      mutate(cor = cor %>% as.factor()) %>%
+      left_join(cor_sum_df) %>%
+      mutate(N = N %>% replace_na(0)) %>%
+      mutate(cor = cor %>% as.character() %>% as.numeric()) %>%
+  
       ggplot() +
-      geom_col(aes(x = factor(cor), y = N)) + 
-      labs(x = "Correlation",
+      geom_col(aes(x = factor(cor), y = N),
+               color = "black",
+               fill = "palegreen3") + 
+      labs(title = "Correlation",
+           x = NULL,
            y = "Number\nOf\nCountries") +
       theme_minimal() +
       theme(axis.title.y = element_text(angle = 0,
-                         vjust = 0.5))
+                         vjust = 0.5),
+            plot.title = element_text(face = "bold", size=13,
+                                      hjust = 0.5))
     
   })
   
@@ -1005,21 +1019,27 @@ server = (function(input, output, session) {
       dplyr::filter(type %in% input$select_covid_type,
                     keyword_en %in% input$select_keyword) 
     
-    cor_sum_df <- cor_df %>%
-      ungroup() %>%
-      mutate(lag = round(lag/3, 0)*3) %>%
-      group_by(lag) %>%
-      summarise(N = n()) %>%
-      filter(lag != 21)
+    # cor_sum_df <- cor_df %>%
+    #   ungroup() %>%
+    #   mutate(lag = round(lag/3, 0)*3) %>%
+    #   group_by(lag) %>%
+    #   summarise(N = n()) %>%
+    #   filter(lag != 21)
     
-    cor_sum_df %>%
+    cor_df %>%
       ggplot() +
-      geom_col(aes(x = factor(lag), y = N)) + 
-      labs(x = "Lead/Lag",
+      geom_histogram(aes(x = lag),
+                     color = "black",
+                     fill = "palegreen3",
+                     bins = 15) + 
+      labs(title = "Lead/Lag",
+           x = NULL,
            y = "Number\nOf\nCountries") +
       theme_minimal() +
       theme(axis.title.y = element_text(angle = 0,
-                                        vjust = 0.5))
+                                        vjust = 0.5),
+            plot.title = element_text(face = "bold", size=13,
+                                      hjust = 0.5))
     
   })
   
