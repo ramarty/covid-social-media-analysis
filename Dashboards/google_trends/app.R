@@ -190,7 +190,7 @@ ui <- fluidPage(
                  HTML("<ul>
                       <li><h4><b>Maximum Correlation</b></h4></li>
                       <li><h4><b>Lead/Lag Days:</b> The number of days COVID-19 cases/deaths was shifted to obtain the maximum correlation.
-                      <b>Negative values</b> mean that search interest comes before COVID-19, helping to preidct cases/deaths while
+                      <b>Negative values</b> mean that search interest comes before COVID-19, helping to predict cases/deaths while
                       <b>positive values</b> indicate the search interest reacts to COVID-19 cases/deaths</h4></li>
                       <li><h4><b>Z-Score of Lead/Lag Days:</b> How different the maximum correlation is from other correlations. We calcualte the <b> z-score </b>, 
                  or the number of standard deviations the maximum correlation is from the average correlation. 
@@ -768,16 +768,21 @@ server = (function(input, output, session) {
     
     world_data$cor_zscore <- ""
     world_data$cor_zscore[!is.na(world_data$cor_covidMA7_hitsMA7_zscore)] <-
-      paste0("<br><b>Z-Score:</b> ", world_data$cor_covidMA7_hitsMA7_zscore[!is.na(world_data$cor_covidMA7_hitsMA7_zscore)])
+      paste0("<br><b>Z-Score:</b> ", world_data$cor_covidMA7_hitsMA7_zscore[!is.na(world_data$cor_covidMA7_hitsMA7_zscore)],
+             "<br>")
+    
+    world_data$cor_keyword <- ""
+    world_data$cor_keyword[!is.na(world_data$keyword)] <-
+      paste0("<b><em>", world_data$keyword[!is.na(world_data$keyword)], "</em></b>")
     
     world_data$l_covid_hits[is.na(world_data$l_covid_hits)] <- "<em>Low Google search activity<br>for this search term</em>"
     
     world_data$popup <- paste0("<h4>", world_data$name, "</h4>", 
-                               "<b><em>", world_data$keyword, "</em></b>",
+                               world_data$cor_keyword,
                                world_data$cor, 
                                world_data$cor_lag, 
                                world_data$cor_zscore,
-                               "<br>", world_data$l_covid_hits)
+                               world_data$l_covid_hits)
     
     # https://stackoverflow.com/questions/61175878/r-leaflet-highcharter-tooltip-label
     pal <- colorNumeric(
@@ -1264,12 +1269,12 @@ server = (function(input, output, session) {
       filter(type %in% input$select_covid_type_map) %>%
       filter(keyword_en %in% input$select_keyword_country) 
     
-    paste0("Using data after ",
-           input$select_begin_date_country, "<br>",
+    paste0("<b>Using data after ",
+           input$select_begin_date_country, "<b><br>",
            "<ul>",
-           "<li><b>Correlation:</b> ", cor$cor %>% round(3), "</li>",
-           "<li><b>Lead/Lag:</b> ", cor$lag, " days</li>",
-           "<li><b>Z-Score:</b> ", cor$zscore %>% round(3), "</li>",
+           "<li><b><em>Correlation:</em></b> ", cor$cor %>% round(3), "</li>",
+           "<li><b><em>Lead/Lag:</em></b> ", cor$lag, " days</li>",
+           "<li><b><em>Z-Score:</em></b> ", cor$zscore %>% round(3), "</li>",
            "</ul>")
     # 
     # paste0("<h4>Using data after ", input$select_begin_date_country, 
