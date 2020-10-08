@@ -1,5 +1,7 @@
 # Translate Search Terms
 
+source("https://raw.githubusercontent.com/ramarty/r_google_translate/main/r_google_translate.R")
+
 #### API Key
 api_key <- read_csv(file.path("~", "Dropbox", "World Bank", "Webscraping", "Files for Server", 
                               "api_keys.csv")) %>%

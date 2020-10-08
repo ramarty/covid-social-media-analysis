@@ -17,11 +17,11 @@ df <- data.frame(date = dates,
                  values = values) %>%
   mutate(cases = round(values*10000)) %>%
   mutate(hits = cases) %>%
-  mutate(hits = lead(hits, 14) %>% replace_na(0)) 
+  mutate(hits = lead(hits, 10) %>% replace_na(0)) 
 
 df_cor <- data.frame(NULL)
 
-for(shift_i in -21:21){
+for(shift_i in -18:18){
   print(shift_i)
   
   if(shift_i < 0){
@@ -84,7 +84,7 @@ for(shift_i in -21:21){
     geom_col(data = df_cor_i,
              aes(x = shift, y = cor), fill = "red") +
     scale_y_continuous(limits = c(-1,1)) +
-    scale_x_continuous(limits = c(-22,22)) + 
+    scale_x_continuous(limits = c(-19,19)) + 
     labs(x = "Days Shift", 
          y = "Correlation") +
     theme_minimal() +
@@ -96,15 +96,14 @@ for(shift_i in -21:21){
     replace_na(0)
   best_lag <- df_cor$shift[which.max(df_cor$cor)]
   
-  title <- paste0("The best correlation is ",
-                  best_cor,
-                  " with a ",best_lag, " day shift")
-  # title <- paste0("The best correlation is ",
-  #                 best_cor,
-  #                 " with a ",best_lag, " day shift.\n",
-  #                 "This correlation is ",
-  #                 zscore, 
-  #                 " standard deviations above the average correlation (z-score).")
+  #title <- paste0("The best correlation is ",
+  #                best_cor,
+  #                " with a ",best_lag, " day shift")
+  title <- paste0("The maximum correlation is ", best_cor,
+                  " with a ",best_lag, " day shift.\n",
+                  "The maximum correlation is ",
+                  zscore,
+                  " standard deviations above the average correlation (z-score).")
   
   fig_all <- ggarrange(fig_line, fig_col, widths = c(0.6, 0.4)) %>%
     annotate_figure(top = text_grob(title, color = "black", face = "bold", size = 14))
