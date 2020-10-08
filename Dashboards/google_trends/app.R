@@ -171,11 +171,12 @@ ui <- fluidPage(
           column(6, align = "center", offset = 3,
                  hr(),
                  h2("Determining correlation and prediction between COVID-19 and Google search term interest"),
-                 HTML("<h4>We compute how strongly different search terms correlated with COVID-19 cases and deaths.
+                 HTML("<h4>We compute how strongly different search terms correlate with COVID-19 cases and deaths.
                       In addition, we determine whether search interest can help predict future cases or deaths
-                      or whether interest responds or comes after cases/deaths. To determine this, we shift COVID-19 cases/deaths
+                      or whether search interest responds or comes after cases/deaths. To determine this, we shift COVID-19 cases/deaths
                       by up to 21 days from its actual date. We calculate the correlation between
-                      COVID-19 (shifted) and the search interst. The following values are determined:</h4>")
+                      the shifted COVID-19 and the search interst. Using all these estimated correlations, we determine the 
+                      following metrics:</h4>")
                  # HTML("<h4>For each search term, we seek to understand (1) the strength of the correlation
                  #      between COVID-19 cases/deaths and Google search term interest and (2) when the correlation
                  #      is strongest.</h4"),
@@ -188,14 +189,13 @@ ui <- fluidPage(
           column(6, align = "left", offset = 3,
                  HTML("<ul>
                       <li><h4><b>Maximum Correlation</b></h4></li>
-                      <li><h4><b>Lead/Lag Days:</b> The number of days search interest was shifted to obtain the maximum correlation.
-                      <b>Negative values</b> mean that search interest comes before COVID-19, helping to preidct cases/deaths.</h4></li>
+                      <li><h4><b>Lead/Lag Days:</b> The number of days COVID-19 cases/deaths was shifted to obtain the maximum correlation.
+                      <b>Negative values</b> mean that search interest comes before COVID-19, helping to preidct cases/deaths while
+                      <b>positive values</b> indicate the search interest reacts to COVID-19 cases/deaths</h4></li>
                       <li><h4><b>Z-Score of Lead/Lag Days:</b> How different the maximum correlation is from other correlations. We calcualte the <b> z-score </b>, 
-                 or the number of standard deviations the maximum correlation is from the average correlation.</li> 
-                 <ul>
-                 <li><h5><b>Large z-scores</b> indicate that the chosen lead/lag day is certain</h5></li>
-                 <li><h5><b>Small z-scores</b> indicate that the chosen lead/lag day isn't that different from others, so the chosen lead/lag day is relatively arbitrary</h5></li>
-                 </ul>
+                 or the number of standard deviations the maximum correlation is from the average correlation. 
+                 <b>Large z-scores</b> indicate that the chosen lead/lag day is certain while
+                 <b>small z-scores</b> indicate that the chosen lead/lag day isn't that different from others, so the chosen lead/lag day is relatively arbitrary</li>
                       </ul>"),
                  
                  # br(),
@@ -208,7 +208,7 @@ ui <- fluidPage(
         
         fluidRow(
           column(12, align = "center",
-                 HTML("<strong>Correlation between <span style='color:orange;'>COVID-19 cases</span> and <span style='color:green;'>Search Term Interest</span> (shifted)</strong>"),
+                 HTML("<strong>Correlation between <span style='color:orange;'>COVID-19 cases</span> (shifted) and <span style='color:green;'>Search Term Interest</span></strong>"),
                  img(src="cor.gif", width='70%')
           )
         ),
@@ -474,7 +474,7 @@ ui <- fluidPage(
         
         fluidRow(
           column(8, align = "center", offset = 2,
-                 div(style = 'overflow-y: scroll; height:220px', htmlOutput("line_graph_country"))
+                 div(style = 'overflow-y: scroll; height:300px', htmlOutput("line_graph_country"))
           )
         ),
         hr(),
@@ -619,29 +619,73 @@ ui <- fluidPage(
         
         fluidRow(
           column(6, offset = 3,
-                 h2("Additional Research", align = "center"),
+                 h2("Data", align = "center"),
+                 HTML("We access COVID-19 Cases and Deaths from the
+                      <a href='https://covid19.who.int/?gclid=Cj0KCQjw8fr7BRDSARIsAK0Qqr73Wij8AiyjGx8dOs-MYxN7oxF5pzYmurbdVxj-x65Gc8tx1jJykaYaAqQNEALw_wcB'>WHO</a>
+                      and download Google Trends data for all countries. To protect privacy, Google
+                      only releases search interest data when there is a large enough search volume for a
+                      specific search term. We translate search terms from English into
+                      each countries most widely used language using Google Translate.
+                      The below table shows which language is used for each country."),
                  
-                 "*** PARAGRAPH LIT REVIEW. ***",
-                 HTML("While the dashboard shows country level results, the project
-                 team also found that Google search term interest also correlates
-                 with COVID-19 at the subnational level using Brazil as a <a href='https://drive.google.com/file/d/1xVI04a2BvTIzcOdlZ1piCNywd8dsI4IN/view?usp=sharing'>case study.</a>")
                  
+          )
+        ),
+        fluidRow(
+          br(),
+          column(6, offset = 3, align = "center",
+                 div(style = 'overflow-y: scroll; height:300px', tableOutput('language_table'))
           )
         ),
         
         fluidRow(
-          column(6, align = "left", offset = 3,
-                 h2("Keywords", align = "center"),
-                 "We translate search terms into different languages and use the
-                 the primary language of each country. The below table shows
-                 the translations for the keywords.", 
-                 br(),
-                 div(style = 'overflow-x: scroll', tableOutput('keyword_table'))
+          column(6, offset = 3,
+                 hr(),
+                 h2("Subnational Case Study: Brazil", align = "center"),
+                 HTML("While the dashboard shows country level results, the project
+                 team also found that Google search term interest also correlates
+                 with COVID-19 at the subnational level using Brazil as a <a href='https://drive.google.com/file/d/1xVI04a2BvTIzcOdlZ1piCNywd8dsI4IN/view?usp=sharing'>case study.</a>")
           )
+        ),
+        
+        fluidRow(
+          column(6, offset = 3,
+                 hr(),
+                 h2("References", align = "center"),
+                 
+                 HTML("This dashboard builds off of a literature that
+                      uses Google Trends to provide insight into COVID-19.
+                      Studies that were used to inform the dashboard include
+                      the following"),
+                 
+                 
+                 # <li><a href='URL'>TITLE</a></li>
+                 HTML("<br><br><ul>
+                      <li><a href='https://www.sciencedirect.com/science/article/pii/S1201971220302496'>Association of the COVID-19 pandemic with Internet Search Volumes: A Google Trends(TM) Analysis</a></li>
+                      <li><a href='https://www.medrxiv.org/content/10.1101/2020.05.07.20093955v2'>Utility and limitations of Google searches for tracking disease: the case of taste and smell loss as markers for COVID-19</a></li>
+                      <li><a href='https://www.nytimes.com/2020/04/05/opinion/coronavirus-google-searches.html'>Google Searches Can Help Us Find Emerging Covid-19 Outbreaks</a></li>
+                      <li><a href='https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7189861/'>The COVID-19 outbreak and Google searches: Is it really the time to worry about global mental health?</a></li>
+                      <li><a href='https://ideas.repec.org/p/cep/cepdps/dp1693.html'>COVID-19, Lockdowns and Well-being: Evidence from Google Trends</a></li>
+                      <li><a href='https://pubmed.ncbi.nlm.nih.gov/32279437/'>Use of Google Trends to investigate loss-of-smell-related searches during the COVID-19 outbreak</a></li>
+                      <li><a href='https://europepmc.org/article/pmc/pmc7267744'>Predicting COVID-19 Incidence Using Anosmia and Other COVID-19 Symptomatology: Preliminary Analysis Using Google and Twitter.</a></li>
+                      </ul>"),
+          )
+        ),
+        
+        fluidRow(
+          column(12,
+                 br(),
+                 br(),
+                 br(),
+                 br(),
+                 br(),
+                 br(),
+                 br(),
+                 br(),
+                 br(),
+                 br()
+                 )
         )
-        
-        
-        
         
         
       )
@@ -720,13 +764,16 @@ server = (function(input, output, session) {
     
     world_data$cor_lag <- ""
     world_data$cor_lag[!is.na(world_data$cor_covidMA7_hitsMA7_lag)] <-
-      paste0("<br><b>Correlation Lag:</b> ", world_data$cor_covidMA7_hitsMA7_lag[!is.na(world_data$cor_covidMA7_hitsMA7_lag)])
+      paste0("<br><b>Lead/Lag:</b> ", world_data$cor_covidMA7_hitsMA7_lag[!is.na(world_data$cor_covidMA7_hitsMA7_lag)], " days")
     
     world_data$cor_zscore <- ""
     world_data$cor_zscore[!is.na(world_data$cor_covidMA7_hitsMA7_zscore)] <-
       paste0("<br><b>Z-Score:</b> ", world_data$cor_covidMA7_hitsMA7_zscore[!is.na(world_data$cor_covidMA7_hitsMA7_zscore)])
     
-    world_data$popup <- paste0("<b>", world_data$name, "</b>", 
+    world_data$l_covid_hits[is.na(world_data$l_covid_hits)] <- "<em>Low Google search activity<br>for this search term</em>"
+    
+    world_data$popup <- paste0("<h4>", world_data$name, "</h4>", 
+                               "<b><em>", world_data$keyword, "</em></b>",
                                world_data$cor, 
                                world_data$cor_lag, 
                                world_data$cor_zscore,
@@ -798,7 +845,7 @@ server = (function(input, output, session) {
         dplyr::rename(Country = name,
                       Trends = l_cases_hits,
                       "Correlation" = cor_casesMA7_hitsMA7_max,
-                      "Correlation Lag" = cor_casesMA7_hitsMA7_lag,
+                      "Lead/Lag" = cor_casesMA7_hitsMA7_lag,
                       "Z-Score" = cor_casesMA7_hitsMA7_zscore)
       
     } 
@@ -813,7 +860,7 @@ server = (function(input, output, session) {
         dplyr::rename(Country = name,
                       Trends = l_death_hits,
                       "Correlation" = cor_deathMA7_hitsMA7_max,
-                      "Correlation Lag" = cor_deathMA7_hitsMA7_lag,
+                      "Lead/Lag" = cor_deathMA7_hitsMA7_lag,
                       "Z-Score" = cor_deathMA7_hitsMA7_zscore)
     } 
     
@@ -843,6 +890,7 @@ server = (function(input, output, session) {
     #### Adjust Variables
     gtrends_spark_df$Correlation <- gtrends_spark_df$Correlation %>% round(3)
     gtrends_spark_df$`Z-Score` <- gtrends_spark_df$`Z-Score` %>% round(3)
+    gtrends_spark_df$`Lead/Lag` <- paste(gtrends_spark_df$`Lead/Lag`, "days")
     
     #### Remove Unneeded Variables
     gtrends_spark_df$continent <- NULL
@@ -855,7 +903,7 @@ server = (function(input, output, session) {
     
     f_list <- list(
       `Country` = formatter("span", style = ~ style(color = "black", font.weight = "bold", width = "2px")),
-      `Correlation Lag` = formatter("span", style = ~ style(color = "black", font.weight = "bold")),
+      `Lead/Lag` = formatter("span", style = ~ style(color = "black", font.weight = "bold")),
       # `Correlation` = formatter(
       #   "span",
       #   style = x ~ style(
@@ -1114,7 +1162,7 @@ server = (function(input, output, session) {
         dplyr::rename("Search Term" = keyword_en,
                       Trends = l_cases_hits,
                       "Correlation" = cor_casesMA7_hitsMA7_max,
-                      "Correlation Lag" = cor_casesMA7_hitsMA7_lag,
+                      "Lead/Lag" = cor_casesMA7_hitsMA7_lag,
                       "Z-Score" = cor_casesMA7_hitsMA7_zscore)
       
       
@@ -1130,12 +1178,12 @@ server = (function(input, output, session) {
         dplyr::rename("Search Term" = keyword_en,
                       Trends = l_death_hits,
                       "Correlation" = cor_deathMA7_hitsMA7_max,
-                      "Correlation Lag" = cor_deathMA7_hitsMA7_lag,
+                      "Lead/Lag" = cor_deathMA7_hitsMA7_lag,
                       "Z-Score" = cor_deathMA7_hitsMA7_zscore)
     } 
     
     gtrends_spark_df <- gtrends_spark_df %>%
-      dplyr::select("Search Term", "Trends", "Correlation", "Correlation Lag", "Z-Score")
+      dplyr::select("Search Term", "Trends", "Correlation", "Lead/Lag", "Z-Score")
     
     gtrends_spark_df$`Z-Score` <- gtrends_spark_df$`Z-Score` %>% round(3)
     
@@ -1150,13 +1198,14 @@ server = (function(input, output, session) {
     
     #### Adjust Variables
     gtrends_spark_df$Correlation <- gtrends_spark_df$Correlation %>% round(3)
+    gtrends_spark_df$`Lead/Lag` <- paste(gtrends_spark_df$`Lead/Lag`, "days")
     
     #### Make Table
     bar_color <- "#FF9999"
     
     f_list <- list(
       `Search Term` = formatter("span", style = ~ style(color = "black", font.weight = "bold", width = "2px")),
-      `Correlation Lag` = formatter("span", style = ~ style(color = "black", font.weight = "bold")),
+      `Lead/Lag` = formatter("span", style = ~ style(color = "black", font.weight = "bold")),
       `Z-Score` = formatter("span", style = ~ style(color = "black", font.weight = "bold")),
       `Correlation` = formatter(
         "span",
@@ -1230,7 +1279,7 @@ server = (function(input, output, session) {
     #        "<li><b>Lead/Lag:</b> ", cor$lag, " days</li>",
     #        "<li><b>Z-Score:</b> ", cor$zscore %>% round(3), "</li>",
     #        "</ul></h4>")
-
+    
   })
   
   # **** Figure ------------------------------
@@ -1383,6 +1432,24 @@ server = (function(input, output, session) {
     tags$body(HTML(paste0('<script type="text/javascript" src="https://ssl.gstatic.com/trends_nrtr/2213_RC01/embed_loader.js"></script> <script type="text/javascript"> var divElem = document.getElementById("wrapper2"); document.getElementById("wrapper2").innerHTML = ""; trends.embed.renderExploreWidgetTo(divElem, "GEO_MAP", {"comparisonItem":[{"keyword":"',search,'","geo":"',geo,'","time":"today 3-m"}],"category":0,"property":""}, {"exploreQuery":"q=',search_p20,'&geo=',geo,'&date=today 3-m","guestPath":"https://trends.google.com:443/trends/embed/"}); </script>')))
   })
   
+  # INFORMATION ********************* ------------------------------------------
+  
+  # ** Language Table ----------------------------------------------------------
+  output$language_table <- renderTable({
+    
+    languges_df %>%
+      dplyr::select(Name, Language_main) %>%
+      dplyr::rename(Country = Name,
+                    Language = Language_main) %>%
+      dplyr::mutate(Country = Country %>% tools::toTitleCase(),
+                    Language = Language %>% 
+                      str_replace_all("Chinese (Traditional)",
+                                      "Chinese (Simplified)") %>%
+                      tools::toTitleCase()) %>%
+      distinct(Country, Language) %>%
+      arrange(Country)
+    
+  })
   
   
   # UIS ******************************** ---------------------------------------
@@ -1599,7 +1666,7 @@ server = (function(input, output, session) {
         dplyr::rename(Country = name,
                       covid_new = cases_new,
                       "Correlation" = cor_casesMA7_hitsMA7_max,
-                      "Correlation Lag" = cor_casesMA7_hitsMA7_lag)
+                      "Lead/Lag" = cor_casesMA7_hitsMA7_lag)
       
     } 
     if(input$select_covid_type %in% "Deaths"){
@@ -1611,7 +1678,7 @@ server = (function(input, output, session) {
         dplyr::rename(Country = name,
                       covid_new = death_new,
                       "Correlation" = cor_deathMA7_hitsMA7_max,
-                      "Correlation Lag" = cor_deathMA7_hitsMA7_lag)
+                      "Lead/Lag" = cor_deathMA7_hitsMA7_lag)
     } 
     
     #### Prep hits
@@ -1876,13 +1943,7 @@ server = (function(input, output, session) {
   #                 options = list(dom = 't'))
   # })
   
-  output$keyword_table <- renderTable({
-    keywords <- unique(gtrends_df$keyword_en) %>%
-      tolower()
-    
-    keywords_clean_df %>%
-      filter(English %in% keywords)
-  })
+  
   
   # * renderUIs ----------------------------------------------------------------
   
@@ -1966,7 +2027,7 @@ server = (function(input, output, session) {
            tolower(input$select_covid_type), 
            "</span> and the <span style='color:green;'>search term interest",
            "</span>. It shows the correlation when the correlation is 
-           highest (correlation lag).")
+           highest.")
     
   })
   
@@ -1979,7 +2040,7 @@ server = (function(input, output, session) {
            ".</span> We show the correlation between the two and the number of
            days in the past when the search popularity is most strongly 
            correlated with COVID-19 ", tolower(input$select_covid_type), 
-           " (Correlation Lag).")
+           ".")
     # 
     # paste0("For each country, we determine when search activity of ",
     #        input$select_keyword,

@@ -17,6 +17,8 @@ begin_day <- c("2020-02-01",
                "2020-07-01",
                "2020-08-01")
 
+#begin_day <- "2020-02-01"
+
 # World Shapefile --------------------------------------------------------------
 world_sp <- readRDS(file.path(dropbox_file_path, "Data", "world_shapefile", 
                               "FinalData",
@@ -76,7 +78,7 @@ for(begin_day_i in begin_day){
   gtrends_df <- gtrends_df[gtrends_df$keyword_en %in% keywords,]
   
   gtrends_df <- gtrends_df %>%
-    dplyr::select(keyword_en, date, hits, hits_ma7, name, geo, continent, cases_new, death_new,
+    dplyr::select(keyword_en, keyword, date, hits, hits_ma7, name, geo, continent, cases_new, death_new,
                   cor_casesMA7_hitsMA7_max, cor_casesMA7_hitsMA7_lag, cor_casesMA7_hitsMA7_zscore,
                   cor_deathMA7_hitsMA7_max, cor_deathMA7_hitsMA7_lag, cor_deathMA7_hitsMA7_zscore,
                   cases_total, death_total)
@@ -186,7 +188,7 @@ for(begin_day_i in begin_day){
     ## Merge other data back in
     gtrends_sum_df <- gtrends_df %>%
       #filter(keyword_en %in% "Loss of Smell") %>%
-      group_by(group, name, keyword_en, continent, geo) %>%
+      group_by(group, name, keyword_en, keyword, continent, geo) %>%
       summarise(cases_total = max(cases_total, na.rm=T),
                 death_total = max(death_total, na.rm=T),
                 cor_casesMA7_hitsMA7_lag    = cor_casesMA7_hitsMA7_lag[1],
@@ -207,3 +209,6 @@ for(begin_day_i in begin_day){
     saveRDS(gtrends_spark_df, file.path(DASHBOARD_PATH, paste0("gtrends_spark_since_",begin_day_i,"_",height_width,".Rds")))
   }
 }
+
+
+
