@@ -119,6 +119,16 @@ for(begin_day_i in begin_day){
     mutate(cor_casesMA7_hitsMA7_zscore = (cor_casesMA7_hitsMA7_max - cor_casesMA7_hitsMA7_mean) / cor_casesMA7_hitsMA7_sd,
            cor_deathMA7_hitsMA7_zscore = (cor_deathMA7_hitsMA7_max - cor_deathMA7_hitsMA7_mean) / cor_deathMA7_hitsMA7_sd)
   
+  gtrends_long_df$cor_casesMA7_hitsMA7_max[is.na(gtrends_long_df$cor_casesMA7_hitsMA7_zscore)] <- NA
+  gtrends_long_df$cor_casesMA7_hitsMA7_mean[is.na(gtrends_long_df$cor_casesMA7_hitsMA7_zscore)] <- NA
+  gtrends_long_df$cor_casesMA7_hitsMA7_sd[is.na(gtrends_long_df$cor_casesMA7_hitsMA7_zscore)] <- NA
+  gtrends_long_df$cor_casesMA7_hitsMA7_lag[is.na(gtrends_long_df$cor_casesMA7_hitsMA7_zscore)] <- NA
+  
+  gtrends_long_df$cor_deathMA7_hitsMA7_max[is.na(gtrends_long_df$cor_deathMA7_hitsMA7_zscore)] <- NA
+  gtrends_long_df$cor_deathMA7_hitsMA7_mean[is.na(gtrends_long_df$cor_deathMA7_hitsMA7_zscore)] <- NA
+  gtrends_long_df$cor_deathMA7_hitsMA7_sd[is.na(gtrends_long_df$cor_deathMA7_hitsMA7_zscore)] <- NA
+  gtrends_long_df$cor_deathMA7_hitsMA7_lag[is.na(gtrends_long_df$cor_deathMA7_hitsMA7_zscore)] <- NA
+  
   #### Append together
   cor_max_df <- bind_rows(gtrends_long_df %>%
                             dplyr::rename(cor = cor_casesMA7_hitsMA7_max,
@@ -135,9 +145,8 @@ for(begin_day_i in begin_day){
     filter(!is.na(zscore))
   
   # Merge Correlations with main data --------------------------------------------
-  gtrends_df <- merge(gtrends_df, cor_max_cases_df, by = c("geo", "keyword_en"), all.x=T, all.y=F)
-  gtrends_df <- merge(gtrends_df, cor_max_death_df, by = c("geo", "keyword_en"), all.x=T, all.y=F)
-  
+  gtrends_df <- merge(gtrends_df, gtrends_long_df, by = c("geo", "keyword_en"), all.x=T, all.y=F)
+
   # Cleanup gtrends_df -----------------------------------------------------------
   
   #### Remove lead/lags
