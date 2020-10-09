@@ -155,13 +155,13 @@ ui <- fluidPage(
                  before considering medical attention
                  to understand their symptoms and see options for home treatments.
                     Using data from Jan 1 - September 20, 2020, this dashboard illustrates how search activity for specific symptoms
-                    strongly matches - and often preceds - trends in COVID-19 cases.</h4>"),
+                    strongly matches - and often preceeds - trends in COVID-19 cases.</h4>"),
                  br(),
                  
                  HTML("<h4>Trends in search popularity of COVID-19 symptoms should not replace
                  administrative data on cases. The relation between the two is strong
                  but <a href='https://www.nature.com/news/when-google-got-flu-wrong-1.12413'>not perfect</a>. However, Google data can supplement official data.
-                This is particulrarly true in circumstances
+                This is particularly true in circumstances
                     when testing or data may not be widely available. Moreover, given that
                     Google trends information is updated in real time, sudden increases in 
                     search activity can warn of potential growth in COVID-19 cases.</h4>"),
@@ -175,7 +175,7 @@ ui <- fluidPage(
                       In addition, we determine whether search interest can help predict future cases or deaths
                       or whether search interest responds or comes after cases/deaths. To determine this, we shift COVID-19 cases/deaths
                       by up to 21 days from its actual date. We calculate the correlation between
-                      the shifted COVID-19 and the search interst. Using all these estimated correlations, we determine the 
+                      the shifted COVID-19 and the search interest. Using all these estimated correlations, we determine the 
                       following metrics:</h4>")
                  # HTML("<h4>For each search term, we seek to understand (1) the strength of the correlation
                  #      between COVID-19 cases/deaths and Google search term interest and (2) when the correlation
@@ -194,7 +194,7 @@ ui <- fluidPage(
                       <b>positive values</b> indicate the search interest reacts to COVID-19 cases/deaths</h4></li>
                       <li><h4><b>Z-Score of Lead/Lag Days:</b> How different the maximum correlation is from other correlations. We calcualte the <b> z-score </b>, 
                  or the number of standard deviations the maximum correlation is from the average correlation. 
-                 <b>Large z-scores</b> indicate that the chosen lead/lag day is certain while
+                 <b>Large z-scores</b> (typically around 1.9 or higher) indicate that the chosen lead/lag day is certain while
                  <b>small z-scores</b> indicate that the chosen lead/lag day isn't that different from others, so the chosen lead/lag day is relatively arbitrary</li>
                       </ul>"),
                  
@@ -644,7 +644,7 @@ ui <- fluidPage(
                  h2("Subnational Case Study: Brazil", align = "center"),
                  HTML("While the dashboard shows country level results, the project
                  team also found that Google search term interest also correlates
-                 with COVID-19 at the subnational level using Brazil as a <a href='https://drive.google.com/file/d/1xVI04a2BvTIzcOdlZ1piCNywd8dsI4IN/view?usp=sharing'>case study.</a>")
+                 with COVID-19 at the subnational level using Brazil as a <a href='https://drive.google.com/file/d/1-DrtOdFdKCv99G-w3zHK0VyDK65GqEpJ/view?usp=sharing'>case study.</a>")
           )
         ),
         
