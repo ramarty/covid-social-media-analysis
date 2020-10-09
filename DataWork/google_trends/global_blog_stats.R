@@ -10,6 +10,9 @@ cor_max_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "Fin
                                 "global_with_refstate",
                                 paste0("gl_gtrends_ref","US","_adj_cases_correlations_since_",begin_day_i,".Rds")))
 
+## Number of countries
+cor_max_df$geo %>% unique() %>% length()
+
 cor_max_df <- cor_max_df %>%
   filter(type %in% "Cases") 
 
