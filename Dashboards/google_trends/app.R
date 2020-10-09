@@ -208,7 +208,11 @@ ui <- fluidPage(
         
         fluidRow(
           column(12, align = "center",
-                 HTML("<strong>Correlation between <span style='color:orange;'>COVID-19 cases</span> (shifted) and <span style='color:green;'>Search Term Interest</span></strong>"),
+                 HTML("<strong>Correlation between <span style='color:orange;'>COVID-19 cases</span> (shifted) and <span style='color:green;'>Search Term Interest</span></strong>")
+          )
+        ),
+        fluidRow(
+          column(12, align = "center",
                  img(src="cor.gif", width='70%')
           )
         ),
