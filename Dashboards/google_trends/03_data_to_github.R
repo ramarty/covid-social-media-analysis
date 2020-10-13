@@ -1,8 +1,6 @@
 # Transfer dashboard data from OneDrive to Github
 
-
-
-# Move telecom data to github folder -------------------------------------------
+# Move data to github folder ---------------------------------------------------
 IN_PATH <- file.path(dropbox_file_path, "Data", "google_trends", "DashboardData",
                      "data")
 
@@ -20,7 +18,13 @@ temp <- list.files(IN_PATH, pattern = "*.Rds|.*png") %>%
               overwrite=T)
   })
 
-#### Keywords
+# Move correlation gif to github folder ----------------------------------------
+file.copy(file.path(dropbox_file_path, "Data", "google_trends", "Outputs", 
+                    "cor_gif", "cor.gif"),
+          file.path(github_file_path, "Dashboards", "google_trends", "www/"),
+          overwrite=T)
+
+# Move keyword/langauge files to github folder ---------------------------------
 keywords <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", 
                               "keywords", "FinalData", "covid_keywords_alllanguages.Rds"))
 write.csv(keywords, file.path(github_file_path, "Dashboards", "google_trends", "data", "covid_keywords.csv"))

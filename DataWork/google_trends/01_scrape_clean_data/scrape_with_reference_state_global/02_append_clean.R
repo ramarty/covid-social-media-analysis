@@ -51,19 +51,14 @@ languages <- languages %>%
 
 gtrends_df <- merge(gtrends_df, languages, by = "geo", all.x = T, all.y = F)
 
-#### Fix language code in gtrends dataset
-gtrends_df <- gtrends_df[!(gtrends_df$language %in% c("pr", "ge")),]
-#gtrends_df$language[gtrends_df$language %in% "ge"] <- "de"
-#gtrends_df$language[gtrends_df$language %in% "pr"] <- "pt"
-
 #### Only keep if google hits language matches state language
 gtrends_df <- gtrends_df %>%
   filter(!is.na(state_language)) %>%
   filter(language == state_language)
 
 # Merge in English Version of Keyword ------------------------------------------
-keywords <- read.csv(file.path(dropbox_file_path, "Data", "google_trends", "covid_keywords.csv"),
-                     stringsAsFactors = F)
+keywords <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", 
+                               "keywords", "FinalData","covid_keywords_alllanguages.Rds"))
 
 #### Dataset with english and translated word
 keywords <- keywords %>%

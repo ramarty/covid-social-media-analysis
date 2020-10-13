@@ -27,8 +27,6 @@ for(language in language_codes_all){
     arrange(priority_to_scrape) %>%
     filter(scrape %in% "yes")
   
-  keywords <- keywords[keywords$keyword_en %in% c("loss of smell", "I can't smell"),]
-
   # Clean keyword
   keywords_vec <- keywords[[paste0("keyword_", language)]] %>% tolower() %>% as.character()
   keywords_vec <- keywords_vec[keywords_vec != ""]
@@ -43,7 +41,7 @@ for(language in language_codes_all){
   extract_trends <- function(iso_i,
                              term_i, 
                              comparison_iso, 
-                             sleep_time = 16,
+                             sleep_time = 0.02,
                              also_scrape_without_cstate = T){
     
     print(iso_i)
@@ -115,7 +113,7 @@ for(language in language_codes_all){
     }
     
     #### 4. Take a quick nap b/c of google rate limits
-    Sys.sleep(sleep_time + runif(1)*2)
+    Sys.sleep(sleep_time) #  + runif(1)*2
     
     print(nrow(out_all_df))
     return(out_all_df)
@@ -151,7 +149,7 @@ for(language in language_codes_all){
           
           saveRDS(term_df, out_path)
           
-          Sys.sleep(16) # pause after each term
+          Sys.sleep(0.01) # pause after each term
           
         }, error=function(e){})
         
