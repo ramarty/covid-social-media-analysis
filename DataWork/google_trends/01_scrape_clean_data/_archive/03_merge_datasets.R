@@ -18,7 +18,8 @@ library(tidylog)
 state_pop_data <- read.csv(file.path(dropbox_file_path, "Data/city_population/FinalData/brazil_state_pop.csv"))
 
 #admin data on covid-19 cases
-covid_data <- read.csv(file.path(dropbox_file_path, "Data/brazil_admin_data/brazil_covid19_200705.csv"), encoding = "UTF-8")
+#covid_data <- read.csv(file.path(dropbox_file_path, "Data/brazil_admin_data/brazil_covid19_200705.csv"), encoding = "UTF-8")
+covid_data <- read.csv(file.path(dropbox_file_path, "Data/brazil_admin_data/brazil_covid19_201008.csv"), encoding = "UTF-8")
 
 #data of google searches at the national level
 gtrends_data <- 
@@ -66,7 +67,7 @@ state_pop_data <-
 #We now merge the datasets on gtrends and covid
 gtrends_data <- 
   gtrends_data %>% 
-  left_join(covid_data, by = c("date", "sub_code_red" = "state"))
+  full_join(covid_data, by = c("date", "sub_code_red" = "state"))
 
 #we add the population data
 gtrends_data <- 
