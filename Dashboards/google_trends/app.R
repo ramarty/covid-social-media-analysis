@@ -1343,12 +1343,12 @@ server = (function(input, output, session) {
         #vjust = 0.5, 
         color=color_cases,
         face = "bold",
-        size=13),
+        size=15),
         axis.title.y.right = element_text(#angle = 0, 
           #vjust = 0.5, 
           color=color_hits,
           face = "bold",
-          size=13),
+          size=15),
         axis.text.y.left = element_text(color = color_cases,
                                         size=13),
         axis.text.y.right = element_text(color = color_hits,
@@ -1515,7 +1515,7 @@ server = (function(input, output, session) {
         unique()
       
       if(input$select_search_category_country != "All"){
-        keywords_vec <- keywords_df_i$keyword_en[keywords_df_i$category %in% input$select_search_category_country]
+        keywords_vec <- keywords_df$keyword_en[keywords_df$category %in% input$select_search_category_country]
         keywords_in_country <- keywords_in_country[keywords_in_country %in% keywords_vec]
       }
       
