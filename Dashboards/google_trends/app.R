@@ -688,7 +688,7 @@ ui <- fluidPage(
                  br(),
                  br(),
                  br()
-                 )
+          )
         )
         
         
@@ -1206,8 +1206,11 @@ server = (function(input, output, session) {
       arrange(-Correlation)
     
     #### Adjust Variables
-    gtrends_spark_df$Correlation <- gtrends_spark_df$Correlation %>% round(3)
-    gtrends_spark_df$`Lead/Lag` <- paste(gtrends_spark_df$`Lead/Lag`, "days")
+    gtrends_spark_df <- gtrends_spark_df %>%
+      mutate(Correlation = Correlation %>% round(3),
+             `Lead/Lag` = paste(`Lead/Lag`, "days"))
+    #gtrends_spark_df$Correlation <- gtrends_spark_df$Correlation %>% round(3)
+    #gtrends_spark_df$`Lead/Lag` <- paste(gtrends_spark_df$`Lead/Lag`, "days")
     
     #### Make Table
     bar_color <- "#FF9999"
@@ -1491,30 +1494,42 @@ server = (function(input, output, session) {
   })
   
   # ** Select Keyword: Country --------------------
-  output$select_keyword_country_ui <- renderUI({
+  observe({
     
-    out <- selectInput(
-      "select_keyword_country",
-      label = strong("Search Term"),
-      choices = keyword_list,
-      selected = "Loss of Smell",
-      multiple = F
-    )
-    
-    if(input$select_search_category_country != "All"){
+    output$select_keyword_country_ui <- renderUI({
       
-      keyword_df_i <- keywords_df[keywords_df$category %in% input$select_search_category_country,]
+      ## Default
+      out <- selectInput(
+        "select_keyword_country",
+        label = strong("Search Term"),
+        choices = keyword_list,
+        selected = "Loss of Smell",
+        multiple = F
+      )
+      
+      ## Restrict to keywords in country
+      keywords_in_country <- gtrends_df %>%
+        filter(name %in% input$select_country) %>%
+        arrange(desc(cor_casesMA7_hitsMA7_max)) %>%
+        pull(keyword_en) %>%
+        unique()
+      
+      if(input$select_search_category_country != "All"){
+        keywords_vec <- keywords_df_i$keyword_en[keywords_df_i$category %in% input$select_search_category_country]
+        keywords_in_country <- keywords_in_country[keywords_in_country %in% keywords_vec]
+      }
       
       out <- selectInput(
         "select_keyword_country",
         label = strong("Search Term"),
-        choices = keyword_df_i$keyword_en,
-        selected = keyword_df_i$keyword_en[1],
+        choices = keywords_in_country,
+        selected = keywords_in_country[1],
         multiple = F
       )
-    }
-    
-    out
+      
+      out
+      
+    })
     
   })
   
