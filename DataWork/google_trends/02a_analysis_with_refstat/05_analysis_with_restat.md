@@ -377,6 +377,7 @@ trends_df %>%
   filter(date == "2020-06-28", !is.na(deaths)) %>% 
   count(deaths, state, cant_smell_appears, first_date_cant_smell) %>% 
   arrange(desc(deaths)) %>% 
+  mutate(cant_smell_appears = if_else(cant_smell_appears == 1, "Yes", "No")) %>% 
   ggplot()+ 
   geom_col(aes(fct_reorder(state, deaths), deaths, fill = cant_smell_appears)) +
   geom_label_repel(
@@ -392,10 +393,14 @@ trends_df %>%
   ) + 
   coord_flip() + 
   labs(
-    title = "States ordered by deaths on June 28th, 2020", 
+    title = "States ordered by COVID-19 deaths up to June 28th, 2020", 
     x = "State", 
-    y = "Deaths"
-  )
+    y = "COVID-19 Deaths", 
+    fill = "Search activity for I can't smell reported by Google", 
+    caption = "The white boxes indicate the date in which I can't smell\nappeared in Google Trends for the first time in each state", 
+    subtitle = "States where Google reported I can't smell searches are more affected by COVID-19,\nand the searches appeared earlier for most-affected states"
+  ) + 
+  theme_light()
 ```
 
 ![](05_analysis_with_restat_files/figure-html/unnamed-chunk-17-1.png)<!-- -->
@@ -478,7 +483,7 @@ trends_df %>%
 ```
 
 ```
-## # A tibble: 165,228 x 33
+## # A tibble: 167,874 x 33
 ##    date        hits hits_with_comps~ keyword geo   time  gprop category
 ##    <date>     <dbl>            <dbl> <chr>   <chr> <chr> <chr> <chr>   
 ##  1 2020-01-01     0                0 ajuda ~ BR-MG 2020~ web   0       
@@ -491,7 +496,7 @@ trends_df %>%
 ##  8 2020-01-08     0                0 ajuda ~ BR-MG 2020~ web   0       
 ##  9 2020-01-09     0                0 ajuda ~ BR-MG 2020~ web   0       
 ## 10 2020-01-10     0                0 ajuda ~ BR-MG 2020~ web   0       
-## # ... with 165,218 more rows, and 25 more variables: hits_compstate <dbl>,
+## # ... with 167,864 more rows, and 25 more variables: hits_compstate <dbl>,
 ## #   hits_adj <dbl>, state <chr>, sub_code_red <chr>, region <fct>, cases <int>,
 ## #   deaths <int>, estimate_2018_state <int>, census_2010_state <int>,
 ## #   perc_change <dbl>, categories <chr>, case_rate <dbl>, death_rate <dbl>,
@@ -525,7 +530,8 @@ week_geo <-
     mean_growth_rate_cases = mean(growth_rate_cases, na.rm = TRUE), 
     mean_growth_rate_deaths = mean(growth_rate_deaths, na.rm = TRUE), 
     sum_cases = sum(cases, na.rm = TRUE), 
-    sum_deaths = sum(deaths, na.rm = TRUE)
+    sum_deaths = sum(deaths, na.rm = TRUE), 
+    week_median_date = mean(date, na.rm = TRUE)
   ) %>% 
   ungroup()
 
@@ -983,6 +989,106 @@ write.csv(
 ```
 
 
+## Review of final Graph - using actual cases and deaths (not aggregated at weekly level)
+
+
+```r
+week_df %>% 
+  filter(!is.na(weeks_since_max_cant_smell)) %>%
+  group_by(week_number, state) %>% 
+  summarize(
+    mean_cases = mean(mean_cases, na.rm = TRUE), 
+    mean_deaths = mean(mean_deaths, na.rm = TRUE), 
+    week_max_days = mean(week_max_days, na.rm = TRUE), 
+    week_number_date = mean(week_median_date)
+  ) %>% 
+  mutate(week_max_days_date = if_else(week_number == week_max_days, week_number_date, NA_Date_)) %>% 
+  ggplot() +
+  geom_line(aes(week_number_date, mean_cases)) + 
+  geom_vline(aes(xintercept = week_max_days_date), linetype = "dashed") +
+  facet_wrap(vars(state)) + 
+  labs(
+    title = "Evolution in COVID-19 cases in Brazilian states relative to I can't smell searches",
+    x = "Date", 
+    y = "COVID-19 cases", 
+    caption = "The vertical dashed line indicates the week with the most I can't smell appearances"
+    ) +
+  theme_light() + 
+  scale_y_continuous(
+    labels = scales::unit_format(scale = 1/1000, suffix = "k")
+  ) 
+```
+
+![](05_analysis_with_restat_files/figure-html/unnamed-chunk-35-1.png)<!-- -->
+
+
+```r
+week_df %>% 
+  filter(!is.na(weeks_since_max_cant_smell)) %>%
+  group_by(week_number, state) %>% 
+  summarize(
+    mean_cases = mean(mean_cases, na.rm = TRUE), 
+    mean_deaths = mean(mean_deaths, na.rm = TRUE), 
+    week_max_days = mean(week_max_days, na.rm = TRUE), 
+    week_number_date = mean(week_median_date)
+  ) %>% 
+  mutate(week_max_days_date = if_else(week_number == week_max_days, week_number_date, NA_Date_)) %>% 
+  ggplot() +
+  geom_line(aes(week_number_date, mean_cases)) + 
+  geom_vline(aes(xintercept = week_max_days_date), linetype = "dashed") +
+  facet_wrap(vars(state), scales = "free_y") + 
+  labs(
+    title = "Evolution in COVID-19 cases in Brazilian states relative to I can't smell searches",
+    x = "Date", 
+    y = "COVID-19 cases", 
+    caption = "The vertical dashed line indicates the week with the most I can't smell appearances"
+    ) +
+  theme_light() + 
+  scale_y_continuous(
+    labels = scales::unit_format(scale = 1/1000, accuracy = 1, suffix = "k")
+  ) 
+```
+
+![](05_analysis_with_restat_files/figure-html/unnamed-chunk-36-1.png)<!-- -->
+
+
+Double checking the COVID-19 cases in the previous graph is correct (Not needed)
+
+
+```r
+weekly_data_to_merge <- 
+  week_df %>% 
+  filter(!is.na(weeks_since_max_cant_smell)) %>%
+  group_by(week_number, state) %>% 
+  summarize(
+    mean_cases = mean(mean_cases, na.rm = TRUE), 
+    mean_deaths = mean(mean_deaths, na.rm = TRUE), 
+    week_max_days = mean(week_max_days, na.rm = TRUE), 
+    week_number_date = mean(week_median_date)
+  ) %>% 
+  mutate(week_max_days_date = if_else(week_number == week_max_days, week_number_date, NA_Date_)) 
+
+trends_df %>% 
+  left_join(weekly_data_to_merge, by = "week_number") %>% 
+  group_by(geo) %>% 
+  ggplot() +
+  geom_line(aes(week_number_date, cases)) + 
+  #geom_vline(aes(xintercept = week_max_days_date), linetype = "dashed") +
+  facet_wrap(vars(geo)) + 
+  labs(
+    title = "Evolution in COVID-19 cases in Brazilian states relative to I can't smell searches",
+    x = "Date", 
+    y = "Average number of cases in a week", 
+    caption = "The vertical dashed line indicates the week with the most I can't smell appearances"
+    ) +
+  theme_light() + 
+  scale_y_continuous(
+    labels = scales::unit_format(scale = 1/1000, suffix = "k")
+  )   
+```
+
+![](05_analysis_with_restat_files/figure-html/unnamed-chunk-37-1.png)<!-- -->
+
 
 ## Correlations between I can't smell and covid cases
 
@@ -1058,6 +1164,31 @@ We replicate the table of correlations from day -3 to day 3 for each state
 #         panel.border = element_blank(),
 #         panel.background = element_blank(),
 #         axis.ticks = element_blank())
+```
+
+
+```r
+week_df %>% 
+  filter(!is.na(weeks_since_max_cant_smell), state == "Maranhão") %>% 
+  count(week_number, days_cant_smell)
+```
+
+```
+## # A tibble: 26 x 4
+## # Groups:   geo [1]
+##    geo   week_number days_cant_smell     n
+##    <chr>       <dbl>           <int> <int>
+##  1 BR-MA           1              NA     1
+##  2 BR-MA           2              NA     1
+##  3 BR-MA           3              NA     1
+##  4 BR-MA           4              NA     1
+##  5 BR-MA           5              NA     1
+##  6 BR-MA           6              NA     1
+##  7 BR-MA           7              NA     1
+##  8 BR-MA           8              NA     1
+##  9 BR-MA           9              NA     1
+## 10 BR-MA          10              NA     1
+## # ... with 16 more rows
 ```
 
 
