@@ -125,7 +125,7 @@ color_tile2 <- function (...) {
 ui <- fluidPage(
   
   navbarPage(
-    theme = shinytheme("cosmo"), # journal, flatly, sandstone
+    theme = shinytheme("cosmo"), #cosmo, journal, flatly, sandstone
     collapsible = TRUE,
     title = "Google Trends",
     
