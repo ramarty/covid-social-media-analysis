@@ -349,14 +349,12 @@ ui <- fluidPage(
           
         ),
         
-        br(),
-        
         fluidRow(
           column(4, align = "center", offset = 2,
-                 plotOutput("keyword_cor", height = "100px")
+                 plotOutput("keyword_cor", height = "120px")
           ),
           column(4, align = "center",
-                 plotOutput("keyword_lag", height = "100px")
+                 plotOutput("keyword_lag", height = "120px")
           )
         ),
         
@@ -672,6 +670,7 @@ ui <- fluidPage(
                       <li><a href='https://ideas.repec.org/p/cep/cepdps/dp1693.html'>COVID-19, Lockdowns and Well-being: Evidence from Google Trends</a></li>
                       <li><a href='https://pubmed.ncbi.nlm.nih.gov/32279437/'>Use of Google Trends to investigate loss-of-smell-related searches during the COVID-19 outbreak</a></li>
                       <li><a href='https://europepmc.org/article/pmc/pmc7267744'>Predicting COVID-19 Incidence Using Anosmia and Other COVID-19 Symptomatology: Preliminary Analysis Using Google and Twitter.</a></li>
+                      <li><a href='https://www.mayoclinicproceedings.org/article/S0025-6196(20)30934-4/fulltext'>Correlations Between COVID-19 Cases and Google Trends Data in the United States: A State-by-State Analysis.</a></li>
                       </ul>"),
           )
         ),
@@ -1080,7 +1079,7 @@ server = (function(input, output, session) {
       mutate(cor = cor %>% as.factor())
     
     
-    seq(from=-1, to=1, by=.1) %>%
+    p <- seq(from=-1, to=1, by=.1) %>%
       as.data.frame() %>%
       dplyr::rename(cor = ".") %>%
       mutate(cor = cor %>% as.factor()) %>%
@@ -1101,6 +1100,8 @@ server = (function(input, output, session) {
             plot.title = element_text(face = "bold", size=13,
                                       hjust = 0.5))
     
+    #ggplotly(p)
+    p
   })
   
   # ** Lag Histogram -----------------------------------------------------------
