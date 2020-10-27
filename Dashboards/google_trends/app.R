@@ -352,7 +352,7 @@ ui <- fluidPage(
         fluidRow(
           column(4, align = "center", offset = 4,
                  htmlOutput("title_cor_lag")
-                 )
+          )
         ),
         
         fluidRow(
@@ -798,10 +798,15 @@ server = (function(input, output, session) {
       palette = "RdYlGn",
       domain = c(world_data$cor_covidMA7_hitsMA7_max[!is.na(world_data$cor_covidMA7_hitsMA7_max)], -1, 1))
     
+    pal_rev <- colorNumeric(
+      palette = "RdYlGn",
+      domain = c(world_data$cor_covidMA7_hitsMA7_max[!is.na(world_data$cor_covidMA7_hitsMA7_max)], -1, 1),
+      reverse = T)
+    
     #aa <<- world_data
     
     leaflet(height = "700px") %>%
-      addTiles() %>%
+      #addTiles() %>%
       addPolygons(data = world_data,
                   label = ~lapply(popup, HTML),
                   popupOptions = popupOptions(minWidth = 200,
@@ -816,13 +821,15 @@ server = (function(input, output, session) {
       #   this.on('popupopen', function() {HTMLWidgets.staticRender();})
       # }") %>%
       addLegend("topright",
-                pal = pal,
+                pal = pal_rev,
                 values = c(world_data$select_covid_type[!is.na(world_data$select_covid_type)], -1, 1),
                 title = paste0("Correlation<br>between<br>",
                                input$select_covid_type,
                                " and<br>Search<br>Activity"),
+                labFormat = labelFormat(transform = function(x) sort(x, decreasing = TRUE)),
                 opacity = 1,
                 bins = c(-1, -0.5, 0, 0.5, 1)) %>%
+      setMapWidgetStyle(list(background= "white")) %>%
       setView(zoom = 2, lat=0, lng=0) %>%
       add_deps("sparkline") %>%
       #add_deps("highchart", 'highcharter') %>%
@@ -989,6 +996,9 @@ server = (function(input, output, session) {
     cor_df <- cor_df %>%
       dplyr::filter(type %in% input$select_covid_type) 
     
+    cor_df$keyword_en[cor_df$keyword_en %in% "What are the Symptoms of Coronavirus"] <- "What are the Symptoms\nof Coronavirus"
+    cor_df$keyword_en[cor_df$keyword_en %in% "How to Treat Coronavirus"] <- "How to Treat\nCoronavirus"
+    
     p1 <- ggplot() +
       geom_dotplot(data = cor_df,
                    aes(x = reorder(keyword_en,
@@ -1051,10 +1061,13 @@ server = (function(input, output, session) {
   
   output$max_cor_hist_ui <- renderUI({
     
-    height <- "700px"
-    if(input$select_search_category == "Symptoms") height <- "500px"
-    if(input$select_search_category == "Mental Health") height <- "600px"
-    if(input$select_search_category == "Coronavirus General") height <- "300px"
+    height <- "2200px"
+    if(input$select_search_category == "Coronavirus General") height <- "600px"
+    if(input$select_search_category == "Mental Health") height <- "900px"
+    if(input$select_search_category == "Potential Consequences") height <- "400px"
+    if(input$select_search_category == "Prevention") height <- "500px"
+    if(input$select_search_category == "Symptoms") height <- "700px"
+    if(input$select_search_category == "Treatment") height <- "500px"
     
     plotOutput("max_cor_hist",
                height = height)
@@ -1376,64 +1389,70 @@ server = (function(input, output, session) {
   # **** Figure ------------------------------
   output$line_graph_country_key <- renderPlot({
     
-    if(F){
-      gtrends_sub_df <- gtrends_df %>%
-        filter(keyword_en %in% "Loss of Smell") %>%
-        filter(name %in% "United States")
+    p <- ggplot()
+    
+    if(!is.null(input$select_keyword_country)){
+      if(input$select_keyword_country != ""){
+        if(!is.null(input$select_country)){
+          if(!is.null(input$select_covid_type_map)){
+            
+            gtrends_sub_df <- gtrends_df %>%
+              filter(keyword_en %in% input$select_keyword_country) %>%
+              filter(name %in% input$select_country)
+            
+            #### COVID Names
+            if(input$select_covid_type_map %in% "Cases"){
+              gtrends_sub_df <- gtrends_sub_df %>%
+                dplyr::select(keyword_en, date, hits_ma7, cases_new) %>%
+                dplyr::rename(covid_new = cases_new)
+            } 
+            if(input$select_covid_type_map %in% "Deaths"){
+              gtrends_sub_df <- gtrends_sub_df %>%
+                dplyr::select(keyword_en, date, hits_ma7, death_new) %>%
+                dplyr::rename(covid_new = death_new)
+            } 
+            
+            multiplier <- max(gtrends_sub_df$covid_new, na.rm=T) / max(gtrends_sub_df$hits_ma7, na.rm=T)
+            gtrends_sub_df$hits_ma7_adj <- gtrends_sub_df$hits_ma7 * multiplier
+            
+            color_cases <- "orange"
+            color_hits <- "forestgreen"
+            
+            p <- gtrends_sub_df %>%
+              ggplot() +
+              geom_col(aes(x = date, y = covid_new),
+                       fill = color_cases,
+                       color = color_cases) +
+              geom_line(aes(x = date, y = hits_ma7_adj),
+                        color = color_hits,
+                        size = 1) +
+              labs(x = NULL, 
+                   y = input$select_covid_type_map) +
+              scale_y_continuous(sec.axis = sec_axis(~.*1, name = "Search Interest",
+                                                     breaks = c(0, max(gtrends_sub_df$hits_ma7_adj, na.rm=T)),
+                                                     labels = c("Low", "High"))) +
+              theme_minimal() +
+              theme(axis.title.y.left = element_text(#angle = 0, 
+                #vjust = 0.5, 
+                color=color_cases,
+                face = "bold",
+                size=15),
+                axis.title.y.right = element_text(#angle = 0, 
+                  #vjust = 0.5, 
+                  color=color_hits,
+                  face = "bold",
+                  size=15),
+                axis.text.y.left = element_text(color = color_cases,
+                                                size=13),
+                axis.text.y.right = element_text(color = color_hits,
+                                                 size=13),
+                axis.text = element_text(face = "bold", size=13),
+                plot.title = element_text(face = "bold", hjust = 0.5, size=13))
+            
+          }
+        }
+      }
     }
-    
-    gtrends_sub_df <- gtrends_df %>%
-      filter(keyword_en %in% input$select_keyword_country) %>%
-      filter(name %in% input$select_country)
-    
-    #### COVID Names
-    if(input$select_covid_type_map %in% "Cases"){
-      gtrends_sub_df <- gtrends_sub_df %>%
-        dplyr::select(keyword_en, date, hits_ma7, cases_new) %>%
-        dplyr::rename(covid_new = cases_new)
-    } 
-    if(input$select_covid_type_map %in% "Deaths"){
-      gtrends_sub_df <- gtrends_sub_df %>%
-        dplyr::select(keyword_en, date, hits_ma7, death_new) %>%
-        dplyr::rename(covid_new = death_new)
-    } 
-    
-    multiplier <- max(gtrends_sub_df$covid_new, na.rm=T) / max(gtrends_sub_df$hits_ma7, na.rm=T)
-    gtrends_sub_df$hits_ma7_adj <- gtrends_sub_df$hits_ma7 * multiplier
-    
-    color_cases <- "orange"
-    color_hits <- "forestgreen"
-    
-    p <- gtrends_sub_df %>%
-      ggplot() +
-      geom_col(aes(x = date, y = covid_new),
-               fill = color_cases,
-               color = color_cases) +
-      geom_line(aes(x = date, y = hits_ma7_adj),
-                color = color_hits,
-                size = 1) +
-      labs(x = NULL, 
-           y = input$select_covid_type_map) +
-      scale_y_continuous(sec.axis = sec_axis(~.*1, name = "Search Interest",
-                                             breaks = c(0, max(gtrends_sub_df$hits_ma7_adj, na.rm=T)),
-                                             labels = c("Low", "High"))) +
-      theme_minimal() +
-      theme(axis.title.y.left = element_text(#angle = 0, 
-        #vjust = 0.5, 
-        color=color_cases,
-        face = "bold",
-        size=15),
-        axis.title.y.right = element_text(#angle = 0, 
-          #vjust = 0.5, 
-          color=color_hits,
-          face = "bold",
-          size=15),
-        axis.text.y.left = element_text(color = color_cases,
-                                        size=13),
-        axis.text.y.right = element_text(color = color_hits,
-                                         size=13),
-        axis.text = element_text(face = "bold", size=13),
-        plot.title = element_text(face = "bold", hjust = 0.5, size=13))
     
     p
     
