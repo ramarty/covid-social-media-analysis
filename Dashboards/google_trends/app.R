@@ -1581,7 +1581,7 @@ server = (function(input, output, session) {
       out <- selectInput(
         "select_keyword_country",
         label = strong("Search Term"),
-        choices = keyword_list,
+        choices = sort(keyword_list),
         selected = "Loss of Smell",
         multiple = F
       )
@@ -1601,8 +1601,8 @@ server = (function(input, output, session) {
       out <- selectInput(
         "select_keyword_country",
         label = strong("Search Term"),
-        choices = keywords_in_country,
-        selected = keywords_in_country[1],
+        choices = sort(keywords_in_country),
+        selected = sort(keywords_in_country)[1],
         multiple = F
       )
       
