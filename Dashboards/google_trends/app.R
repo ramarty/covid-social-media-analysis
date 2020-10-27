@@ -305,7 +305,7 @@ ui <- fluidPage(
                    multiple = F
                  )
           ),
-          column(2, align = "center",
+          column(3, align = "center",
                  selectInput(
                    "select_search_category",
                    label = strong("Search Term Categories"),
@@ -350,11 +350,17 @@ ui <- fluidPage(
         ),
         
         fluidRow(
+          column(4, align = "center", offset = 4,
+                 htmlOutput("title_cor_lag")
+                 )
+        ),
+        
+        fluidRow(
           column(4, align = "center", offset = 2,
-                 plotOutput("keyword_cor", height = "120px")
+                 plotOutput("keyword_cor", height = "130px")
           ),
           column(4, align = "center",
-                 plotOutput("keyword_lag", height = "120px")
+                 plotOutput("keyword_lag", height = "130px")
           )
         ),
         
@@ -452,7 +458,7 @@ ui <- fluidPage(
                    multiple = F
                  )
           ),
-          column(2, align = "center",
+          column(3, align = "center",
                  selectInput(
                    "select_search_category_country",
                    label = strong("Search Term Categories"),
@@ -816,7 +822,7 @@ server = (function(input, output, session) {
                                input$select_covid_type,
                                " and<br>Search<br>Activity"),
                 opacity = 1,
-                bins = c(-1, 0, 1)) %>%
+                bins = c(-1, -0.5, 0, 0.5, 1)) %>%
       setView(zoom = 2, lat=0, lng=0) %>%
       add_deps("sparkline") %>%
       #add_deps("highchart", 'highcharter') %>%
@@ -1055,6 +1061,30 @@ server = (function(input, output, session) {
     
   })
   
+  # ** Cor/Lag Title -----------------------------------------------------------
+  output$title_cor_lag <- renderText({
+    
+    cor_df     <- readRDS(file.path("data", paste0("correlations_since_",
+                                                   input$select_begin_date,
+                                                   ".Rds")))
+    
+    if(input$select_continent != "All"){
+      cor_df <- cor_df %>%
+        dplyr::filter(continent %in% input$select_continent) 
+    }
+    
+    cor_df <- cor_df %>%
+      dplyr::filter(type %in% input$select_covid_type,
+                    keyword_en %in% input$select_keyword) 
+    
+    cor_df <- cor_df %>%
+      filter(!is.na(cor))
+    
+    paste0("<strong>", input$select_keyword,"</strong><br><b><em>",nrow(cor_df), " countries with available data</em></b>")
+    
+  })
+  
+  
   # ** Cor Histogram -----------------------------------------------------------
   output$keyword_cor <- renderPlot({
     
@@ -1090,17 +1120,36 @@ server = (function(input, output, session) {
       ggplot() +
       geom_col(aes(x = factor(cor), y = N),
                color = "black",
-               fill = "palegreen3") + 
+               fill = "palegreen3") +
       labs(title = "Correlation",
+           subtitle = paste0("Average: ", round(mean(cor_df$cor), 2)),
            x = NULL,
            y = "Number\nOf\nCountries") +
+      scale_x_discrete(labels = c("-1", "",
+                                  "-0.8", "",
+                                  "-0.6", "",
+                                  "-0.4", "",
+                                  "-0.2", "",
+                                  "0", "",
+                                  "0.2", "",
+                                  "0.4", "",
+                                  "0.6", "",
+                                  "0.8", "",
+                                  "1", "")) +
       theme_minimal() +
       theme(axis.title.y = element_text(angle = 0,
+                                        #family = "Helvetica",
                                         vjust = 0.5),
-            plot.title = element_text(face = "bold", size=13,
-                                      hjust = 0.5))
+            plot.title = element_text(face = "bold", size=14,
+                                      #family = "Helvetica",
+                                      hjust = 0.5),
+            plot.subtitle = element_text(face = "bold.italic", 
+                                         #family = "Helvetica",
+                                         size=12,
+                                         hjust = 0.5),
+            panel.grid.major = element_blank(), 
+            panel.grid.minor = element_blank())
     
-    #ggplotly(p)
     p
   })
   
@@ -1120,13 +1169,6 @@ server = (function(input, output, session) {
       dplyr::filter(type %in% input$select_covid_type,
                     keyword_en %in% input$select_keyword) 
     
-    # cor_sum_df <- cor_df %>%
-    #   ungroup() %>%
-    #   mutate(lag = round(lag/3, 0)*3) %>%
-    #   group_by(lag) %>%
-    #   summarise(N = n()) %>%
-    #   filter(lag != 21)
-    
     cor_df %>%
       ggplot() +
       geom_histogram(aes(x = lag),
@@ -1134,15 +1176,51 @@ server = (function(input, output, session) {
                      fill = "palegreen3",
                      bins = 15) + 
       labs(title = "Lead/Lag",
+           subtitle = paste0("Average ", round(mean(cor_df$lag),2), " days"), 
            x = NULL,
            y = "Number\nOf\nCountries") +
       theme_minimal() +
       theme(axis.title.y = element_text(angle = 0,
                                         vjust = 0.5),
-            plot.title = element_text(face = "bold", size=13,
-                                      hjust = 0.5))
+            plot.title = element_text(face = "bold", size=14,
+                                      hjust = 0.5),
+            plot.subtitle = element_text(face = "bold.italic", size=12,
+                                         hjust = 0.5),
+            panel.grid.major = element_blank(), 
+            panel.grid.minor = element_blank())
     
   })
+  
+  # ** Cor Value Box -----------------------------------------------------------
+  # output$keyword_cor_box <- renderValueBox({
+  #   
+  #   cor_df     <- readRDS(file.path("data", paste0("correlations_since_",
+  #                                                  input$select_begin_date,
+  #                                                  ".Rds")))
+  #   
+  #   if(input$select_continent != "All"){
+  #     cor_df <- cor_df %>%
+  #       dplyr::filter(continent %in% input$select_continent) 
+  #   }
+  #   
+  #   cor_df <- cor_df %>%
+  #     dplyr::filter(type %in% input$select_covid_type,
+  #                   keyword_en %in% input$select_keyword) 
+  #   
+  #   cor_mean <- cor_df$cor %>% round(2)
+  #   
+  #   
+  #   valueBox(1, 
+  #            "Average Correlation", 
+  #            icon = icon("database"), 
+  #            color = "blue", 
+  #            width = 3,
+  #            href = NULL)
+  #   
+  # })
+  
+  
+  
   
   # COUNTRY FIGURES **************** -------------------------------------------
   
