@@ -41,7 +41,7 @@ for(language in language_codes_all){
   extract_trends <- function(iso_i,
                              term_i, 
                              comparison_iso, 
-                             sleep_time = 11,
+                             sleep_time = 0.01,
                              also_scrape_without_cstate = T){
     
     print(iso_i)

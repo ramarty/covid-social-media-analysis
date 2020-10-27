@@ -20,7 +20,7 @@ language_codes <- languages_df$Language_code_main[!is.na(languages_df$Language_c
 language_codes <- language_codes[language_codes != "en"] # remove english
 
 # Scrape Translations ----------------------------------------------------------
-for(l_code_i in language_codes){
+for(l_code_i in sort(language_codes)){
   print(l_code_i)
   
   translations_out <- r_google_translate_vec(keywords_df$keyword_en,

@@ -790,7 +790,7 @@ server = (function(input, output, session) {
     # https://stackoverflow.com/questions/61175878/r-leaflet-highcharter-tooltip-label
     pal <- colorNumeric(
       palette = "RdYlGn",
-      domain = c(world_data$cor_covidMA7_hitsMA7_max[!is.na(world_data$cor_covidMA7_hitsMA7_max)], 0, 1))
+      domain = c(world_data$cor_covidMA7_hitsMA7_max[!is.na(world_data$cor_covidMA7_hitsMA7_max)], -1, 1))
     
     #aa <<- world_data
     
@@ -811,12 +811,12 @@ server = (function(input, output, session) {
       # }") %>%
       addLegend("topright",
                 pal = pal,
-                values = c(world_data$select_covid_type[!is.na(world_data$select_covid_type)], 0, 1),
+                values = c(world_data$select_covid_type[!is.na(world_data$select_covid_type)], -1, 1),
                 title = paste0("Correlation<br>between<br>",
                                input$select_covid_type,
                                " and<br>Search<br>Activity"),
                 opacity = 1,
-                bins = c(-1, -.5, 0, 0.5, 1)) %>%
+                bins = c(-1, 0, 1)) %>%
       setView(zoom = 2, lat=0, lng=0) %>%
       add_deps("sparkline") %>%
       #add_deps("highchart", 'highcharter') %>%
@@ -1472,7 +1472,7 @@ server = (function(input, output, session) {
     out <- selectInput(
       "select_keyword",
       label = strong("Search Term"),
-      choices = keyword_list,
+      choices = sort(keyword_list),
       selected = "Loss of Smell",
       multiple = F
     )
@@ -1484,8 +1484,8 @@ server = (function(input, output, session) {
       out <- selectInput(
         "select_keyword",
         label = strong("Search Term"),
-        choices = keyword_df_i$keyword_en,
-        selected = keyword_df_i$keyword_en[1],
+        choices = sort(keyword_df_i$keyword_en),
+        selected = sort(keyword_df_i$keyword_en)[1],
         multiple = F
       )
     }

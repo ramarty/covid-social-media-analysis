@@ -3,11 +3,11 @@
 #### PARAMETERS
 DASHBOARD_PATH <- file.path(dropbox_file_path, "Data", "google_trends", "DashboardData", "data")
 
-keywords <- c("Corona Symptoms", "Coronavirus", "Coronavirus Symptoms",
-              "covid symptoms", "covid-19", "how to treat coronavirus",
-              "Loss of Smell", "I Can't Smell", "Loss of Taste",
-              "Fever", "Tired", "Cough", "My Eyes Hurt",
-              "Anxiety", "Depression", "Insomnia", "Loneliness", "Panic", "Suicide")
+# keywords <- c("corona symptoms", "coronavirus", "coronavirus symptoms",
+#               "covid symptoms", "covid-19", "how to treat coronavirus",
+#               "loss of smell", "i can't smell", "loss of taste",
+#               "fever", "tired", "cough", "my eyes hurt",
+#               "anxiety", "depression", "insomnia", "loneliness", "panic", "suicide")
 
 begin_day <- c("2020-02-01",
                "2020-03-01",
@@ -18,6 +18,14 @@ begin_day <- c("2020-02-01",
                "2020-08-01")
 
 #begin_day <- "2020-02-01"
+
+#### Load Keywords
+keywords_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", 
+                                 "keywords", "FinalData", "covid_keywords_alllanguages.Rds"))
+keywords <- keywords_df %>%
+  filter(scrape %in% "yes") %>%
+  pull(keyword_en) %>%
+  tolower()
 
 # World Shapefile --------------------------------------------------------------
 world_sp <- readRDS(file.path(dropbox_file_path, "Data", "world_shapefile", 
@@ -47,18 +55,17 @@ saveRDS(world_sp, file.path(DASHBOARD_PATH, "world.Rds"))
 # Correlations -----------------------------------------------------------------
 for(begin_day_i in begin_day){
   
+  print(paste(begin_day_i, "-------------------------------------------------"))
+  
   cor_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
                               "global_with_refstate",
                               paste0("gl_gtrends_ref","US","_adj_cases_correlations_since_",begin_day_i,".Rds")))
   
-  cor_df$keyword_en <- cor_df$keyword_en %>% tools::toTitleCase()
+  cor_df <- cor_df[tolower(cor_df$keyword_en) %in% keywords,]
+  
+  cor_df$keyword_en <- cor_df$keyword_en %>% tools::toTitleCase() %>% str_replace_all("\\bi\\b", "I")
   cor_df <- merge(cor_df, world_df, by = "geo")
-  
-  cor_df$keyword_en <- cor_df$keyword_en %>% tools::toTitleCase()
-  cor_df$keyword_en[cor_df$keyword_en %in% "i Can't Smell"] <- "I Can't Smell"
-  
-  cor_df <- cor_df[cor_df$keyword_en %in% keywords,]
-  
+
   saveRDS(cor_df, file.path(DASHBOARD_PATH, paste0("correlations_since_",begin_day_i,".Rds")))
   
   
@@ -67,15 +74,13 @@ for(begin_day_i in begin_day){
                                   "global_with_refstate",
                                   paste0("gl_gtrends_ref","US","_adj_cases_cor_since_",begin_day_i,".Rds")))
   
+  gtrends_df <- gtrends_df[tolower(gtrends_df$keyword_en) %in% keywords,]
   gtrends_df <- gtrends_df[!is.na(gtrends_df$keyword_en),]
   
-  gtrends_df$keyword_en <- gtrends_df$keyword_en %>% tools::toTitleCase()
-  gtrends_df$keyword_en[gtrends_df$keyword_en %in% "i Can't Smell"] <- "I Can't Smell"
+  gtrends_df$keyword_en <- gtrends_df$keyword_en %>% tools::toTitleCase() %>% str_replace_all("\\bi\\b", "I")
   
   gtrends_df <- gtrends_df[gtrends_df$date >= "2020-02-01",]
   gtrends_df <- merge(gtrends_df, world_df, by = "geo")
-  
-  gtrends_df <- gtrends_df[gtrends_df$keyword_en %in% keywords,]
   
   gtrends_df <- gtrends_df %>%
     dplyr::select(keyword_en, keyword, date, hits, hits_ma7, name, geo, continent, cases_new, death_new,
