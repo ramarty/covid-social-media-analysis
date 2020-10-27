@@ -1563,7 +1563,7 @@ server = (function(input, output, session) {
         "select_keyword",
         label = strong("Search Term"),
         choices = sort(keyword_df_i$keyword_en),
-        selected = sort(keyword_df_i$keyword_en)[1],
+        selected = keyword_df_i$keyword_en[1],
         multiple = F
       )
     }
@@ -1602,7 +1602,7 @@ server = (function(input, output, session) {
         "select_keyword_country",
         label = strong("Search Term"),
         choices = sort(keywords_in_country),
-        selected = sort(keywords_in_country)[1],
+        selected = keywords_in_country[1],
         multiple = F
       )
       
