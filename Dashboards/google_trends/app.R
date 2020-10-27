@@ -1018,10 +1018,12 @@ server = (function(input, output, session) {
       labs(x = "",
            y = "Correlation",
            title = NULL) +
-      theme(axis.text.y = element_text(face = "bold", size = 14),
+      theme(axis.text.y = element_text(face = "bold", size = 14, color="black"),
+            axis.title.x = element_text(size = 14, color = "black", face="bold"),
             axis.text.x = element_text(size = 14),
             legend.text = element_text(size = 14),
-            legend.position = "top") 
+            legend.position = "top") +
+      scale_y_continuous(position = "right") 
     
     # cor_df$lag <- cor_df$lag + runif(cor_df$lag)
     # 
