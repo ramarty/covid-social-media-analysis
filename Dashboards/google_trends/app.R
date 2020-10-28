@@ -375,6 +375,15 @@ ui <- fluidPage(
                     tabPanel(id = "map_view",
                              "Map View", 
                              
+                             br(),
+                             fluidRow(
+                               column(12, align = "center",
+                                      htmlOutput("map_text")
+                                      )
+                             ),
+                             
+                             br(),
+                             
                              fluidRow(
                                column(12, align = "center", offset = 0,
                                       #strong("Click a country on the map"),
@@ -762,6 +771,7 @@ server = (function(input, output, session) {
     }
     
     #### Merge
+    gtrends_spark_df <- gtrends_spark_df %>% distinct(geo, .keep_all=T) # TODO
     world_data <- merge(world, gtrends_spark_df, by = "geo", all.x=T, all.y=F)
     world_data <- world_data %>% st_as_sf()
     
@@ -965,6 +975,19 @@ server = (function(input, output, session) {
     
   })
   
+  # **** Title - Map ---------------------------
+  output$map_text <- renderText({
+    paste0("<strong>Hover over the map to see trends in <span style='color:orange;'>COVID-19 ",
+           tolower(input$select_covid_type),
+           "</span> and <span style='color:green;'>search interest of '",
+           input$select_keyword, "'</span></strong>")
+    
+    # paste0("Correlation between COVID-19 ",
+    #        tolower(input$select_covid_type),
+    #        " and Google search interest. Data after ",
+    #        input$select_begin_date, 
+    #        " used.")
+  })
   
   # ** Max Correlation Dotplot -------------------------------------------------
   # **** Title ---------------------------
@@ -1480,11 +1503,11 @@ server = (function(input, output, session) {
     if(language_code %in% "en"){
       out <- ""
     } else{
-      out <- paste0("'", search_en, "' translated into ",
-                    languges_df$Language_main[languges_df$Code %in% geo],": ",
-                    search)
+      out <- paste0("'", search_en[1], "' translated into ",
+                    languges_df$Language_main[languges_df$Code %in% geo][1],": ",
+                    search[1])
     }
-    
+
     out 
     
     
