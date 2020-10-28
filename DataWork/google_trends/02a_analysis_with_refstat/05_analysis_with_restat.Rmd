@@ -26,6 +26,7 @@ This script performs analysis of the google trends data for Brazil to develop an
 ```{r}
 #user's file path
 if(Sys.info()[["user"]] == "wb537287") dropbox_file_path <- "/Users/wb537287/Dropbox/COVID Social Media Analysis/"
+if(Sys.info()[["user"]] == "robmarty") dropbox_file_path <- "~/Dropbox/World Bank/Side Work/COVID Social Media Analysis"
 
 #import data
 trends_df <- 
