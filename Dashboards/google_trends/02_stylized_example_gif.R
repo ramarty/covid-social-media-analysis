@@ -226,9 +226,6 @@ for(shift_i in rep(-10, 20)){
 
 
 if(T){
-  library(magick)
-  library(magrittr)
-  
   file.path(dropbox_file_path, "Data", "google_trends", "Outputs", 
             "cor_gif", "images") %>% 
     list.files(pattern = '*.png', full.names = TRUE) %>%
