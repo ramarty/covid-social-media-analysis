@@ -2,6 +2,7 @@
 
 # Packages ---------------------------------------------------------------------
 library(gtrendsR)
+library(countrycode)
 library(parallel)
 library(pbmcapply)
 library(ggplot2)

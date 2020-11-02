@@ -813,6 +813,16 @@ server = (function(input, output, session) {
     
     #aa <<- world_data
     
+    # +proj=wintri
+    # epsg2163 <- leafletCRS(
+    #   crsClass = "L.Proj.CRS",
+    #   #code = "EPSG:2163",
+    #   code = "ESRI:54030",
+    #   proj4def = "+proj=robin +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs",
+    #   #proj4def = "+proj=laea +lat_0=45 +lon_0=-100 +x_0=0 +y_0=0 +a=6370997 +b=6370997 +units=m +no_defs",
+    #   resolutions = 2^(16:7))
+    # options = leafletOptions(crs = epsg2163)
+    
     leaflet(height = "700px") %>%
       #addTiles() %>%
       addPolygons(data = world_data,
