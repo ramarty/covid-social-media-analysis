@@ -396,9 +396,9 @@ trends_df %>%
     title = "States ordered by COVID-19 deaths up to June 28th, 2020", 
     x = "State", 
     y = "COVID-19 Deaths", 
-    fill = "Search activity for I can't smell reported by Google", 
-    caption = "The white boxes indicate the date in which I can't smell\nappeared in Google Trends for the first time in each state", 
-    subtitle = "States where Google reported I can't smell searches are more affected by COVID-19,\nand the searches appeared earlier for most-affected states"
+    fill = "Search activity for \"I can't smell\" reported by Google", 
+    caption = "The white boxes indicate the date in which \"I can't smell\"\nappeared in Google Trends for the first time in each state", 
+    subtitle = "States where Google reported \"I can't smell\" searches are more affected by COVID-19,\nand the searches appeared earlier for most-affected states"
   ) + 
   theme_light()
 ```
@@ -1038,10 +1038,10 @@ week_df %>%
   geom_vline(aes(xintercept = week_max_days_date), linetype = "dashed") +
   facet_wrap(vars(state), scales = "free_y") + 
   labs(
-    title = "Evolution in COVID-19 cases in Brazilian states relative to I can't smell searches",
+    title = "Evolution in COVID-19 cases in Brazilian states relative to \"I can't smell\" searches",
     x = "Date", 
     y = "COVID-19 cases", 
-    caption = "The vertical dashed line indicates the week with the most I can't smell appearances"
+    caption = "The vertical dashed line indicates the week with the most \"I can't smell\" appearances reported by Google"
     ) +
   theme_light() + 
   scale_y_continuous(
