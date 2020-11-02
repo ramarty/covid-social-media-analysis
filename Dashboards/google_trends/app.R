@@ -25,17 +25,16 @@ library(dplyr)
 library(rmarkdown)
 library(lubridate)
 library(shiny)
-library(wesanderson)
+#library(wesanderson)
 library(ggplot2)
-library(ggtext)
+#library(ggtext)
 library(tidyr)
 library(shinyWidgets)
-library(zoo)
-library(cowplot)
+#library(zoo)
+#library(cowplot)
 library(bcrypt)
 library(shinyjs)
 library(ngram)
-library(rtweet)
 library(stringdist)
 library(stringr)
 library(rgdal)
@@ -49,7 +48,6 @@ library(raster)
 library(leaflet)
 library(leaflet.extras)
 library(plotly)
-library(data.table)
 library(formattable)
 library(tidyr)
 library(viridis)
@@ -125,7 +123,7 @@ color_tile2 <- function (...) {
 ui <- fluidPage(
   
   navbarPage(
-    theme = shinytheme("cosmo"), # journal, flatly, sandstone
+    theme = shinytheme("cosmo"), #cosmo, journal, flatly, sandstone
     collapsible = TRUE,
     title = "Google Trends",
     
@@ -305,7 +303,7 @@ ui <- fluidPage(
                    multiple = F
                  )
           ),
-          column(2, align = "center",
+          column(3, align = "center",
                  selectInput(
                    "select_search_category",
                    label = strong("Search Term Categories"),
@@ -349,14 +347,18 @@ ui <- fluidPage(
           
         ),
         
-        br(),
+        fluidRow(
+          column(4, align = "center", offset = 4,
+                 htmlOutput("title_cor_lag")
+          )
+        ),
         
         fluidRow(
           column(4, align = "center", offset = 2,
-                 plotOutput("keyword_cor", height = "100px")
+                 plotOutput("keyword_cor", height = "130px")
           ),
           column(4, align = "center",
-                 plotOutput("keyword_lag", height = "100px")
+                 plotOutput("keyword_lag", height = "130px")
           )
         ),
         
@@ -370,6 +372,15 @@ ui <- fluidPage(
                     
                     tabPanel(id = "map_view",
                              "Map View", 
+                             
+                             br(),
+                             fluidRow(
+                               column(12, align = "center",
+                                      htmlOutput("map_text")
+                                      )
+                             ),
+                             
+                             br(),
                              
                              fluidRow(
                                column(12, align = "center", offset = 0,
@@ -454,7 +465,7 @@ ui <- fluidPage(
                    multiple = F
                  )
           ),
-          column(2, align = "center",
+          column(3, align = "center",
                  selectInput(
                    "select_search_category_country",
                    label = strong("Search Term Categories"),
@@ -672,6 +683,7 @@ ui <- fluidPage(
                       <li><a href='https://ideas.repec.org/p/cep/cepdps/dp1693.html'>COVID-19, Lockdowns and Well-being: Evidence from Google Trends</a></li>
                       <li><a href='https://pubmed.ncbi.nlm.nih.gov/32279437/'>Use of Google Trends to investigate loss-of-smell-related searches during the COVID-19 outbreak</a></li>
                       <li><a href='https://europepmc.org/article/pmc/pmc7267744'>Predicting COVID-19 Incidence Using Anosmia and Other COVID-19 Symptomatology: Preliminary Analysis Using Google and Twitter.</a></li>
+                      <li><a href='https://www.mayoclinicproceedings.org/article/S0025-6196(20)30934-4/fulltext'>Correlations Between COVID-19 Cases and Google Trends Data in the United States: A State-by-State Analysis.</a></li>
                       </ul>"),
           )
         ),
@@ -688,7 +700,7 @@ ui <- fluidPage(
                  br(),
                  br(),
                  br()
-                 )
+          )
         )
         
         
@@ -757,6 +769,7 @@ server = (function(input, output, session) {
     }
     
     #### Merge
+    gtrends_spark_df <- gtrends_spark_df %>% distinct(geo, .keep_all=T) # TODO
     world_data <- merge(world, gtrends_spark_df, by = "geo", all.x=T, all.y=F)
     world_data <- world_data %>% st_as_sf()
     
@@ -791,12 +804,27 @@ server = (function(input, output, session) {
     # https://stackoverflow.com/questions/61175878/r-leaflet-highcharter-tooltip-label
     pal <- colorNumeric(
       palette = "RdYlGn",
-      domain = c(world_data$cor_covidMA7_hitsMA7_max[!is.na(world_data$cor_covidMA7_hitsMA7_max)], 0, 1))
+      domain = c(world_data$cor_covidMA7_hitsMA7_max[!is.na(world_data$cor_covidMA7_hitsMA7_max)], -1, 1))
+    
+    pal_rev <- colorNumeric(
+      palette = "RdYlGn",
+      domain = c(world_data$cor_covidMA7_hitsMA7_max[!is.na(world_data$cor_covidMA7_hitsMA7_max)], -1, 1),
+      reverse = T)
     
     #aa <<- world_data
     
+    # +proj=wintri
+    # epsg2163 <- leafletCRS(
+    #   crsClass = "L.Proj.CRS",
+    #   #code = "EPSG:2163",
+    #   code = "ESRI:54030",
+    #   proj4def = "+proj=robin +lon_0=0 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs",
+    #   #proj4def = "+proj=laea +lat_0=45 +lon_0=-100 +x_0=0 +y_0=0 +a=6370997 +b=6370997 +units=m +no_defs",
+    #   resolutions = 2^(16:7))
+    # options = leafletOptions(crs = epsg2163)
+    
     leaflet(height = "700px") %>%
-      addTiles() %>%
+      #addTiles() %>%
       addPolygons(data = world_data,
                   label = ~lapply(popup, HTML),
                   popupOptions = popupOptions(minWidth = 200,
@@ -811,13 +839,15 @@ server = (function(input, output, session) {
       #   this.on('popupopen', function() {HTMLWidgets.staticRender();})
       # }") %>%
       addLegend("topright",
-                pal = pal,
-                values = c(world_data$select_covid_type[!is.na(world_data$select_covid_type)], 0, 1),
+                pal = pal_rev,
+                values = c(world_data$select_covid_type[!is.na(world_data$select_covid_type)], -1, 1),
                 title = paste0("Correlation<br>between<br>",
                                input$select_covid_type,
                                " and<br>Search<br>Activity"),
+                labFormat = labelFormat(transform = function(x) sort(x, decreasing = TRUE)),
                 opacity = 1,
-                bins = c(-1, -.5, 0, 0.5, 1)) %>%
+                bins = c(-1, -0.5, 0, 0.5, 1)) %>%
+      setMapWidgetStyle(list(background= "white")) %>%
       setView(zoom = 2, lat=0, lng=0) %>%
       add_deps("sparkline") %>%
       #add_deps("highchart", 'highcharter') %>%
@@ -953,6 +983,19 @@ server = (function(input, output, session) {
     
   })
   
+  # **** Title - Map ---------------------------
+  output$map_text <- renderText({
+    paste0("<strong>Hover over the map to see trends in <span style='color:orange;'>COVID-19 ",
+           tolower(input$select_covid_type),
+           "</span> and <span style='color:green;'>search interest of '",
+           input$select_keyword, "'</span></strong>")
+    
+    # paste0("Correlation between COVID-19 ",
+    #        tolower(input$select_covid_type),
+    #        " and Google search interest. Data after ",
+    #        input$select_begin_date, 
+    #        " used.")
+  })
   
   # ** Max Correlation Dotplot -------------------------------------------------
   # **** Title ---------------------------
@@ -984,6 +1027,9 @@ server = (function(input, output, session) {
     cor_df <- cor_df %>%
       dplyr::filter(type %in% input$select_covid_type) 
     
+    cor_df$keyword_en[cor_df$keyword_en %in% "What are the Symptoms of Coronavirus"] <- "What are the Symptoms\nof Coronavirus"
+    cor_df$keyword_en[cor_df$keyword_en %in% "How to Treat Coronavirus"] <- "How to Treat\nCoronavirus"
+    
     p1 <- ggplot() +
       geom_dotplot(data = cor_df,
                    aes(x = reorder(keyword_en,
@@ -1003,10 +1049,12 @@ server = (function(input, output, session) {
       labs(x = "",
            y = "Correlation",
            title = NULL) +
-      theme(axis.text.y = element_text(face = "bold", size = 14),
+      theme(axis.text.y = element_text(face = "bold", size = 14, color="black"),
+            axis.title.x = element_text(size = 14, color = "black", face="bold"),
             axis.text.x = element_text(size = 14),
             legend.text = element_text(size = 14),
-            legend.position = "top") 
+            legend.position = "top") +
+      scale_y_continuous(position = "right") 
     
     # cor_df$lag <- cor_df$lag + runif(cor_df$lag)
     # 
@@ -1046,15 +1094,42 @@ server = (function(input, output, session) {
   
   output$max_cor_hist_ui <- renderUI({
     
-    height <- "700px"
-    if(input$select_search_category == "Symptoms") height <- "500px"
-    if(input$select_search_category == "Mental Health") height <- "600px"
-    if(input$select_search_category == "Coronavirus General") height <- "300px"
+    height <- "2200px"
+    if(input$select_search_category == "Coronavirus General") height <- "600px"
+    if(input$select_search_category == "Mental Health") height <- "900px"
+    if(input$select_search_category == "Potential Consequences") height <- "400px"
+    if(input$select_search_category == "Prevention") height <- "500px"
+    if(input$select_search_category == "Symptoms") height <- "700px"
+    if(input$select_search_category == "Treatment") height <- "500px"
     
     plotOutput("max_cor_hist",
                height = height)
     
   })
+  
+  # ** Cor/Lag Title -----------------------------------------------------------
+  output$title_cor_lag <- renderText({
+    
+    cor_df     <- readRDS(file.path("data", paste0("correlations_since_",
+                                                   input$select_begin_date,
+                                                   ".Rds")))
+    
+    if(input$select_continent != "All"){
+      cor_df <- cor_df %>%
+        dplyr::filter(continent %in% input$select_continent) 
+    }
+    
+    cor_df <- cor_df %>%
+      dplyr::filter(type %in% input$select_covid_type,
+                    keyword_en %in% input$select_keyword) 
+    
+    cor_df <- cor_df %>%
+      filter(!is.na(cor))
+    
+    paste0("<strong>", input$select_keyword,"</strong><br><b><em>",nrow(cor_df), " countries with available data</em></b>")
+    
+  })
+  
   
   # ** Cor Histogram -----------------------------------------------------------
   output$keyword_cor <- renderPlot({
@@ -1080,7 +1155,7 @@ server = (function(input, output, session) {
       mutate(cor = cor %>% as.factor())
     
     
-    seq(from=-1, to=1, by=.1) %>%
+    p <- seq(from=-1, to=1, by=.1) %>%
       as.data.frame() %>%
       dplyr::rename(cor = ".") %>%
       mutate(cor = cor %>% as.factor()) %>%
@@ -1091,16 +1166,37 @@ server = (function(input, output, session) {
       ggplot() +
       geom_col(aes(x = factor(cor), y = N),
                color = "black",
-               fill = "palegreen3") + 
+               fill = "palegreen3") +
       labs(title = "Correlation",
+           subtitle = paste0("Average: ", round(mean(cor_df$cor), 2)),
            x = NULL,
            y = "Number\nOf\nCountries") +
+      scale_x_discrete(labels = c("-1", "",
+                                  "-0.8", "",
+                                  "-0.6", "",
+                                  "-0.4", "",
+                                  "-0.2", "",
+                                  "0", "",
+                                  "0.2", "",
+                                  "0.4", "",
+                                  "0.6", "",
+                                  "0.8", "",
+                                  "1", "")) +
       theme_minimal() +
       theme(axis.title.y = element_text(angle = 0,
+                                        #family = "Helvetica",
                                         vjust = 0.5),
-            plot.title = element_text(face = "bold", size=13,
-                                      hjust = 0.5))
+            plot.title = element_text(face = "bold", size=14,
+                                      #family = "Helvetica",
+                                      hjust = 0.5),
+            plot.subtitle = element_text(face = "bold.italic", 
+                                         #family = "Helvetica",
+                                         size=12,
+                                         hjust = 0.5),
+            panel.grid.major = element_blank(), 
+            panel.grid.minor = element_blank())
     
+    p
   })
   
   # ** Lag Histogram -----------------------------------------------------------
@@ -1119,13 +1215,6 @@ server = (function(input, output, session) {
       dplyr::filter(type %in% input$select_covid_type,
                     keyword_en %in% input$select_keyword) 
     
-    # cor_sum_df <- cor_df %>%
-    #   ungroup() %>%
-    #   mutate(lag = round(lag/3, 0)*3) %>%
-    #   group_by(lag) %>%
-    #   summarise(N = n()) %>%
-    #   filter(lag != 21)
-    
     cor_df %>%
       ggplot() +
       geom_histogram(aes(x = lag),
@@ -1133,15 +1222,51 @@ server = (function(input, output, session) {
                      fill = "palegreen3",
                      bins = 15) + 
       labs(title = "Lead/Lag",
+           subtitle = paste0("Average ", round(mean(cor_df$lag),2), " days"), 
            x = NULL,
            y = "Number\nOf\nCountries") +
       theme_minimal() +
       theme(axis.title.y = element_text(angle = 0,
                                         vjust = 0.5),
-            plot.title = element_text(face = "bold", size=13,
-                                      hjust = 0.5))
+            plot.title = element_text(face = "bold", size=14,
+                                      hjust = 0.5),
+            plot.subtitle = element_text(face = "bold.italic", size=12,
+                                         hjust = 0.5),
+            panel.grid.major = element_blank(), 
+            panel.grid.minor = element_blank())
     
   })
+  
+  # ** Cor Value Box -----------------------------------------------------------
+  # output$keyword_cor_box <- renderValueBox({
+  #   
+  #   cor_df     <- readRDS(file.path("data", paste0("correlations_since_",
+  #                                                  input$select_begin_date,
+  #                                                  ".Rds")))
+  #   
+  #   if(input$select_continent != "All"){
+  #     cor_df <- cor_df %>%
+  #       dplyr::filter(continent %in% input$select_continent) 
+  #   }
+  #   
+  #   cor_df <- cor_df %>%
+  #     dplyr::filter(type %in% input$select_covid_type,
+  #                   keyword_en %in% input$select_keyword) 
+  #   
+  #   cor_mean <- cor_df$cor %>% round(2)
+  #   
+  #   
+  #   valueBox(1, 
+  #            "Average Correlation", 
+  #            icon = icon("database"), 
+  #            color = "blue", 
+  #            width = 3,
+  #            href = NULL)
+  #   
+  # })
+  
+  
+  
   
   # COUNTRY FIGURES **************** -------------------------------------------
   
@@ -1206,8 +1331,11 @@ server = (function(input, output, session) {
       arrange(-Correlation)
     
     #### Adjust Variables
-    gtrends_spark_df$Correlation <- gtrends_spark_df$Correlation %>% round(3)
-    gtrends_spark_df$`Lead/Lag` <- paste(gtrends_spark_df$`Lead/Lag`, "days")
+    gtrends_spark_df <- gtrends_spark_df %>%
+      mutate(Correlation = Correlation %>% round(3),
+             `Lead/Lag` = paste(`Lead/Lag`, "days"))
+    #gtrends_spark_df$Correlation <- gtrends_spark_df$Correlation %>% round(3)
+    #gtrends_spark_df$`Lead/Lag` <- paste(gtrends_spark_df$`Lead/Lag`, "days")
     
     #### Make Table
     bar_color <- "#FF9999"
@@ -1294,64 +1422,70 @@ server = (function(input, output, session) {
   # **** Figure ------------------------------
   output$line_graph_country_key <- renderPlot({
     
-    if(F){
-      gtrends_sub_df <- gtrends_df %>%
-        filter(keyword_en %in% "Loss of Smell") %>%
-        filter(name %in% "United States")
+    p <- ggplot()
+    
+    if(!is.null(input$select_keyword_country)){
+      if(input$select_keyword_country != ""){
+        if(!is.null(input$select_country)){
+          if(!is.null(input$select_covid_type_map)){
+            
+            gtrends_sub_df <- gtrends_df %>%
+              filter(keyword_en %in% input$select_keyword_country) %>%
+              filter(name %in% input$select_country)
+            
+            #### COVID Names
+            if(input$select_covid_type_map %in% "Cases"){
+              gtrends_sub_df <- gtrends_sub_df %>%
+                dplyr::select(keyword_en, date, hits_ma7, cases_new) %>%
+                dplyr::rename(covid_new = cases_new)
+            } 
+            if(input$select_covid_type_map %in% "Deaths"){
+              gtrends_sub_df <- gtrends_sub_df %>%
+                dplyr::select(keyword_en, date, hits_ma7, death_new) %>%
+                dplyr::rename(covid_new = death_new)
+            } 
+            
+            multiplier <- max(gtrends_sub_df$covid_new, na.rm=T) / max(gtrends_sub_df$hits_ma7, na.rm=T)
+            gtrends_sub_df$hits_ma7_adj <- gtrends_sub_df$hits_ma7 * multiplier
+            
+            color_cases <- "orange"
+            color_hits <- "forestgreen"
+            
+            p <- gtrends_sub_df %>%
+              ggplot() +
+              geom_col(aes(x = date, y = covid_new),
+                       fill = color_cases,
+                       color = color_cases) +
+              geom_line(aes(x = date, y = hits_ma7_adj),
+                        color = color_hits,
+                        size = 1) +
+              labs(x = NULL, 
+                   y = input$select_covid_type_map) +
+              scale_y_continuous(sec.axis = sec_axis(~.*1, name = "Search Interest",
+                                                     breaks = c(0, max(gtrends_sub_df$hits_ma7_adj, na.rm=T)),
+                                                     labels = c("Low", "High"))) +
+              theme_minimal() +
+              theme(axis.title.y.left = element_text(#angle = 0, 
+                #vjust = 0.5, 
+                color=color_cases,
+                face = "bold",
+                size=15),
+                axis.title.y.right = element_text(#angle = 0, 
+                  #vjust = 0.5, 
+                  color=color_hits,
+                  face = "bold",
+                  size=15),
+                axis.text.y.left = element_text(color = color_cases,
+                                                size=13),
+                axis.text.y.right = element_text(color = color_hits,
+                                                 size=13),
+                axis.text = element_text(face = "bold", size=13),
+                plot.title = element_text(face = "bold", hjust = 0.5, size=13))
+            
+          }
+        }
+      }
     }
-    
-    gtrends_sub_df <- gtrends_df %>%
-      filter(keyword_en %in% input$select_keyword_country) %>%
-      filter(name %in% input$select_country)
-    
-    #### COVID Names
-    if(input$select_covid_type_map %in% "Cases"){
-      gtrends_sub_df <- gtrends_sub_df %>%
-        dplyr::select(keyword_en, date, hits_ma7, cases_new) %>%
-        dplyr::rename(covid_new = cases_new)
-    } 
-    if(input$select_covid_type_map %in% "Deaths"){
-      gtrends_sub_df <- gtrends_sub_df %>%
-        dplyr::select(keyword_en, date, hits_ma7, death_new) %>%
-        dplyr::rename(covid_new = death_new)
-    } 
-    
-    multiplier <- max(gtrends_sub_df$covid_new, na.rm=T) / max(gtrends_sub_df$hits_ma7, na.rm=T)
-    gtrends_sub_df$hits_ma7_adj <- gtrends_sub_df$hits_ma7 * multiplier
-    
-    color_cases <- "orange"
-    color_hits <- "forestgreen"
-    
-    p <- gtrends_sub_df %>%
-      ggplot() +
-      geom_col(aes(x = date, y = covid_new),
-               fill = color_cases,
-               color = color_cases) +
-      geom_line(aes(x = date, y = hits_ma7_adj),
-                color = color_hits,
-                size = 1) +
-      labs(x = NULL, 
-           y = input$select_covid_type_map) +
-      scale_y_continuous(sec.axis = sec_axis(~.*1, name = "Search Interest",
-                                             breaks = c(0, max(gtrends_sub_df$hits_ma7_adj, na.rm=T)),
-                                             labels = c("Low", "High"))) +
-      theme_minimal() +
-      theme(axis.title.y.left = element_text(#angle = 0, 
-        #vjust = 0.5, 
-        color=color_cases,
-        face = "bold",
-        size=13),
-        axis.title.y.right = element_text(#angle = 0, 
-          #vjust = 0.5, 
-          color=color_hits,
-          face = "bold",
-          size=13),
-        axis.text.y.left = element_text(color = color_cases,
-                                        size=13),
-        axis.text.y.right = element_text(color = color_hits,
-                                         size=13),
-        axis.text = element_text(face = "bold", size=13),
-        plot.title = element_text(face = "bold", hjust = 0.5, size=13))
     
     p
     
@@ -1377,11 +1511,11 @@ server = (function(input, output, session) {
     if(language_code %in% "en"){
       out <- ""
     } else{
-      out <- paste0("'", search_en, "' translated into ",
-                    languges_df$Language_main[languges_df$Code %in% geo],": ",
-                    search)
+      out <- paste0("'", search_en[1], "' translated into ",
+                    languges_df$Language_main[languges_df$Code %in% geo][1],": ",
+                    search[1])
     }
-    
+
     out 
     
     
@@ -1468,7 +1602,7 @@ server = (function(input, output, session) {
     out <- selectInput(
       "select_keyword",
       label = strong("Search Term"),
-      choices = keyword_list,
+      choices = sort(keyword_list),
       selected = "Loss of Smell",
       multiple = F
     )
@@ -1480,7 +1614,7 @@ server = (function(input, output, session) {
       out <- selectInput(
         "select_keyword",
         label = strong("Search Term"),
-        choices = keyword_df_i$keyword_en,
+        choices = sort(keyword_df_i$keyword_en),
         selected = keyword_df_i$keyword_en[1],
         multiple = F
       )
@@ -1491,30 +1625,42 @@ server = (function(input, output, session) {
   })
   
   # ** Select Keyword: Country --------------------
-  output$select_keyword_country_ui <- renderUI({
+  observe({
     
-    out <- selectInput(
-      "select_keyword_country",
-      label = strong("Search Term"),
-      choices = keyword_list,
-      selected = "Loss of Smell",
-      multiple = F
-    )
-    
-    if(input$select_search_category_country != "All"){
+    output$select_keyword_country_ui <- renderUI({
       
-      keyword_df_i <- keywords_df[keywords_df$category %in% input$select_search_category_country,]
+      ## Default
+      out <- selectInput(
+        "select_keyword_country",
+        label = strong("Search Term"),
+        choices = sort(keyword_list),
+        selected = "Loss of Smell",
+        multiple = F
+      )
+      
+      ## Restrict to keywords in country
+      keywords_in_country <- gtrends_df %>%
+        filter(name %in% input$select_country) %>%
+        arrange(desc(cor_casesMA7_hitsMA7_max)) %>%
+        pull(keyword_en) %>%
+        unique()
+      
+      if(input$select_search_category_country != "All"){
+        keywords_vec <- keywords_df$keyword_en[keywords_df$category %in% input$select_search_category_country]
+        keywords_in_country <- keywords_in_country[keywords_in_country %in% keywords_vec]
+      }
       
       out <- selectInput(
         "select_keyword_country",
         label = strong("Search Term"),
-        choices = keyword_df_i$keyword_en,
-        selected = keyword_df_i$keyword_en[1],
+        choices = sort(keywords_in_country),
+        selected = keywords_in_country[1],
         multiple = F
       )
-    }
-    
-    out
+      
+      out
+      
+    })
     
   })
   

@@ -25,6 +25,7 @@ This script performs analysis of the google trends data for Brazil to develop an
 ```r
 #user's file path
 if(Sys.info()[["user"]] == "wb537287") dropbox_file_path <- "/Users/wb537287/Dropbox/COVID Social Media Analysis/"
+if(Sys.info()[["user"]] == "robmarty") dropbox_file_path <- "~/Dropbox/World Bank/Side Work/COVID Social Media Analysis"
 
 #import data
 trends_df <- 
@@ -394,13 +395,16 @@ trends_df %>%
   coord_flip() + 
   labs(
     title = "States ordered by COVID-19 deaths up to June 28th, 2020", 
-    x = "State", 
+    x = NULL, # "State", 
     y = "COVID-19 Deaths", 
-    fill = "Search activity for \"I can't smell\" reported by Google", 
+    fill = "Search activity for \"I can't smell\"\nreported by Google", 
     caption = "The white boxes indicate the date in which \"I can't smell\"\nappeared in Google Trends for the first time in each state", 
     subtitle = "States where Google reported \"I can't smell\" searches are more affected by COVID-19,\nand the searches appeared earlier for most-affected states"
   ) + 
-  theme_light()
+  scale_fill_manual(values = c("#e8453c", "#4688f1"), # taking red/blue values from google logo
+                    guide = guide_legend(reverse = TRUE)) +
+  theme_light() +
+  theme(axis.text.y = element_text(color = "black", face="bold"))
 ```
 
 ![](05_analysis_with_restat_files/figure-html/unnamed-chunk-17-1.png)<!-- -->
