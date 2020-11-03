@@ -58,6 +58,7 @@ library(readstata13)
 library(forcats)
 library(tidyr)
 library(tidylog)
+library(gridExtra)
 ```
 
 Adjusting the dataset
@@ -488,19 +489,19 @@ trends_df %>%
 
 ```
 ## # A tibble: 167,874 x 33
-##    date        hits hits_with_comps… keyword geo   time  gprop category
+##    date        hits hits_with_comps~ keyword geo   time  gprop category
 ##    <date>     <dbl>            <dbl> <chr>   <chr> <chr> <chr> <chr>   
-##  1 2020-01-01     0                0 ajuda … BR-MG 2020… web   0       
-##  2 2020-01-02     0                0 ajuda … BR-MG 2020… web   0       
-##  3 2020-01-03     0                0 ajuda … BR-MG 2020… web   0       
-##  4 2020-01-04     0                0 ajuda … BR-MG 2020… web   0       
-##  5 2020-01-05     0                0 ajuda … BR-MG 2020… web   0       
-##  6 2020-01-06     0                0 ajuda … BR-MG 2020… web   0       
-##  7 2020-01-07     0                0 ajuda … BR-MG 2020… web   0       
-##  8 2020-01-08     0                0 ajuda … BR-MG 2020… web   0       
-##  9 2020-01-09     0                0 ajuda … BR-MG 2020… web   0       
-## 10 2020-01-10     0                0 ajuda … BR-MG 2020… web   0       
-## # … with 167,864 more rows, and 25 more variables: hits_compstate <dbl>,
+##  1 2020-01-01     0                0 ajuda ~ BR-MG 2020~ web   0       
+##  2 2020-01-02     0                0 ajuda ~ BR-MG 2020~ web   0       
+##  3 2020-01-03     0                0 ajuda ~ BR-MG 2020~ web   0       
+##  4 2020-01-04     0                0 ajuda ~ BR-MG 2020~ web   0       
+##  5 2020-01-05     0                0 ajuda ~ BR-MG 2020~ web   0       
+##  6 2020-01-06     0                0 ajuda ~ BR-MG 2020~ web   0       
+##  7 2020-01-07     0                0 ajuda ~ BR-MG 2020~ web   0       
+##  8 2020-01-08     0                0 ajuda ~ BR-MG 2020~ web   0       
+##  9 2020-01-09     0                0 ajuda ~ BR-MG 2020~ web   0       
+## 10 2020-01-10     0                0 ajuda ~ BR-MG 2020~ web   0       
+## # ... with 167,864 more rows, and 25 more variables: hits_compstate <dbl>,
 ## #   hits_adj <dbl>, state <chr>, sub_code_red <chr>, region <fct>, cases <int>,
 ## #   deaths <int>, estimate_2018_state <int>, census_2010_state <int>,
 ## #   perc_change <dbl>, categories <chr>, case_rate <dbl>, death_rate <dbl>,
@@ -823,7 +824,7 @@ week_df %>%
 ##  8 BR-ES                   2    26
 ##  9 BR-GO                   1    26
 ## 10 BR-MA                   2    26
-## # … with 17 more rows
+## # ... with 17 more rows
 ```
 
 ## Final graph
@@ -979,10 +980,10 @@ dates_deaths_dataset %>%
 
 ```
 ## # A tibble: 1 x 5
-##   dates_since_dea… dates_since_dea… dates_since_dea… dates_since_dea…
+##   dates_since_dea~ dates_since_dea~ dates_since_dea~ dates_since_dea~
 ##   <drtn>           <drtn>           <drtn>           <drtn>          
 ## 1 -25 days         -13.82353 days   -9.176471 days   9.588235 days   
-## # … with 1 more variable: dates_since_death_500 <drtn>
+## # ... with 1 more variable: dates_since_death_500 <drtn>
 ```
 
 ```r
@@ -1094,6 +1095,83 @@ trends_df %>%
 ![](05_analysis_with_restat_files/figure-html/unnamed-chunk-37-1.png)<!-- -->
 
 
+## Combining 2 graphs for the blog into 1
+
+
+```r
+graph_covid_states_time <- 
+  week_df %>% 
+  filter(!is.na(weeks_since_max_cant_smell)) %>%
+  group_by(week_number, state) %>% 
+  summarize(
+    mean_cases = mean(mean_cases, na.rm = TRUE), 
+    mean_deaths = mean(mean_deaths, na.rm = TRUE), 
+    week_max_days = mean(week_max_days, na.rm = TRUE), 
+    week_number_date = mean(week_median_date)
+  ) %>% 
+  mutate(week_max_days_date = if_else(week_number == week_max_days, week_number_date, NA_Date_)) %>% 
+  ggplot() +
+  geom_line(aes(week_number_date, mean_cases)) + 
+  geom_vline(aes(xintercept = week_max_days_date), linetype = "dashed") +
+  facet_wrap(vars(state), scales = "free_y") + 
+  labs(
+    title = "Evolution in COVID-19 cases in Brazilian states relative to \"I can't smell\" searches",
+    x = "Date", 
+    y = "COVID-19 cases", 
+    caption = "The vertical dashed line indicates the week with the most \"I can't smell\" appearances reported by Google"
+    ) +
+  theme_light() + 
+  scale_y_continuous(
+    labels = scales::unit_format(scale = 1/1000, accuracy = 1, suffix = "k")
+  ) 
+
+graph_deaths_june <- 
+  trends_df %>% 
+  left_join(states_cant_smell_date, by = "state") %>% 
+  mutate(cant_smell_appears = if_else(!is.na(first_date_cant_smell), 1L, 0L) %>% as.character()) %>% 
+  filter(date == "2020-06-28", !is.na(deaths)) %>% 
+  count(deaths, state, cant_smell_appears, first_date_cant_smell) %>% 
+  arrange(desc(deaths)) %>% 
+  mutate(cant_smell_appears = if_else(cant_smell_appears == 1, "Yes", "No")) %>% 
+  ggplot()+ 
+  geom_col(aes(fct_reorder(state, deaths), deaths, fill = cant_smell_appears)) +
+  geom_label_repel(
+    aes(
+      x = as.character(state), 
+      y = deaths, 
+      label = as.character(first_date_cant_smell)
+    ), 
+    position = position_fill(vjust = 0)
+  ) + 
+  labs(
+    color = "State category"
+  ) + 
+  coord_flip() + 
+  labs(
+    title = "States ordered by COVID-19 deaths up to June 28th, 2020", 
+    x = NULL, # "State", 
+    y = "COVID-19 Deaths", 
+    fill = "Search activity for \"I can't smell\"\nreported by Google", 
+    caption = "The white boxes indicate the date in which \"I can't smell\"\nappeared in Google Trends for the first time in each state", 
+    subtitle = "States where Google reported \"I can't smell\" searches are more affected by COVID-19,\nand the searches appeared earlier for most-affected states"
+  ) + 
+  scale_fill_manual(values = c("#e8453c", "#4688f1"), # taking red/blue values from google logo
+                    guide = guide_legend(reverse = TRUE)) +
+  theme_light() +
+  theme(axis.text.y = element_text(color = "black", face="bold"))
+
+ggarrange(
+  graph_covid_states_time, 
+  graph_deaths_june, 
+  ncol = 2, 
+  widths = c(1, 1), 
+  heights = c(1, 2)
+  )
+```
+
+![](05_analysis_with_restat_files/figure-html/unnamed-chunk-38-1.png)<!-- -->
+
+
 ## Correlations between I can't smell and covid cases
 
 Create the variables counting the number of days before/after "I can't smell" shows up. For those states that don't have "I can't smell", we won't be able to include them. 
@@ -1192,7 +1270,7 @@ week_df %>%
 ##  8 BR-MA           8              NA     1
 ##  9 BR-MA           9              NA     1
 ## 10 BR-MA          10              NA     1
-## # … with 16 more rows
+## # ... with 16 more rows
 ```
 
 
