@@ -1113,18 +1113,30 @@ graph_covid_states_time <-
   ggplot() +
   geom_line(aes(week_number_date, mean_cases)) + 
   geom_vline(aes(xintercept = week_max_days_date), linetype = "dashed") +
-  facet_wrap(vars(state), scales = "free_y") + 
+  facet_wrap(vars(state), nrow = 6, scales = "free_y") + 
   labs(
-    title = "Evolution in COVID-19 cases in Brazilian states relative to \"I can't smell\" searches",
+    title = "Evolution in COVID-19 cases in Brazilian states\nrelative to \"I can't smell\" searches",
     x = "Date", 
     y = "COVID-19 cases", 
     caption = "The vertical dashed line indicates the week with the most \"I can't smell\" appearances reported by Google"
     ) +
-  theme_light() + 
+  #theme_light() + 
+  theme_minimal() +
+  theme(strip.text = element_text(face = "bold", color = "black"))
   scale_y_continuous(
     labels = scales::unit_format(scale = 1/1000, accuracy = 1, suffix = "k")
-  ) 
+  )
+```
 
+```
+## <ScaleContinuousPosition>
+##  Range:  
+##  Limits:    0 --    1
+```
+
+
+
+```r
 graph_deaths_june <- 
   trends_df %>% 
   left_join(states_cant_smell_date, by = "state") %>% 
@@ -1159,17 +1171,21 @@ graph_deaths_june <-
                     guide = guide_legend(reverse = TRUE)) +
   theme_light() +
   theme(axis.text.y = element_text(color = "black", face="bold"))
+```
 
+
+
+```r
 ggarrange(
   graph_covid_states_time, 
   graph_deaths_june, 
   ncol = 2, 
-  widths = c(1, 1), 
-  heights = c(1, 2)
+  widths = c(1, 1.2), 
+  heights = c(1, 1)
   )
 ```
 
-![](05_analysis_with_restat_files/figure-html/unnamed-chunk-38-1.png)<!-- -->
+![](05_analysis_with_restat_files/figure-html/unnamed-chunk-40-1.png)<!-- -->
 
 
 ## Correlations between I can't smell and covid cases
