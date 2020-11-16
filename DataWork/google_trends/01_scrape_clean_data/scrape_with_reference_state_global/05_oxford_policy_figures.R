@@ -17,7 +17,7 @@ policy_data <- read.csv("https://raw.githubusercontent.com/OxCGRT/covid-policy-t
 # Prep Policy Data -------------------------------------------------------------
 policy_data_sum <- policy_data %>%
   group_by(CountryCode) %>%
-  dplyr::summarise(H2_Testing.policy = mean(H2_Testing.policy, na.rm=T)) %>%
+  dplyr::summarise(H2_Testing.policy = max(H2_Testing.policy, na.rm=T)) %>%
   dplyr::rename(iso3 = CountryCode) %>%
   dplyr::mutate(geo =  countrycode(iso3, origin = "iso3c", destination = "iso2c"))
 
@@ -35,8 +35,8 @@ cor_df$test_policy[cor_df$H2_Testing.policy > 2] <- "2"
 
 #cor_df <- cor_df[!(cor_df$lag %in% c(-21, 21)),]
 #cor_df_sub <- cor_df[cor_df$zscore > 1.1,]
-cor_df_sub <- cor_df[cor_df$keyword_en %in% "loss of smell",]
-cor_df_sub <- cor_df_sub[cor_df_sub$lag > -21,]
+#cor_df_sub <- cor_df[cor_df$keyword_en %in% "loss of smell",]
+#cor_df_sub <- cor_df_sub[cor_df_sub$lag > -21,]
 
 cor_df_sub$lag[cor_df_sub$test_policy %in% "0"] %>% summary()
 cor_df_sub$lag[cor_df_sub$test_policy %in% "1"] %>% summary()
@@ -46,15 +46,30 @@ cor_df_sub$lag[cor_df_sub$test_policy %in% "0"] %>% length()
 cor_df_sub$lag[cor_df_sub$test_policy %in% "1"] %>% length()
 cor_df_sub$lag[cor_df_sub$test_policy %in% "2"] %>% length()
 
+cor(cor_df_sub$lag, cor_df_sub$H2_Testing.policy)
+
+cor_df_sub$cor[cor_df_sub$test_policy %in% "0"] %>% summary()
+#cor_df_sub$cor[cor_df_sub$test_policy %in% "1"] %>% summary()
+cor_df_sub$cor[cor_df_sub$test_policy %in% "2"] %>% summary()
+
 cor_df_sub %>%
+  mutate(test_policy = test_policy %>% as.numeric) %>%
+  ggplot(aes(x = test_policy, y = cor)) +
+  geom_point() +
+  geom_smooth()
+
+cor_df %>%
+  filter(keyword_en %in% "loss of smell",
+         zscore > 1.5,
+         cor > 0.2) %>%
   ggplot() +
   geom_dotplot(aes(x = test_policy,
                    y = lag,
                    fill = "=  One Country"),
                binaxis = "y", 
                stackdir = "center",
-               dotsize = 1,
-               binwidth = 1,
+               dotsize = 5,
+               binwidth = .1,
                color = "palegreen4") 
 
 

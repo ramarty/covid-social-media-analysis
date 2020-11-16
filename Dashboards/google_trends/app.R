@@ -138,7 +138,7 @@ ui <- fluidPage(
         
         fluidRow(
           column(12, align = "center",
-                 h1("Google Trends Data as Predictor of COVID-19")
+                 h1("Google Trends Data to Understanding COVID-19")
           )
         ),
         
@@ -163,17 +163,32 @@ ui <- fluidPage(
                     when testing or data may not be widely available. Moreover, given that
                     Google trends information is updated in real time, sudden increases in 
                     search activity can warn of potential growth in COVID-19 cases.</h4>"),
+                 
+                 br(),
+                 HTML("<h4>Google Trends can also be used to understand impacts of COVID-19 
+                      and search activity around prevention measures. Consequently, in addition 
+                      to showing search interest in COVID-related symptoms, the dashboard also 
+                      shows search interest related to 
+                      <a href='https://psycnet.apa.org/fulltext/2020-59192-001.html'>mental health keywords</a> 
+                      (e.g., anxiety and loneliness), other potential consequences (e.g., unemployment and debt), 
+                      prevention measures (e.g., face masks) and treatment measures (e.g., teleworking 
+                      and ventilators).</h4>")
+ 
           )
         ),
         fluidRow(
           column(6, align = "center", offset = 3,
                  hr(),
-                 h2("Determining correlation and prediction between COVID-19 and Google search term interest"),
+                 h2("Determining correlation and prediction between Google search interest and COVID-19"),
                  HTML("<h4>We compute how strongly different search terms correlate with COVID-19 cases and deaths.
                       In addition, we determine whether search interest can help predict future cases or deaths
                       or whether search interest responds or comes after cases/deaths. To determine this, we shift COVID-19 cases/deaths
                       by up to 21 days from its actual date. We calculate the correlation between
-                      the shifted COVID-19 and the search interest. Using all these estimated correlations, we determine the 
+                      the shifted COVID-19 and the search interest (this approach follows 
+                      <a href='https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7176069/'>research</a>
+                      <a href='https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7438693/'>from</a>
+                      <a href='https://www.sciencedirect.com/science/article/pii/S1201971220302496'>others</a>
+                      on COVID-19 and Google Trends). Using all these estimated correlations, we determine the 
                       following metrics:</h4>")
                  # HTML("<h4>For each search term, we seek to understand (1) the strength of the correlation
                  #      between COVID-19 cases/deaths and Google search term interest and (2) when the correlation

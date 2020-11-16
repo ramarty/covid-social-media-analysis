@@ -26,7 +26,7 @@ file.copy(file.path(dropbox_file_path, "Data", "google_trends", "Outputs",
 
 # Move keyword/langauge files to github folder ---------------------------------
 keywords <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", 
-                              "keywords", "FinalData", "covid_keywords_alllanguages.Rds"))
+                              "keywords", "FinalData", "covid_keywords_alllanguages_clean.Rds"))
 write.csv(keywords, file.path(github_file_path, "Dashboards", "google_trends", "data", "covid_keywords.csv"))
 
 languages <- read.csv(file.path(dropbox_file_path, "Data", "country_primary_language", "countries_lang.csv"), stringsAsFactors = F)

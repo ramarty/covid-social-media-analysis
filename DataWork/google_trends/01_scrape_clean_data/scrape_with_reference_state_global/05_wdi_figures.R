@@ -34,6 +34,15 @@ cor_df$cases_pc_group[cor_df$cases_pc < 0.01] <- "Cases <1%\nPopulation"
 cor_df <- cor_df[cor_df$keyword_en %in% "loss of smell",]
 
 cor_df %>%
+  filter(zscore > 1.1) %>%
+ggplot() + 
+  geom_point(
+            aes(x = log(SP.POP.TOTL),
+                y = cor))
+
+cor_df$cor
+
+cor_df %>%
   filter(keyword_en %in% "loss of smell") %>%
   ggplot() +
   geom_dotplot(aes(x=cases_pc_group, y = cor,

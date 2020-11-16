@@ -2,9 +2,9 @@
 # state
 
 #### PARAMETERS
-comparison_iso <- "US"
+SLEEP_TIME <- 0.01 # number of seconds to pause after each scrape
 overwrite_files <- F
-language <- "pt" 
+comparison_iso <- "US"
 
 # Load file that indicates which language to use for each country. Contains 
 # a language code and country code
@@ -21,7 +21,7 @@ for(language in language_codes_all){
   
   # Terms to Scrape --------------------------------------------------------------
   keywords <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", 
-                                 "keywords", "FinalData", "covid_keywords_alllanguages.Rds"))
+                                 "keywords", "FinalData", "covid_keywords_alllanguages_clean.Rds"))
   
   keywords <- keywords %>%
     arrange(priority_to_scrape) %>%
@@ -41,7 +41,7 @@ for(language in language_codes_all){
   extract_trends <- function(iso_i,
                              term_i, 
                              comparison_iso, 
-                             sleep_time = 0.01,
+                             sleep_time = SLEEP_TIME,
                              also_scrape_without_cstate = T){
     
     print(iso_i)

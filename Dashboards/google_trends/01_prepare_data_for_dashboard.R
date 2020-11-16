@@ -21,7 +21,7 @@ begin_day <- c("2020-02-01",
 
 #### Load Keywords
 keywords_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", 
-                                 "keywords", "FinalData", "covid_keywords_alllanguages.Rds"))
+                                 "keywords", "FinalData", "covid_keywords_alllanguages_clean.Rds"))
 keywords <- keywords_df %>%
   filter(scrape %in% "yes") %>%
   pull(keyword_en) %>%

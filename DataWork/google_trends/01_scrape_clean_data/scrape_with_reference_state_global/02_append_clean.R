@@ -58,7 +58,7 @@ gtrends_df <- gtrends_df %>%
 
 # Merge in English Version of Keyword ------------------------------------------
 keywords <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", 
-                               "keywords", "FinalData","covid_keywords_alllanguages.Rds"))
+                               "keywords", "FinalData","covid_keywords_alllanguages_clean.Rds"))
 
 #### Dataset with english and translated word
 keywords <- keywords %>%
