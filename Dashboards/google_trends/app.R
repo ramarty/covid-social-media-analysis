@@ -4,6 +4,9 @@
 # 1. Table - which search term is most predictive for each country. The table will
 #    report: country name, search term, correlation, total cases, total deaths.
 
+# TO CITE:
+# https://www.chicagofed.org/publications/blogs/chicago-fed-insights/2020/closer-look-google-trends-unemployment
+
 # PACKAGES AND SETUP ===========================================================
 
 #### Setting directory so will work locally
@@ -139,7 +142,9 @@ ui <- fluidPage(
         
         fluidRow(
           column(12, align = "center",
-                 h1("Google Trends Data to Understanding COVID-19")
+                 #h1("Google Trends Data for Understanding COVID-19")
+                 h1("The Evolution of the Pandemic Through the Lens of Google Searches"),
+                 h2("A Global Dashboard for Real-time Monitoring of COVID-19")
           )
         ),
         
@@ -171,9 +176,15 @@ ui <- fluidPage(
                       to showing search interest in COVID-related symptoms, the dashboard also 
                       shows search interest related to 
                       <a href='https://psycnet.apa.org/fulltext/2020-59192-001.html'>mental health keywords</a> 
-                      (e.g., anxiety and loneliness), other potential consequences (e.g., unemployment and debt), 
+                      (e.g., anxiety and loneliness), other potential consequences (e.g., <a href='https://www.chicagofed.org/publications/blogs/chicago-fed-insights/2020/closer-look-google-trends-unemployment'>unemployment</a> and debt), 
                       prevention measures (e.g., face masks) and treatment measures (e.g., teleworking 
                       and ventilators).</h4>")
+                 
+                 
+                 
+                   
+                 
+                 
                  
           )
         ),
@@ -723,8 +734,13 @@ ui <- fluidPage(
                       <li><a href='https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7189861/'>The COVID-19 outbreak and Google searches: Is it really the time to worry about global mental health?</a></li>
                       <li><a href='https://ideas.repec.org/p/cep/cepdps/dp1693.html'>COVID-19, Lockdowns and Well-being: Evidence from Google Trends</a></li>
                       <li><a href='https://pubmed.ncbi.nlm.nih.gov/32279437/'>Use of Google Trends to investigate loss-of-smell-related searches during the COVID-19 outbreak</a></li>
-                      <li><a href='https://europepmc.org/article/pmc/pmc7267744'>Predicting COVID-19 Incidence Using Anosmia and Other COVID-19 Symptomatology: Preliminary Analysis Using Google and Twitter.</a></li>
-                      <li><a href='https://www.mayoclinicproceedings.org/article/S0025-6196(20)30934-4/fulltext'>Correlations Between COVID-19 Cases and Google Trends Data in the United States: A State-by-State Analysis.</a></li>
+                      <li><a href='https://europepmc.org/article/pmc/pmc7267744'>Predicting COVID-19 Incidence Using Anosmia and Other COVID-19 Symptomatology: Preliminary Analysis Using Google and Twitter</a></li>
+                      <li><a href='https://www.mayoclinicproceedings.org/article/S0025-6196(20)30934-4/fulltext'>Correlations Between COVID-19 Cases and Google Trends Data in the United States: A State-by-State Analysis</a></li>
+                      <li><a href='https://www.chicagofed.org/publications/blogs/chicago-fed-insights/2020/closer-look-google-trends-unemployment'>A Closer Look at the Correlation Between Google Trends and Initial Unemployment Insurance Claims</a></li>
+
+                      
+                      
+                      
                       </ul>"),
           )
         ),
