@@ -1,9 +1,5 @@
 # Google Trends Dashboard
 
-# TODO:
-# 1. Table - which search term is most predictive for each country. The table will
-#    report: country name, search term, correlation, total cases, total deaths.
-
 # PACKAGES AND SETUP ===========================================================
 
 #### Setting directory so will work locally
@@ -189,8 +185,9 @@ ui <- fluidPage(
           column(6, align = "center", offset = 3,
                  hr(),
                  h2("Determining correlation and prediction between Google search interest and COVID-19"),
-                 HTML("<h4>We compute how strongly different search terms correlate with COVID-19 cases and deaths.
-                      In addition, we determine whether search interest can help predict future cases or deaths
+                 HTML("<h4>In all figures and analysis, we use the number of new daily COVID-19 cases or deaths
+                      and a 7 day moving average of Google Search Interest. We compute how strongly different 
+                      search terms correlate with COVID-19 cases and deaths. In addition, we determine whether search interest can help predict future cases or deaths
                       or whether search interest responds or comes after cases/deaths. To determine this, we shift COVID-19 cases/deaths
                       by up to 21 days from its actual date. We calculate the correlation between
                       the shifted COVID-19 and the search interest (this approach follows 
@@ -686,13 +683,13 @@ ui <- fluidPage(
                  h2("Data", align = "center"),
                  HTML("We access COVID-19 Cases and Deaths from the
                       <a href='https://covid19.who.int/?gclid=Cj0KCQjw8fr7BRDSARIsAK0Qqr73Wij8AiyjGx8dOs-MYxN7oxF5pzYmurbdVxj-x65Gc8tx1jJykaYaAqQNEALw_wcB'>WHO</a>
-                      and download Google Trends data for all countries. To protect privacy, Google
+                      and download Google Trends data for all countries. In all analyses, we
+                      use a 7 day moving average of Google Search interest. To protect privacy, Google
                       only releases search interest data when there is a large enough search volume for a
                       specific search term. We translate search terms from English into
                       each country's most widely used language using Google Translate.
                       The below table shows which language is used for each country."),
-                 
-                 
+     
           )
         ),
         fluidRow(
