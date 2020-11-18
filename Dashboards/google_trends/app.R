@@ -4,9 +4,6 @@
 # 1. Table - which search term is most predictive for each country. The table will
 #    report: country name, search term, correlation, total cases, total deaths.
 
-# TO CITE:
-# https://www.chicagofed.org/publications/blogs/chicago-fed-insights/2020/closer-look-google-trends-unemployment
-
 # PACKAGES AND SETUP ===========================================================
 
 #### Setting directory so will work locally
