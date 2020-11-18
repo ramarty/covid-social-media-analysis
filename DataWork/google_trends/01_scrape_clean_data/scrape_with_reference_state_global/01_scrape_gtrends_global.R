@@ -2,7 +2,7 @@
 # state
 
 #### PARAMETERS
-SLEEP_TIME <- 0.01 # number of seconds to pause after each scrape
+SLEEP_TIME <- 1 # number of seconds to pause after each scrape
 overwrite_files <- F
 comparison_iso <- "US"
 
