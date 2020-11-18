@@ -64,7 +64,7 @@ for(language in language_codes_all){
     #### 4. Take a quick nap b/c of google rate limits
     Sys.sleep(sleep_time) #  + runif(1)*2
     
-    print(nrow(out_all_df))
+    print(nrow(out_df))
     return(out_df)
     
   }
