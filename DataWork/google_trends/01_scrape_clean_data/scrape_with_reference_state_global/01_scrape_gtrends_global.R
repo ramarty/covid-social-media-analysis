@@ -40,7 +40,7 @@ for(language in language_codes_all){
   # Function to Scrape Data ----------------------------------------------------
   extract_trends <- function(iso_i,
                              term_i, 
-                             sleep_time = SLEEP_TIME){
+                             sleep_time){
     
     print(iso_i)
     
@@ -93,7 +93,7 @@ for(language in language_codes_all){
           
           term_df <- extract_trends(iso_i,
                                     term_i,
-                                    comparison_iso)
+                                    SLEEP_TIME)
           term_df$language <- language
           
           saveRDS(term_df, out_path)
