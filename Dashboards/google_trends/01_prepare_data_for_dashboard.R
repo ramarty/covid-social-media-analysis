@@ -28,25 +28,30 @@ keywords <- keywords_df %>%
   tolower()
 
 # World Shapefile --------------------------------------------------------------
-world_sp <- readRDS(file.path(dropbox_file_path, "Data", "world_shapefile", 
-                              "FinalData",
-                              "TM_WORLD_BORDERS-0.3_simplified.Rds"))
+# world_sp <- readRDS(file.path(dropbox_file_path, "Data", "world_shapefile", 
+#                               "FinalData",
+#                               "TM_WORLD_BORDERS-0.3_simplified.Rds"))
 
-world_sp$name <- world_sp$name %>% as.character()
-world_sp$continent <- NA
-world_sp$continent[world_sp$region %in% 2] <- "Africa"
-world_sp$continent[world_sp$region %in% 142] <- "Asia"
-world_sp$continent[world_sp$region %in% 150] <- "Europe"
-world_sp$continent[world_sp$region %in% 9] <- "Oceania"
-world_sp$continent[world_sp$region %in% 19] <- "Americas"
-
-world_sp <- world_sp[world_sp$name != "Antarctica",]
-
+world_sp <- ne_countries(type = "countries", scale=50)
 world_sp@data <- world_sp@data %>%
-  dplyr::select(iso2, name, continent) %>%
-  dplyr::rename(geo = iso2)
+  dplyr::select(name, continent, iso_a2) %>%
+  dplyr::rename(geo = iso_a2)
 
 world_sp$geo <- world_sp$geo %>% as.character()
+
+## Remove some polygons
+world_sp <- world_sp[world_sp$continent != "Antarctica",]
+world_sp <- world_sp[world_sp$name != "Fr. S. Antarctic Lands",]
+world_sp <- world_sp[world_sp$name != "Heard I. and McDonald Is.",]
+world_sp <- world_sp[world_sp$name != "Br. Indian Ocean Ter.",]
+world_sp <- world_sp[world_sp$name != "S. Geo. and S. Sandw. Is.",]
+
+## Rename Continent for select countries
+# Do if open ocean
+world_sp$continent[world_sp$name %in% "Seychelles"] <- "Africa"
+world_sp$continent[world_sp$name %in% "Maldives"] <- "Asia"
+world_sp$continent[world_sp$name %in% "Mauritius"] <- "Africa"
+world_sp$continent[world_sp$name %in% "Saint Helena"] <- "Africa"
 
 world_df <- world_sp@data
 
@@ -84,8 +89,8 @@ for(begin_day_i in begin_day){
   
   gtrends_df <- gtrends_df %>%
     dplyr::select(keyword_en, keyword, date, hits, hits_ma7, name, geo, continent, cases_new, death_new,
-                  cor_casesMA7_hitsMA7_max, cor_casesMA7_hitsMA7_lag, cor_casesMA7_hitsMA7_zscore,
-                  cor_deathMA7_hitsMA7_max, cor_deathMA7_hitsMA7_lag, cor_deathMA7_hitsMA7_zscore,
+                  cor_casesMA7_hitsMA7_max, cor_casesMA7_hitsMA7_nolag, cor_casesMA7_hitsMA7_lag, cor_casesMA7_hitsMA7_zscore, cor_casesMA7_hitsMA7_nolag_zscore,
+                  cor_deathMA7_hitsMA7_max, cor_deathMA7_hitsMA7_nolag, cor_deathMA7_hitsMA7_lag, cor_deathMA7_hitsMA7_zscore, cor_deathMA7_hitsMA7_nolag_zscore,
                   cases_total, death_total)
   
   saveRDS(gtrends_df, file.path(DASHBOARD_PATH, paste0("gtrends_since_",begin_day_i,".Rds")))
@@ -176,7 +181,7 @@ for(begin_day_i in begin_day){
                             chartRangeMax = 8,
                             width = SPARK_WIDTH,
                             height = SPARK_HEIGHT,
-                            tooltipChartTitle = "Search Popularity",
+                            tooltipChartTitle = "Search Interest",
                             highlightLineColor = 'green', 
                             highlightSpotColor = 'green') 
         l_cases_hits <- spk_composite(l_cases, 
@@ -196,13 +201,17 @@ for(begin_day_i in begin_day){
       group_by(group, name, keyword_en, keyword, continent, geo) %>%
       summarise(cases_total = max(cases_total, na.rm=T),
                 death_total = max(death_total, na.rm=T),
+                cor_casesMA7_hitsMA7_nolag  = cor_casesMA7_hitsMA7_nolag[1],
                 cor_casesMA7_hitsMA7_lag    = cor_casesMA7_hitsMA7_lag[1],
                 cor_casesMA7_hitsMA7_max    = cor_casesMA7_hitsMA7_max[1],
                 cor_casesMA7_hitsMA7_zscore = cor_casesMA7_hitsMA7_zscore[1],
+                cor_casesMA7_hitsMA7_nolag_zscore =  cor_casesMA7_hitsMA7_nolag_zscore[1],
                 
+                cor_deathMA7_hitsMA7_nolag  = cor_deathMA7_hitsMA7_nolag[1],
                 cor_deathMA7_hitsMA7_lag    = cor_deathMA7_hitsMA7_lag[1],
                 cor_deathMA7_hitsMA7_max    = cor_deathMA7_hitsMA7_max[1],
-                cor_deathMA7_hitsMA7_zscore = cor_deathMA7_hitsMA7_zscore[1]) %>%
+                cor_deathMA7_hitsMA7_zscore = cor_deathMA7_hitsMA7_zscore[1],
+                cor_deathMA7_hitsMA7_nolag_zscore =  cor_deathMA7_hitsMA7_nolag_zscore[1]) %>%
       ungroup()
     
     gtrends_spark_df <- gtrends_spark_df %>%

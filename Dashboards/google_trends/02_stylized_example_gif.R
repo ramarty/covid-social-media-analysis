@@ -201,10 +201,12 @@ best_lag <- df_cor$shift[which.max(df_cor$cor)]
 #                best_cor,
 #                " with a ",best_lag, " day shift")
 title <- paste0("The maximum correlation is ", best_cor,
-                " when COVID-19 cases is shifted 10 days into the past.\n",
-                "This correlation is ", 
-                zscore, 
-                " standard deviations above the average correlation (z-score).")
+                " when COVID-19 cases is shifted 10 days into the past\n")
+# title <- paste0("The maximum correlation is ", best_cor,
+#                 " when COVID-19 cases is shifted 10 days into the past.\n",
+#                 "This correlation is ", 
+#                 zscore, 
+#                 " standard deviations above the average correlation (z-score).")
 # 
 # title <- paste0("Search Interest and COVID-19 cases ",
 #                 abs(shift_i), " Days into the ",
