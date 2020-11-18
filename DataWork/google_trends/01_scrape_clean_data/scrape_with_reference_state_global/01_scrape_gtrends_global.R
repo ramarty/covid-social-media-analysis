@@ -40,6 +40,7 @@ for(language in language_codes_all){
   # Function to Scrape Data ----------------------------------------------------
   extract_trends <- function(iso_i,
                              term_i, 
+                             language,
                              sleep_time){
     
     print(iso_i)
@@ -58,7 +59,9 @@ for(language in language_codes_all){
     # error later. In this case, we just want to skip.
     if((class(out)[1] %in% "gtrends") & is.null(out_df)){
       out_df <- data.frame(NULL)
-    } 
+    } else{
+      out_df$language <- language
+    }
 
     
     #### 4. Take a quick nap b/c of google rate limits
@@ -93,9 +96,9 @@ for(language in language_codes_all){
           
           term_df <- extract_trends(iso_i,
                                     term_i,
+                                    language,
                                     SLEEP_TIME)
-          term_df$language <- language
-          
+
           saveRDS(term_df, out_path)
           
           Sys.sleep(0.01) # pause after each term
