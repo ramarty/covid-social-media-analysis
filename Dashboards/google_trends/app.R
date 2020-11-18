@@ -122,7 +122,7 @@ color_tile2 <- function (...) {
 
 # UI -==========================================================================
 ui <- fluidPage(
-
+  
   navbarPage(
     theme = shinytheme("cosmo"), #cosmo, journal, flatly, sandstone
     collapsible = TRUE,
@@ -347,7 +347,7 @@ ui <- fluidPage(
         h2(textOutput("which_keyword_title"),
            align = "center"),
         
-
+        
         
         
         fluidRow(
@@ -358,7 +358,7 @@ ui <- fluidPage(
                                     strong(textOutput("cor_distribution_text")),
                              ),
                              column(1,
-                                    )
+                             )
                            ),
                            fluidRow(
                              uiOutput("max_cor_hist_ui")
@@ -577,8 +577,10 @@ ui <- fluidPage(
                      )
                    ),
                    
-                   plotlyOutput("line_graph_country_key",
-                              height = "225px")
+                   box(solidHeader = TRUE, status = "primary", width=12,
+                       plotlyOutput("line_graph_country_key",
+                                    height = "270px") # 225
+                   ),
             ),
             column(4, align = "center",
                    tags$div(id="wrapper"),
@@ -1053,16 +1055,29 @@ server = (function(input, output, session) {
   # ** Max Correlation Dotplot -------------------------------------------------
   # **** Title ---------------------------
   output$cor_distribution_text <- renderText({
-    paste0("Correlation between COVID-19 ",
-           tolower(input$select_covid_type),
-           " and Google search interest. Data after ",
-           input$select_begin_date, 
-           " used.")
+    out <- paste0("Correlation between COVID-19 ",
+                  tolower(input$select_covid_type),
+                  " and Google search interest.")
+    
+    if(input$select_cor_type %in% "Best Lead/Lag"){
+      out <- paste0(out,
+                    " The highest correlation when COVID-19 ", 
+                    tolower(input$select_covid_type), 
+                    " are shifted -21 to 21 days is shown.")
+    }
+    
+    out <- paste0(out, 
+                  " Data after ", 
+                  input$select_begin_date, 
+                  " is used.")
+    
+    out
+    
   })
   
   # **** Figure ---------------------------
   output$max_cor_hist <- renderPlot({
-
+    
     cor_df     <- readRDS(file.path("data", paste0("correlations_since_",
                                                    input$select_begin_date,
                                                    ".Rds")))
@@ -1143,7 +1158,7 @@ server = (function(input, output, session) {
     # ggarrange(p1, p2,
     #           common.legend = T,
     #           widths = c(.6,.4))
-
+    
     p1
     
     
@@ -1286,7 +1301,7 @@ server = (function(input, output, session) {
                      color = "black",
                      fill = "palegreen3",
                      bins = 15) + 
-      labs(title = "Lead/Lag of Highest Correlation",
+      labs(title = "Lead/Lag with Highest Correlation",
            subtitle = paste0("Average ", round(mean(cor_df$lag),2), " days"), 
            x = NULL,
            y = "Number\nOf\nCountries") +
@@ -1540,11 +1555,15 @@ server = (function(input, output, session) {
                                      text = ~paste(round(hits_ma7, 2),"<br>", date))
             fig <- fig %>% layout(title = '',
                                   xaxis = list(title = ""),
-                                  margin = list(l=45, r=45, b=5, t=5, pad=0),
-                                  showlegend = T,
-                                  legend = list(orientation = 'h'),
+                                  margin = list(l=45, r=45, b=5, t=10, pad=0),
+                                  showlegend = F,
+                                  #legend = list(orientation = 'h'),
+                                  #paper_bgcolor = 'transparent',
                                   yaxis = list(side = 'left', title = input$select_covid_type_map, showgrid = FALSE, zeroline = FALSE, color = "orange"),
-                                  yaxis2 = list(side = 'right', overlaying = "y", title = 'Search Interest', showgrid = FALSE, zeroline = F, color = "forestgreen"))
+                                  yaxis2 = list(side = 'right', overlaying = "y", title = 'Search Interest', showgrid = FALSE, zeroline = F, color = "forestgreen")) 
+            fig <- fig %>% config(displayModeBar = F)
+            
+            
             
             # p <- gtrends_sub_df %>%
             #   ggplot() +
@@ -2273,11 +2292,24 @@ server = (function(input, output, session) {
   
   output$trends_country_subtitle <- renderText({
     
-    paste0("The table compares trends in <span style='color:orange;'>COVID-19 ",
+    out <- paste0("The table compares trends in <span style='color:orange;'>COVID-19 ",
            tolower(input$select_covid_type), 
            "</span> and the <span style='color:green;'>search term interest",
-           "</span>. It shows the correlation when the correlation is 
-           highest.")
+           "</span>.")
+    
+    if(input$select_cor_type_country %in% "Best Lead/Lag"){
+      out <- paste0(out,
+                    " The highest correlation when COVID-19 ", 
+                    tolower(input$select_covid_type), 
+                    " are shifted -21 to 21 days is shown.")
+    }
+    
+    out <- paste0(out, 
+                  " Data after ", 
+                  input$select_begin_date_country, 
+                  " is used to compute the correlation.")    
+    out
+    
     
   })
   
