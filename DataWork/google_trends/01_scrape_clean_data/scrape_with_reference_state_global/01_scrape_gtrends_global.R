@@ -17,7 +17,7 @@ language_codes_all <- language_codes_all[!is.na(language_codes_all)]
 language_codes_all <- language_codes_all[language_codes_all != ""]
 language_codes_all <- language_codes_all %>% sort()
 
-for(language in language_codes_all){
+for(language in rev(language_codes_all)){
   
   # Terms to Scrape --------------------------------------------------------------
   keywords <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", 
@@ -90,7 +90,7 @@ for(language in language_codes_all){
                                    ".Rds"))
       
       if(!file.exists(out_path) | overwrite_files){
-        print(paste(iso_i, term_i, "-------------------------------------------"))
+        print(paste(language, iso_i, term_i, "-------------------------------"))
         
         tryCatch({
           

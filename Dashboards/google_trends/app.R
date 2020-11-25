@@ -175,7 +175,7 @@ ui <- fluidPage(
                  
                  
                  
-                   
+                 
                  
                  
                  
@@ -340,12 +340,15 @@ ui <- fluidPage(
                    label = strong("Search Term Categories"),
                    choices = c("All",
                                sort(unique(keywords_df$category))),
-                   selected = "All",
+                   selected = "Symptoms",
                    multiple = F
                  )
           )
           
+          
         ),
+        
+
         
         hr(),
         
@@ -480,8 +483,7 @@ ui <- fluidPage(
                    multiple = F
                  )#,
           ),
-          
-          column(2, align = "center",
+          column(2, align = "center", offset = 0,
                  selectInput(
                    "select_covid_type_map",
                    
@@ -515,11 +517,13 @@ ui <- fluidPage(
                    label = strong("Search Term Categories"),
                    choices = c("All",
                                sort(unique(keywords_df$category))),
-                   selected = "All",
+                   selected = "Symptoms",
                    multiple = F
                  )
           )
         ),
+        
+
         
         br(),
         
@@ -689,7 +693,7 @@ ui <- fluidPage(
                       specific search term. We translate search terms from English into
                       each country's most widely used language using Google Translate.
                       The below table shows which language is used for each country."),
-     
+                 
           )
         ),
         fluidRow(
@@ -1179,9 +1183,9 @@ server = (function(input, output, session) {
     height <- "2200px"
     if(input$select_search_category == "Coronavirus General") height <- "600px"
     if(input$select_search_category == "Mental Health") height <- "900px"
-    if(input$select_search_category == "Potential Consequences") height <- "400px"
+    if(input$select_search_category == "Potential Consequences") height <- "500px"
     if(input$select_search_category == "Prevention") height <- "500px"
-    if(input$select_search_category == "Symptoms") height <- "700px"
+    if(input$select_search_category == "Symptoms") height <- "920px"
     if(input$select_search_category == "Treatment") height <- "500px"
     
     plotOutput("max_cor_hist",
@@ -1735,13 +1739,23 @@ server = (function(input, output, session) {
       
       keyword_df_i <- keywords_df[keywords_df$category %in% input$select_search_category,]
       
+      # If 'Loss of Smell' is a keyword, select that initially
+      if("Loss of Smell" %in% keyword_df_i$keyword_en){
+        keyword_selected <- "Loss of Smell"
+      } else{
+        keyword_selected <- sort(keyword_df_i$keyword_en)[1]
+      }
+      
       out <- selectInput(
         "select_keyword",
         label = strong("Search Term"),
         choices = sort(keyword_df_i$keyword_en),
-        selected = keyword_df_i$keyword_en[1],
+        selected = keyword_selected,
         multiple = F
       )
+      
+      
+      
     }
     
     out
@@ -2303,9 +2317,9 @@ server = (function(input, output, session) {
   output$trends_country_subtitle <- renderText({
     
     out <- paste0("The table compares trends in <span style='color:orange;'>COVID-19 ",
-           tolower(input$select_covid_type), 
-           "</span> and the <span style='color:green;'>search term interest",
-           "</span>.")
+                  tolower(input$select_covid_type), 
+                  "</span> and the <span style='color:green;'>search term interest",
+                  "</span>.")
     
     if(input$select_cor_type_country %in% "Best Lead/Lag"){
       out <- paste0(out,
