@@ -347,7 +347,7 @@ ui <- fluidPage(
           
         ),
         
-
+        
         
         hr(),
         
@@ -430,6 +430,16 @@ ui <- fluidPage(
                     ),
                     tabPanel(id = "table_view",
                              "Table View",
+                             
+                             br(),
+                             
+                             fluidRow(
+                               column(12, align = "center",
+                                     htmlOutput("global_table_title")
+                               )
+                             ),
+                             
+                             br(),
                              
                              fluidRow(
                                column(4,
@@ -522,7 +532,7 @@ ui <- fluidPage(
           )
         ),
         
-
+        
         
         br(),
         
@@ -923,6 +933,14 @@ server = (function(input, output, session) {
   })
   
   # ** Sparkline Table ---------------------------------------------------------
+  output$global_table_title <- renderText({
+    paste0("<strong>The table shows trends in <span style='color:orange;'>COVID-19 ",
+           tolower(input$select_covid_type),
+           "</span> and <span style='color:green;'>search interest of '",
+           input$select_keyword, "'</span></strong>")
+  })
+
+  
   output$line_graph <- renderUI({
     
     gtrends_spark_df <- readRDS(file.path("data", paste0("gtrends_spark_since_",
