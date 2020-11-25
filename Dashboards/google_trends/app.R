@@ -12,7 +12,6 @@ if (Sys.info()[["user"]] == "WB521633") {
 }
 
 #### Pacakges
-library(waiter)
 library(sparkline)
 library(shinydashboard)
 library(RColorBrewer)
