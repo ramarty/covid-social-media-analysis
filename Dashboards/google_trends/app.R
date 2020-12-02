@@ -74,7 +74,7 @@ LOAD_GTRENDS_INIT <- TRUE
 
 keyword_list <- gtrends_df$keyword_en %>% unique()
 
-keywords_df <- read_csv(file.path("data", "covid_keywords.csv"))
+keywords_df <- readRDS(file.path("data", "covid_keywords.Rds"))
 languges_df <- read_csv(file.path("data", "countries_lang.csv"))
 
 ## Prep keywords
@@ -560,7 +560,7 @@ ui <- fluidPage(
           
           fluidRow(
             column(6, align = "center", offset = 3,
-                   h4(textOutput("translation_text"))
+                   htmlOutput("translation_text")
             )
           ),
           
@@ -1652,7 +1652,7 @@ server = (function(input, output, session) {
     geo <- world$geo[world$name %in% input$select_country] %>% as.character()
     
     search_en <- input$select_keyword_country
-    language_code <- languges_df$Language_code_main[languges_df$Code %in% geo]
+    language_code <- languges_df$Language_code_main[languges_df$Code %in% geo][1]
     
     if(length(search_en) %in% 0) search_en <- "Loss of Smell"
     if(length(language_code) %in% 0) language_code <- "en"
@@ -1660,6 +1660,8 @@ server = (function(input, output, session) {
     search <- keywords_df[[paste0("keyword_", language_code)]][tolower(keywords_df$keyword_en) %in% tolower(search_en)]
     search <- search %>% str_replace_all("'", "")
     search_p20 <- search %>% str_replace_all(" ", "%20")
+    
+    print(search)
     
     if(language_code %in% "en"){
       out <- ""
