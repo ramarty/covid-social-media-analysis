@@ -19,49 +19,64 @@ gtrends_df$Country[gtrends_df$Country %in% "Bolivia (Plurinational State of)"] <
 gtrends_df$Country[gtrends_df$Country %in% "United Republic of Tanzania"] <- "Tanzania"
 gtrends_df$Country[gtrends_df$Country %in% "Venezuela (Bolivarian Republic of)"] <- "Venezuela"
 gtrends_df$Country[gtrends_df$Country %in% "Bosnia and Herzegovina"] <- "Bosnia & Herzegovina"
+gtrends_df$Country[gtrends_df$Country %in% "Viet Nam"] <- "Vietnam"
 
 # gtrends_df <- gtrends_df %>%
 #   filter(Country %in% c("United States of America", "Australia", "Brazil"))
 
 library(ggtext)
 
-gtrends_df %>%
+#gtrends_df$Country <- fct_reorder(gtrends_df$Country, gtrends_df$cor_casesMA7_hitsMA7_mean, .desc=T)
+
+p <- gtrends_df %>%
   filter(cases_total > 0) %>%
   ggplot() +
   geom_col(aes(x = date, y = cases_new),
-           fill = "orange3", # orange3
-           color = "orange3") +
+           fill = "#ffc266", # orange3
+           color = "#ffc266") +
   geom_line(aes(x = date, y = hits_ma7),
-            color = "green4",
-            size=0.75) + # olivedrab3 deepskyblue
+            color = "#3AA959", # green4
+            size=0.8) + # .75 olivedrab3 deepskyblue
   labs(x = "",
        y = "",
-       title ="<span style='font-size:18pt'><span style='color:#ffffff;'>Trends in</span> 
-               <span style='color:green4;'>'Loss of Smell'</span> 
-               <span style='color:#ffffff;'>and</span>
-    <span style='color:orange2;'>COVID-19 Cases</span>
+       # #ffffff -- white
+       title ="<span style='font-size:18pt'><span style='color:#000000;'>Trends in Google Search Interest in</span> 
+               <span style='color:#3AA959;'>'Loss of Smell'</span> 
+               <span style='color:#000000;'>and</span>
+    <span style='color:#ff9900;'>COVID-19 Cases</span>
     <br>
     </span>") +
   theme_minimal() +
   theme(axis.text.y = element_blank(),
         axis.text.x = element_blank(),
-        strip.text = element_text(face = "bold", color = "white"),
-        plot.background = element_rect(fill = "black"),
+        strip.text = element_text(face = "bold", color = "black", size=10),
+        #panel.spacing = unit(0.2, "lines"),
+        #panel.spacing.x=unit(0, "lines"),
+        #panel.spacing.y=unit(0, "lines"),
+        plot.background = element_rect(fill = "white", color = "white"),
         panel.grid.major = element_blank(), 
         panel.grid.minor = element_blank(),
         panel.background = element_blank(), 
         axis.line = element_blank(),
-        plot.title = element_markdown(lineheight = 1.1, hjust = 0.5, face = "bold")) +
+        plot.title = element_markdown(lineheight = 1.1, hjust = 0.5, face = "bold",size=5)) +
   facet_wrap(~Country, 
-             ncol = 9,
-             scales = "free") +
-  ggsave(filename = file.path(dropbox_file_path,
-                              "Data",
-                              "google_trends",
-                              "Outputs",
-                              "figures",
-                              "trend_i_cant_smell.png"),
-         heigh = 12, width=14.1)
+             ncol = 8,
+             scales = "free") 
+
+ggsave(p, filename = file.path(dropbox_file_path,
+                               "Blog Figures",
+                               "blog1_figure1.png"),
+       heigh = 16, width=14.2)
+
+ggsave(p, filename = file.path(dropbox_file_path,
+                               "Data",
+                               "google_trends",
+                               "Outputs",
+                               "figures",
+                               "trend_i_cant_smell.png"),
+       heigh = 12, width=14.1)
+
+
 
 # #f9ba2d
 # #3aa757

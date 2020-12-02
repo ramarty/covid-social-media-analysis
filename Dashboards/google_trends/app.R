@@ -136,7 +136,7 @@ ui <- fluidPage(
           column(12, align = "center",
                  #h1("Google Trends Data for Understanding COVID-19")
                  h1("The Evolution of the Pandemic Through the Lens of Google Searches"),
-                 h2("A Global Dashboard for Real-time Monitoring of COVID-19")
+                 h2("A Global Dashboard for Monitoring COVID-19")
           )
         ),
         
@@ -1591,8 +1591,16 @@ server = (function(input, output, session) {
                                   #legend = list(orientation = 'h'),
                                   #paper_bgcolor = 'transparent',
                                   yaxis = list(side = 'left', title = input$select_covid_type_map, showgrid = FALSE, zeroline = FALSE, color = "orange"),
-                                  yaxis2 = list(side = 'right', overlaying = "y", title = 'Search Interest', showgrid = FALSE, zeroline = F, color = "forestgreen")) 
+                                  yaxis2 = list(side = 'right', 
+                                                overlaying = "y", 
+                                                rangemode = "tozero",
+                                                title = 'Search Interest', 
+                                                showgrid = FALSE, 
+                                                zeroline = F,
+                                                color = "forestgreen")) 
             fig <- fig %>% config(displayModeBar = F)
+            
+
             
             
             

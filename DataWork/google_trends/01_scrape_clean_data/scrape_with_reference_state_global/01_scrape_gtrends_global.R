@@ -2,7 +2,7 @@
 # state
 
 #### PARAMETERS
-SLEEP_TIME <- 1 # number of seconds to pause after each scrape
+SLEEP_TIME <- 0.01 # number of seconds to pause after each scrape
 overwrite_files <- F
 comparison_iso <- "US"
 
@@ -17,7 +17,7 @@ language_codes_all <- language_codes_all[!is.na(language_codes_all)]
 language_codes_all <- language_codes_all[language_codes_all != ""]
 language_codes_all <- language_codes_all %>% sort()
 
-for(language in rev(language_codes_all)){
+for(language in language_codes_all){
   
   # Terms to Scrape --------------------------------------------------------------
   keywords <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", 
@@ -26,6 +26,8 @@ for(language in rev(language_codes_all)){
   keywords <- keywords %>%
     arrange(priority_to_scrape) %>%
     filter(scrape %in% "yes")
+  
+  #keywords <- keywords[keywords$keyword_en %in% "fever",]
   
   # Clean keyword
   keywords_vec <- keywords[[paste0("keyword_", language)]] %>% tolower() %>% as.character()
@@ -36,6 +38,8 @@ for(language in rev(language_codes_all)){
   # Grab iso/country codes where the selected language is the main language
   iso2 <- languages$Code[languages$Language_code_main %in% language]
   iso2 <- iso2[!is.na(iso2)]
+  
+  iso2 <- "BR"
   
   # Function to Scrape Data ----------------------------------------------------
   extract_trends <- function(iso_i,
@@ -48,7 +52,7 @@ for(language in rev(language_codes_all)){
     #### 1. Scrape
     out <- gtrends(term_i, 
                    geo = iso_i,
-                   time = "2020-02-05 2020-10-31",
+                   time = "2020-03-05 2020-11-29",
                    onlyInterest=T,
                    low_search_volume=T)
     
