@@ -435,7 +435,7 @@ ui <- fluidPage(
                              
                              fluidRow(
                                column(12, align = "center",
-                                     htmlOutput("global_table_title")
+                                      htmlOutput("global_table_title")
                                )
                              ),
                              
@@ -484,13 +484,15 @@ ui <- fluidPage(
         fluidRow(
           column(3, align = "center", offset = 0,
                  
-                 selectizeInput(
-                   "select_country",
-                   label = strong("Select Country"),
-                   choices = c("", sort(cor_df$name)),
-                   selected = "",
-                   multiple = F
-                 )#,
+                 uiOutput("select_country_ui")
+                 
+                 # selectizeInput(
+                 #   "select_country",
+                 #   label = strong("Select Country"),
+                 #   choices = c("", sort(cor_df$name)),
+                 #   selected = "",
+                 #   multiple = F
+                 # )#,
           ),
           column(2, align = "center", offset = 0,
                  selectInput(
@@ -893,7 +895,20 @@ server = (function(input, output, session) {
     #   resolutions = 2^(16:7))
     # options = leafletOptions(crs = epsg2163)
     
-    aa <<- world_data
+    # https://epsg.io/54030
+    # crs_leaflet <- leafletCRS(
+    #   crsClass = "L.Proj.CRS",
+    #   code = "EPSG:4087",
+    #   proj4def = "+proj=eqc +lat_ts=0 +lat_0=0 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs ",
+    #   resolutions = 1.55^(25:15))
+    # 
+    # crs_leaflet <- leafletCRS(
+    #   crsClass = "L.Proj.CRS",
+    #   code = "EPSG:4088",
+    #   proj4def = "+proj=eqc +lat_ts=0 +lat_0=0 +lon_0=0 +x_0=0 +y_0=0 +a=6371007 +b=6371007 +units=m +no_defs",
+    #   resolutions = 1.55^(25:15))
+    
+    # options = leafletOptions(crs = epsg2163)
     
     leaflet(height = "700px") %>%
       #addTiles() %>%
@@ -939,7 +954,7 @@ server = (function(input, output, session) {
            "</span> and <span style='color:green;'>search interest of '",
            input$select_keyword, "'</span></strong>")
   })
-
+  
   
   output$line_graph <- renderUI({
     
@@ -1197,12 +1212,12 @@ server = (function(input, output, session) {
   
   output$max_cor_hist_ui <- renderUI({
     
-    height <- "2200px"
+    height <- "2700px"
     if(input$select_search_category == "Coronavirus General") height <- "600px"
     if(input$select_search_category == "Mental Health") height <- "900px"
     if(input$select_search_category == "Potential Consequences") height <- "500px"
     if(input$select_search_category == "Prevention") height <- "500px"
-    if(input$select_search_category == "Symptoms") height <- "920px"
+    if(input$select_search_category == "Symptoms") height <- "970px"
     if(input$select_search_category == "Treatment") height <- "500px"
     
     plotOutput("max_cor_hist",
@@ -1600,7 +1615,7 @@ server = (function(input, output, session) {
                                                 color = "forestgreen")) 
             fig <- fig %>% config(displayModeBar = F)
             
-
+            
             
             
             
@@ -1661,14 +1676,15 @@ server = (function(input, output, session) {
     search <- search %>% str_replace_all("'", "")
     search_p20 <- search %>% str_replace_all(" ", "%20")
     
-    print(search)
-    
     if(language_code %in% "en"){
       out <- ""
     } else{
-      out <- paste0("'", search_en[1], "' translated into ",
+      out <- paste0("<h4>", "'", search_en[1], "' translated into ",
                     languges_df$Language_main[languges_df$Code %in% geo][1],": ",
-                    search[1])
+                    search[1],
+                    "</h4>")
+      
+      
     }
     
     out 
@@ -1680,10 +1696,12 @@ server = (function(input, output, session) {
   output$gtrends_html_trends <- renderUI({
     
     # Do this as doesn't appear on default.
-    if((input$select_country %in% "") & LOAD_GTRENDS_INIT){
-      updateSelectInput(session, "select_country",
-                        selected = "United States")
-      LOAD_GTRENDS_INIT <<- F
+    if(!is.null(input$select_country)){
+      if((input$select_country %in% "") & LOAD_GTRENDS_INIT){
+        updateSelectInput(session, "select_country",
+                          selected = "United States")
+        LOAD_GTRENDS_INIT <<- F
+      }
     }
     
     ## Country
@@ -1691,7 +1709,7 @@ server = (function(input, output, session) {
     
     ## Search term
     search_en <- input$select_keyword_country
-    language_code <- languges_df$Language_code_main[languges_df$Code %in% geo]
+    language_code <- languges_df$Language_code_main[languges_df$Code %in% geo][1]
     
     if(length(search_en) %in% 0) search_en <- "Loss of Smell"
     if(length(language_code) %in% 0) language_code <- "en"
@@ -1707,10 +1725,12 @@ server = (function(input, output, session) {
   output$gtrends_html_map <- renderUI({
     
     # Do this as doesn't appear on default.
-    if((input$select_country %in% "") & LOAD_GTRENDS_INIT){
-      updateSelectInput(session, "select_country",
-                        selected = "United States")
-      LOAD_GTRENDS_INIT <<- F
+    if(!is.null(input$select_country)){
+      if((input$select_country %in% "") & LOAD_GTRENDS_INIT){
+        updateSelectInput(session, "select_country",
+                          selected = "United States")
+        LOAD_GTRENDS_INIT <<- F
+      }
     }
     
     ## Country
@@ -1718,7 +1738,7 @@ server = (function(input, output, session) {
     
     ## Search term
     search_en <- input$select_keyword_country
-    language_code <- languges_df$Language_code_main[languges_df$Code %in% geo]
+    language_code <- languges_df$Language_code_main[languges_df$Code %in% geo][1]
     
     if(length(search_en) %in% 0) search_en <- "Loss of Smell"
     if(length(language_code) %in% 0) language_code <- "en"
@@ -1829,6 +1849,45 @@ server = (function(input, output, session) {
     
   })
   
+  # ** Country List - Restrict based on category --------------------
+  observe({
+    
+    output$select_country_ui <- renderUI({
+      
+      # !!!!!!!!!!!!!!!!!!!!!!!!!! EDIT HERE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+      
+      ## Default
+      out <- selectInput(
+        "select_country",
+        label = strong("Search Country"),
+        choices = sort(unique(cor_df$name)),
+        selected = "United States",
+        multiple = F
+      )
+      
+      cor_country_df <- cor_df
+      
+      if(input$select_search_category_country != "All"){
+        keywords_vec <- keywords_df$keyword_en[keywords_df$category %in% input$select_search_category_country]
+        
+        cor_country_df <- cor_df[cor_df$keyword_en %in% keywords_vec,]
+      }
+      
+      
+      out <- selectInput(
+        "select_country",
+        label = strong("Search Country"),
+        choices = sort(unique(cor_country_df$name)),
+        selected = "United States",
+        multiple = F
+      )
+      
+      out
+      
+    })
+    
+  })
+  
   
   # * * * * * * * * * * * P U R G A T O R Y * * * * * *  ------------------------
   
@@ -1839,6 +1898,15 @@ server = (function(input, output, session) {
   #### Basemap
   output$global_map <- renderLeaflet({
     
+    # https://epsg.io/54030
+    epsg2163 <- leafletCRS(
+      crsClass = "L.Proj.CRS",
+      code = "EPSG:4087",
+      proj4def = "+proj=eqc +lat_ts=0 +lat_0=0 +lon_0=0 +x_0=0 +y_0=0 +datum=WGS84 +units=m +no_defs ",
+      resolutions = 2^(25:15))
+    
+    # options = leafletOptions(crs = epsg2163)
+  
     leaflet() %>%
       addProviderTiles(providers$OpenStreetMap.Mapnik) %>%
       setView(lat = 0, lng = 0, zoom = 1)
