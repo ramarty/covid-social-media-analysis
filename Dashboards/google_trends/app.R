@@ -1,5 +1,7 @@
 # Google Trends Dashboard
 
+# https://shiny.rstudio.com/articles/plot-caching.html
+
 # PACKAGES AND SETUP ===========================================================
 
 #### Setting directory so will work locally
@@ -1107,7 +1109,7 @@ server = (function(input, output, session) {
   })
   
   # **** Figure ---------------------------
-  output$max_cor_hist <- renderPlot({
+  output$max_cor_hist <- renderCachedPlot({
     
     cor_df     <- readRDS(file.path("data", paste0("correlations_since_",
                                                    input$select_begin_date,
@@ -1193,7 +1195,11 @@ server = (function(input, output, session) {
     p1
     
     
-  }, bg="transparent")
+  }, cacheKeyExpr = { list(input$select_begin_date,
+                           input$select_cor_type,
+                           input$select_search_category,
+                           input$select_continent,
+                           input$select_covid_type)}, bg="transparent")
   
   output$max_cor_hist_ui <- renderUI({
     
@@ -1239,7 +1245,7 @@ server = (function(input, output, session) {
   
   
   # ** Cor Histogram -----------------------------------------------------------
-  output$keyword_cor <- renderPlot({
+  output$keyword_cor <- renderCachedPlot({
     
     cor_df     <- readRDS(file.path("data", paste0("correlations_since_",
                                                    input$select_begin_date,
@@ -1308,10 +1314,15 @@ server = (function(input, output, session) {
             panel.grid.minor = element_blank())
     
     p
-  })
+  }, cacheKeyExpr = { list(input$select_keyword,
+                           input$select_begin_date,
+                           input$select_cor_type,
+                           input$select_search_category,
+                           input$select_continent,
+                           input$select_covid_type)})
   
   # ** Lag Histogram -----------------------------------------------------------
-  output$keyword_lag <- renderPlot({
+  output$keyword_lag <- renderCachedPlot({
     
     cor_df     <- readRDS(file.path("data", paste0("correlations_since_",
                                                    input$select_begin_date,
@@ -1346,7 +1357,12 @@ server = (function(input, output, session) {
             panel.grid.major = element_blank(), 
             panel.grid.minor = element_blank())
     
-  })
+  }, cacheKeyExpr = { list(input$select_keyword,
+                           input$select_begin_date,
+                           input$select_cor_type,
+                           input$select_search_category,
+                           input$select_continent,
+                           input$select_covid_type)})
   
   # ** Cor Value Box -----------------------------------------------------------
   # output$keyword_cor_box <- renderValueBox({
@@ -1904,37 +1920,7 @@ server = (function(input, output, session) {
     
   })
   
-  # *** Country Correlation Figure ---------------------------------------------
-  output$country_cor <- renderPlot({
-    
-    country_name <- country_name_react()
-    
-    cor_df_sub <- cor_df[cor_df$name %in% country_name,]
-    cor_df_sub <- cor_df_sub[cor_df_sub$type %in% input$select_covid_type_map,]
-    
-    cor_df_sub$keyword_en <- cor_df_sub$keyword_en %>% as.character()
-    
-    MIN_COR <- min(cor_df_sub$cor, na.rm=T)
-    MIN_COR <- ifelse(MIN_COR > 0, 0, MIN_COR)
-    
-    cor_df_sub %>% 
-      ggplot() +
-      geom_bar(aes(x = cor, 
-                   y = reorder(keyword_en, cor),
-                   fill = cor),
-               color = "black",
-               stat = "identity") +
-      labs(x = "Correlation",
-           y = "") +
-      scale_fill_gradient2(low = "blue",
-                           mid = "white", 
-                           high = "firebrick4",
-                           midpoint = 0) +
-      xlim(MIN_COR, 1) +
-      theme_minimal() +
-      theme(legend.position = "none") 
-    
-  })
+
   
   # *** Country Trends -----------------------------------------------------------
   # country_data_react <- reactive({
@@ -1958,110 +1944,7 @@ server = (function(input, output, session) {
   # })
   
   #observe({
-  
-  output$country_trends <- renderPlot({
-    
-    color_cases <- "orange"
-    color_hits <- "forestgreen"
-    
-    #### Subset to country
-    if(F){
-      gtrends_sub_df <- gtrends_df %>%
-        filter(name %in% "United States",
-               keyword_en %in% "Loss of Smell") 
-    }
-    
-    
-    gtrends_sub_df <- gtrends_df %>%
-      filter(name %in% country_name_react()) %>%
-      filter(keyword_en %in% input$select_keyword_country)
-    
-    #### Define case/death varibles
-    if(input$select_covid_type %in% "Cases"){
-      
-      gtrends_sub_df <- gtrends_sub_df %>%
-        dplyr::select(name, date, hits_ma7, hits, cases_new,keyword_en,
-                      cor_casesMA7_hitsMA7_max, cor_casesMA7_hitsMA7_lag,
-                      cases_total) %>%
-        dplyr::rename(Country = name,
-                      covid_new = cases_new,
-                      "Correlation" = cor_casesMA7_hitsMA7_max,
-                      "Lead/Lag" = cor_casesMA7_hitsMA7_lag)
-      
-    } 
-    if(input$select_covid_type %in% "Deaths"){
-      
-      gtrends_sub_df <- gtrends_sub_df %>%
-        dplyr::select(name, date, hits_ma7, hits, death_new, keyword_en,
-                      cor_deathMA7_hitsMA7_max, cor_deathMA7_hitsMA7_lag,
-                      death_total) %>%
-        dplyr::rename(Country = name,
-                      covid_new = death_new,
-                      "Correlation" = cor_deathMA7_hitsMA7_max,
-                      "Lead/Lag" = cor_deathMA7_hitsMA7_lag)
-    } 
-    
-    #### Prep hits
-    gtrends_sub_df$hits_fig <-  gtrends_sub_df$hits_ma7
-    
-    # multiplier so that max of hits is same as covid
-    multiplier <- max(gtrends_sub_df$covid_new, na.rm=T) / max(gtrends_sub_df$hits_fig, na.rm=T)
-    
-    gtrends_sub_df$hits_fig <- gtrends_sub_df$hits_fig * multiplier
-    
-    ### COVID 
-    
-    gtrends_sub_covid_df <- gtrends_sub_df %>%
-      dplyr::group_by(date, Country) %>%
-      dplyr::summarise(covid_new = mean(covid_new, na.rm=T))
-    
-    #### Figure
-    # Check if 1 row. If no data, previous step gives 1 row with "name" 
-    # variable filled in.
-    if(nrow(gtrends_sub_df) %in% 1){
-      p <- ggplot() +
-        labs(title = "No Data") +
-        theme_void() +
-        theme(plot.title = element_text(hjust = 0.5, face = "bold", size=16))
-    } else{
-      p <-       ggplot() +
-        geom_col(data = gtrends_sub_covid_df,
-                 aes(x = date, y = covid_new),
-                 fill = color_cases,
-                 color = color_cases) +
-        geom_line(data = gtrends_sub_df,
-                  aes(x = date, y = hits_fig),
-                  color = color_hits, 
-                  group = color_hits,
-                  size=1) +
-        labs(x = NULL,
-             y = input$select_covid_type_map) +
-        scale_y_continuous(sec.axis = sec_axis(~.*1, name = "Search\nInterest",
-                                               breaks = c(0, max(gtrends_sub_df$hits_fig, na.rm=T)),
-                                               labels = c("Low", "High"))) +
-        theme_ipsum() +
-        theme(axis.title.y.left = element_text(angle = 0, 
-                                               vjust = 0.5, 
-                                               color=color_cases,
-                                               face = "bold",
-                                               size=16),
-              axis.title.y.right = element_text(angle = 0, 
-                                                vjust = 0.5, 
-                                                color=color_hits,
-                                                face = "bold",
-                                                size=16),
-              axis.text.y.left = element_text(color = color_cases,
-                                              size=16),
-              axis.text.y.right = element_text(color = color_hits,
-                                               size=16),
-              axis.text = element_text(face = "bold", size=16),
-              plot.title = element_text(face = "bold", hjust = 0.5, size=18))
-    }
-    
-    p
-    
-    
-  }, bg = "transparent")
+
   
   #})
   
@@ -2095,100 +1978,9 @@ server = (function(input, output, session) {
   
   
   
-  
-  
-  
-  
-  
-  # * Histogram - Time Lag Max Cor ---------------------------------------------
-  output$cor_histogram_time_lag <- renderPlot({
-    
-    if(input$select_continent != "All"){
-      cor_df <- cor_df %>%
-        dplyr::filter(continent %in% input$select_continent) 
-    }
-    
-    df <- cor_df %>%
-      
-      dplyr::filter(type %in% input$select_covid_type) %>%
-      filter(keyword_en %in% input$select_keyword) 
-    
-    p <- df %>%
-      
-      mutate(text = "FILLER") %>%
-      ggplot() +
-      geom_histogram(aes(x = lag),
-                     fill = "palegreen3",
-                     color = "black",
-                     text = text,
-                     binwidth = 3) +
-      geom_vline(aes(xintercept = mean(df$lag)), color = "red") +
-      labs(x = "Time lag (days) of strongest correlation",
-           y = "Number of Countries") +
-      theme_minimal()
-    
-    #p %>%
-    #  ggplotly(tooltip = "text") %>%
-    #  layout(plot_bgcolor='transparent', paper_bgcolor='transparent') %>%
-    #  config(displayModeBar = F)
-    p
-    
-  }, bg = "transparent")
-  
-  
-  # * Histogram - Correlation --------------------------------------------------
-  output$cor_histogram <- renderPlot({
-    
-    if(input$select_continent != "All"){
-      cor_df <- cor_df %>%
-        dplyr::filter(continent %in% input$select_continent) 
-    }
-    
-    df <- cor_df %>%
-      
-      dplyr::filter(type %in% input$select_covid_type) %>%
-      filter(keyword_en %in% input$select_keyword) %>%
-      
-      dplyr::mutate(bins = round(cor*100, digits=-1) / 100) %>%
-      distinct(geo, bins) %>%
-      dplyr::group_by(bins) %>%
-      dplyr::summarise(N = n()) %>%
-      ungroup() 
-    
-    df_m <- seq(from = 0,
-                to = 1,
-                by = .1) %>%
-      as.data.frame() %>%
-      dplyr::rename(bins = ".") %>%
-      mutate(bins = bins %>% round(1))
-    
-    df <- merge(df, df_m, by = "bins", all=T) %>%
-      mutate(N = replace_na(N, 0)) %>%
-      mutate(text = paste0("Correlation: ", bins, "\nN countries: ", N)) 
-    
-    p <- ggplot(df) +
-      geom_col(aes(x = bins %>% as.factor(), 
-                   y = N, 
-                   fill = bins,
-                   text = text), color = "black") +
-      labs(x = "Correlation",
-           y = "Number of Countries") +
-      scale_fill_gradient(low = "white",
-                          high = muted("red")) +
-      theme_minimal() +
-      theme(legend.position = "none")
-    
-    #p %>%
-    #  ggplotly(tooltip = "text") %>%
-    #  layout(plot_bgcolor='transparent', paper_bgcolor='transparent') %>%
-    #  config(displayModeBar = F)
-    p
-    
-  }, bg = "transparent")
-  
-  
+
   # * Correlation Map ------------------------------------------------------------------
-  output$cor_map <- renderPlot({
+  output$cor_map <- renderCachedPlot({
     world$name <- NULL
     
     if(F){
@@ -2235,7 +2027,11 @@ server = (function(input, output, session) {
     #  config(displayModeBar = F)
     p
     
-  }, bg = "transparent")
+  }, cacheKeyExpr = { list(input$select_begin_date,
+                           input$select_cor_type,
+                           input$select_search_category,
+                           input$select_continent,
+                           input$select_covid_type)}, bg="transparent")
   
   
   
