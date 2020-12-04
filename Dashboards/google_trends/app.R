@@ -71,8 +71,8 @@ cor_after_dates <- c("2020-02-01",
 
 # Defaults
 gtrends_df <- readRDS(file.path("data", paste0("gtrends_since_",cor_after_dates[1],".Rds")))
-#gtrends_spark_df <- readRDS(file.path("data", paste0("gtrends_spark_since_",cor_after_dates[1],"_large.Rds")))
-#cor_df     <- readRDS(file.path("data", paste0("correlations_since_",cor_after_dates[1],".Rds")))
+gtrends_spark_df <- readRDS(file.path("data", paste0("gtrends_spark_since_",cor_after_dates[1],"_large.Rds")))
+cor_df     <- readRDS(file.path("data", paste0("correlations_since_",cor_after_dates[1],".Rds")))
 world      <- readRDS(file.path("data", "world.Rds"))
 #world <- thinnedSpatialPoly(world, tol=0.001, topologyPreserve=T)
 
@@ -927,9 +927,9 @@ server = (function(input, output, session) {
                 bins = c(-1, -0.5, 0, 0.5, 1)) %>%
       setMapWidgetStyle(list(background= "white")) %>%
       setView(zoom = 2, lat=0, lng=0) %>%
-      add_deps("sparkline") %>%
+      add_deps("sparkline") #%>%
       #add_deps("highchart", 'highcharter') %>%
-      browsable()
+      #browsable()
     #) #%>%
     #add_deps("sparkline") 
     #browsable() %>%
