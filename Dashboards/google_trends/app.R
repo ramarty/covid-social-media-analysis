@@ -1089,17 +1089,22 @@ server = (function(input, output, session) {
     #fig <- plot_ly(y = ~rnorm(50), type = "box", boxpoints = "all", jitter = 0.3,
     #               pointpos = -1.8)
     
-    
+    # https://plotly.com/r/hover-text-and-formatting/
     p1 <- cor_df %>%
       plot_ly() %>% 
       add_markers(y = ~jitter(as.numeric(keyword_en)), 
                   x = ~cor, 
                   color = ~keyword_en,
                   marker = list(size = 6),
-                  hoverinfo = "text",
-                  text = ~paste0(keyword_en,"<br>",
-                                "<h4>",  name, "</h4>",
-                                 "<br>",cor %>% round(2)),
+                  #hoverinfo = "text",
+                  # text = ~paste0(keyword_en,"<br>",
+                  #               "<h4>",  name, "</h4>",
+                  #                "<br>",cor %>% round(2)),
+                  hovertemplate = ~paste('<b>',name,'</b><br>', 
+                                        'Correlation: %{x:.2f}<extra></extra>'),
+                  # hovertemplate = paste('<i>Price</i>: $%{cor:.2f}',
+                  #                       '<br><b>X</b>: %{x}<br>',
+                  #                       '<b>%{text}</b>'),
                   showlegend = F) %>% 
       layout(
       xaxis = list(title = "",
