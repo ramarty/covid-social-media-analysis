@@ -587,9 +587,13 @@ ui <- fluidPage(
           )
         ),
         
+        #br(),
         
-        
-        br(),
+        fluidRow(
+          column(12, align = "center",
+                 h3(textOutput("country_name"))
+          )
+        ),
         
         fluidRow(
           column(6, align = "center", offset = 3,
@@ -635,7 +639,7 @@ ui <- fluidPage(
                    )
             )
           ),
-
+          
           fluidRow(
             column(5, align = "left", 
                    #br(),
@@ -651,10 +655,17 @@ ui <- fluidPage(
                    # ),
                    
                    #div(style='color:green; font-size:20px; background-color: white; border: 1px solid #ccc; border-radius: 3px; margin: 10px 0; padding: 10px; width: 700px',
-                   div(style='color:black; font-size:20px; background-color: white; border: 1px solid #ccc; border-radius: 3px; margin: 10px 0; padding: 16px;',
+                   div(style='color:black; font-size:20px; background-color: white; border: 1px solid #ccc; border-radius: 3px; margin: 10px 0; padding-left: 16px; padding-right: 16px; padding-bottom: 5px; padding-top: 0px;',
+                       
                        fluidRow(
-                       plotlyOutput("line_graph_country_key",
-                                    height = "270px") # 225
+                         column(12, align = "left", offset = 0,
+                                htmlOutput("line_graph_country_key_title_2")
+                         )
+                       ),
+
+                       fluidRow(
+                         plotlyOutput("line_graph_country_key",
+                                      height = "270px") # 225
                        ),
                        fluidRow(
                          column(11, offset = 1, align = "left",
@@ -665,7 +676,7 @@ ui <- fluidPage(
                        )
                        
                    ),
-
+                   
             ),
             column(4, align = "center",
                    tags$div(id="wrapper"),
@@ -1587,7 +1598,7 @@ server = (function(input, output, session) {
     #        "</ul>")
     
     if(input$select_cor_type_country %in% "No Lead/Lag"){
-      out <- paste0("<b>Using data after ",
+      out <- paste0("<h5><em><b>Trends in COVID-19 and Search Interest</b><br><br>Using data after ",
                     input$select_begin_date_country, 
                     ", the correlation between COVID-19 ",
                     input$select_covid_type_map %>% tolower(), 
@@ -1595,13 +1606,13 @@ server = (function(input, output, session) {
                     input$select_keyword_country, 
                     "\" is ",
                     cor$cor %>% round(3),
-                    "</b>")
+                    "</em></h5>")
     } else{
       
       
-      out <- paste0("<b>Using data after ",
+      out <- paste0("<h5><b>Trends in COVID-19 and Search Interest</b><br><br><em>Using data after ",
                     input$select_begin_date_country, 
-                    ", <span style='color:#003cb3;'>the correlation between COVID-19 ",
+                    ", <span style='color:black;'>the correlation between COVID-19 ",
                     input$select_covid_type_map %>% tolower(), 
                     " and search interest in \"",
                     input$select_keyword_country, 
@@ -1613,7 +1624,7 @@ server = (function(input, output, session) {
                     abs(cor$lag),
                     " days into the ",
                     ifelse(cor$lag <= 0, "past", "future"),
-                    ".</b>")
+                    ".</em></h5>")
     }
     
     
@@ -1815,6 +1826,10 @@ server = (function(input, output, session) {
     search_p20 <- search %>% str_replace_all(" ", "%20")
     
     tags$body(HTML(paste0('<script type="text/javascript" src="https://ssl.gstatic.com/trends_nrtr/2213_RC01/embed_loader.js"></script> <script type="text/javascript"> var divElem = document.getElementById("wrapper2"); document.getElementById("wrapper2").innerHTML = ""; trends.embed.renderExploreWidgetTo(divElem, "GEO_MAP", {"comparisonItem":[{"keyword":"',search,'","geo":"',geo,'","time":"today 3-m"}],"category":0,"property":""}, {"exploreQuery":"q=',search_p20,'&geo=',geo,'&date=today 3-m","guestPath":"https://trends.google.com:443/trends/embed/"}); </script>')))
+  })
+  
+  output$country_name <- renderText({
+    input$select_country
   })
   
   # INFORMATION ********************* ------------------------------------------
