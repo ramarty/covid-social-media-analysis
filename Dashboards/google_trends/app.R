@@ -2,7 +2,8 @@
 
 # https://shiny.rstudio.com/articles/plot-caching.html
 
-
+END_DATE_TEXT <- "October 31, 2020"
+END_DATE <- "2020-10-31"
 
 # PACKAGES AND SETUP ===========================================================
 
@@ -155,7 +156,7 @@ ui <- fluidPage(
   navbarPage(
     theme = shinytheme("cosmo"), #cosmo, journal, flatly, sandstone
     collapsible = TRUE,
-    title = "Google Trends",
+    title = "COVID-19 & Google Trends",
     
     id = "nav",
     
@@ -163,6 +164,7 @@ ui <- fluidPage(
     tabPanel(
       "Overview",
       tags$head(includeCSS("styles.css")),
+      
       
       dashboardBody(
         
@@ -178,17 +180,20 @@ ui <- fluidPage(
           column(6, align = "center", offset = 3,
                  
                  hr(),
-                 h2("Overview"),
+                 h2("Overview")
+          ),
+          column(6, align = "left", offset = 3,
                  
                  HTML("<h4>When people fall sick, 
                  <a href='https://blog.google/technology/health/using-symptoms-search-trends-inform-covid-19-research/'>many turn to Google</a>
                  before considering medical attention
                  to understand their symptoms and see options for home treatments.
-                    Using data from February 1 - October 31, 2020, this dashboard illustrates how search interest for specific symptoms
+                    Using data from February 1 - ",END_DATE_TEXT,", 
+                    this dashboard illustrates how search interest for specific symptoms
                     strongly matches - and often preceeds - trends in COVID-19 cases.</h4>"),
                  br(),
                  
-                 HTML("<h4>Trends in search interest of COVID-19 symptoms should not replace
+                 HTML("<h4>Trends in search interest in COVID-19 symptoms should not replace
                  administrative data on cases. The relation between the two is strong
                  but <a href='https://www.nature.com/news/when-google-got-flu-wrong-1.12413'>not perfect</a>. However, Google data can supplement official data.
                 This is particularly true in circumstances
@@ -217,7 +222,9 @@ ui <- fluidPage(
         fluidRow(
           column(6, align = "center", offset = 3,
                  hr(),
-                 h2("Determining when the correlation between Google search interest and COVID-19 is strongest"),
+                 h2("Determining when the correlation between Google search interest and COVID-19 is strongest")
+          ),
+          column(6, align = "left", offset = 3,
                  HTML("<h4>In all figures and analysis, we use the number of new daily COVID-19 cases or deaths
                       and a 7 day moving average of Google Search Interest. We compute how strongly different 
                       search terms correlate with COVID-19 cases and deaths. In addition, we determine whether 
@@ -387,8 +394,15 @@ ui <- fluidPage(
           column(6, offset = 3,
                  wellPanel(id = "tPanel",style = "overflow-y:scroll; max-height: 500px",
                            fluidRow(
+                             column(12, align = "center", offset = 0,
+                                    htmlOutput("cor_distribution_text"),
+                             ),
+                             #column(1,
+                             #)
+                           ),
+                           fluidRow(
                              column(10, align = "center", offset = 1,
-                                    strong(textOutput("cor_distribution_text")),
+                                    htmlOutput("cor_distribution_text_2"),
                              ),
                              column(1,
                              )
@@ -405,7 +419,11 @@ ui <- fluidPage(
         fluidRow(
           
           column(4, align = "center", offset = 4,
+                 #tags$style("#select_keyword_ui {color: green;}"),
                  uiOutput("select_keyword_ui")
+                 
+                 
+                 
           )
           
         ),
@@ -442,6 +460,11 @@ ui <- fluidPage(
                                       htmlOutput("map_text")
                                )
                              ),
+                             fluidRow(
+                               column(12, align = "center",
+                                      HTML(paste0("<em>Trends shown from February 1 - ", END_DATE_TEXT, "</em>"))
+                               )
+                             ),
                              
                              br(),
                              
@@ -461,6 +484,11 @@ ui <- fluidPage(
                              fluidRow(
                                column(12, align = "center",
                                       htmlOutput("global_table_title")
+                               )
+                             ),
+                             fluidRow(
+                               column(12, align = "center",
+                                      HTML(paste0("<em>Trends shown from February 1 - ", END_DATE_TEXT, "</em>"))
                                )
                              ),
                              
@@ -594,7 +622,7 @@ ui <- fluidPage(
           fluidRow(
             column(5, align = "center",
                    h3("Historic Trends"),
-                   strong("Data Available Until October 31, 2020")
+                   strong(paste0("Data Available Until ", END_DATE_TEXT))
             ),
             column(7, align = "center",
                    h3("Real Time Data: Search Interest in Past 90 Days"),
@@ -607,25 +635,37 @@ ui <- fluidPage(
                    )
             )
           ),
-          
+
           fluidRow(
             column(5, align = "left", 
-                   br(),
+                   #br(),
                    # fluidRow(
                    #   column(12, align = "center",
                    #          htmlOutput("line_graph_country_key_title_1")
                    #          )
                    # ),
-                   fluidRow(
-                     column(10, align = "left", offset = 1,
-                            htmlOutput("line_graph_country_key_title_2")
-                     )
-                   ),
+                   # fluidRow(
+                   #   column(10, align = "left", offset = 1,
+                   #          htmlOutput("line_graph_country_key_title_2")
+                   #   )
+                   # ),
                    
-                   box(solidHeader = TRUE, status = "primary", width=12,
+                   #div(style='color:green; font-size:20px; background-color: white; border: 1px solid #ccc; border-radius: 3px; margin: 10px 0; padding: 10px; width: 700px',
+                   div(style='color:black; font-size:20px; background-color: white; border: 1px solid #ccc; border-radius: 3px; margin: 10px 0; padding: 16px;',
+                       fluidRow(
                        plotlyOutput("line_graph_country_key",
                                     height = "270px") # 225
+                       ),
+                       fluidRow(
+                         column(11, offset = 1, align = "left",
+                                h6("We compute a 7 day moving average of Google search interest.
+                               Original daily values range from 0 to 100, where 100 represents
+                               peak search activity for a keyword.") 
+                         )
+                       )
+                       
                    ),
+
             ),
             column(4, align = "center",
                    tags$div(id="wrapper"),
@@ -654,7 +694,9 @@ ui <- fluidPage(
                  h2("Data", align = "center"),
                  HTML("We access COVID-19 Cases and Deaths from the
                       <a href='https://covid19.who.int/?gclid=Cj0KCQjw8fr7BRDSARIsAK0Qqr73Wij8AiyjGx8dOs-MYxN7oxF5pzYmurbdVxj-x65Gc8tx1jJykaYaAqQNEALw_wcB'>WHO</a>
-                      and download Google Trends data for all countries. In all analyses, we
+                      and download 
+                      <a href='https://trends.google.com/trends/'>Google Trends </a>
+                      data for all countries. In all analyses, we
                       use a 7 day moving average of Google Search interest. To protect privacy, Google
                       only releases search interest data when there is a large enough search volume for a
                       specific search term. We translate search terms from English into
@@ -675,8 +717,10 @@ ui <- fluidPage(
                  hr(),
                  h2("Subnational Case Study: Brazil", align = "center"),
                  HTML("While the dashboard shows country level results, the project
-                 team also found that Google search term interest also correlates
-                 with COVID-19 at the subnational level using Brazil as a <a href='https://drive.google.com/file/d/1-DrtOdFdKCv99G-w3zHK0VyDK65GqEpJ/view?usp=sharing'>case study.</a>")
+                 team also conducted a 
+                 <a href='https://drive.google.com/file/d/1-DrtOdFdKCv99G-w3zHK0VyDK65GqEpJ/view?usp=sharing'>case study</a> 
+                 of Google Search interest and 
+                 COVID-19 at the subnational level in Brazil.")
           )
         ),
         
@@ -885,7 +929,7 @@ server = (function(input, output, session) {
   output$global_table_title <- renderText({
     paste0("<strong>The table shows trends in <span style='color:orange;'>COVID-19 ",
            tolower(input$select_covid_type),
-           "</span> and <span style='color:green;'>search interest of '",
+           "</span> and <span style='color:green;'>search interest in '",
            input$select_keyword, "'</span></strong>")
   })
   
@@ -1016,7 +1060,7 @@ server = (function(input, output, session) {
   output$map_text <- renderText({
     paste0("<strong>Hover over the map to see trends in <span style='color:orange;'>COVID-19 ",
            tolower(input$select_covid_type),
-           "</span> and <span style='color:green;'>search interest of '",
+           "</span> and <span style='color:green;'>search interest in '",
            input$select_keyword, "'</span></strong>")
     
     # paste0("Correlation between COVID-19 ",
@@ -1029,9 +1073,30 @@ server = (function(input, output, session) {
   # ** Max Correlation Dotplot -------------------------------------------------
   # **** Title ---------------------------
   output$cor_distribution_text <- renderText({
-    out <- paste0("Correlation between COVID-19 ",
-                  tolower(input$select_covid_type),
-                  " and Google search interest.")
+    out <- paste0("<strong>Correlation Between COVID-19 ",
+                  tolower(input$select_covid_type) %>% tools::toTitleCase(),
+                  " and Google Search Interest</strong><br>")
+    
+    # if(input$select_cor_type %in% "Best Lead/Lag"){
+    #   out <- paste0(out,
+    #                 " The highest correlation when COVID-19 ", 
+    #                 tolower(input$select_covid_type), 
+    #                 " are shifted -21 to 21 days is shown.")
+    # }
+    # 
+    # out <- paste0(out, 
+    #               " Data after ", 
+    #               input$select_begin_date, 
+    #               " is used.")
+    out
+    
+  })
+  
+  output$cor_distribution_text_2 <- renderText({
+    # out <- paste0("<strong>Correlation between COVID-19 ",
+    #               tolower(input$select_covid_type),
+    #               " and Google search interest</strong><br>")
+    out <- ""
     
     if(input$select_cor_type %in% "Best Lead/Lag"){
       out <- paste0(out,
@@ -1044,7 +1109,6 @@ server = (function(input, output, session) {
                   " Data after ", 
                   input$select_begin_date, 
                   " is used.")
-    
     out
     
   })
@@ -1079,10 +1143,10 @@ server = (function(input, output, session) {
     cor_df$keyword_en[cor_df$keyword_en %in% "Unemployment Insurance"] <- "Unemployment<br>Insurance"
     cor_df$keyword_en[cor_df$keyword_en %in% "Unemployment Benefits"] <- "Unemployment<br>Benefits"
     
-
+    
     cor_df$keyword_en <- reorder(cor_df$keyword_en,
                                  cor_df$cor)
-
+    
     
     #fig <- plot_ly(y = ~rnorm(50), type = "box", boxpoints = "all", jitter = 0.3,
     #               pointpos = -1.8)
@@ -1135,7 +1199,7 @@ server = (function(input, output, session) {
                   showlegend = F) %>% 
       layout(
         xaxis = list(title = "",
-                     range = c(min(cor_df$cor),1),
+                     range = c((min(cor_df$cor)-.1),1),
                      showticklabels = T,
                      side ="top")) %>%
       layout(plot_bgcolor='transparent') %>% 
@@ -1495,7 +1559,7 @@ server = (function(input, output, session) {
   # **** Title ------------------------------
   output$line_graph_country_key_title_1 <- renderText({
     paste0("<h4>COVID-19 ", input$select_covid_type_map, " and 
-           Search Interest of ", input$select_keyword_country, "</h4>")
+           Search Interest in ", input$select_keyword_country, "</h4>")
   })
   
   output$line_graph_country_key_title_2 <- renderText({
@@ -1513,13 +1577,47 @@ server = (function(input, output, session) {
       filter(type %in% input$select_covid_type_map) %>%
       filter(keyword_en %in% input$select_keyword_country) 
     
-    paste0("<b>Using data after ",
-           input$select_begin_date_country, "<b><br>",
-           "<ul>",
-           "<li><b><em>Correlation:</em></b> ", cor$cor %>% round(3), "</li>",
-           "<li><b><em>Lead/Lag of Highest Correlation:</em></b> ", cor$lag, " days</li>",
-           "</ul>")
     
+    
+    # paste0("<b>Using data after ",
+    #        input$select_begin_date_country, "<b><br>",
+    #        "<ul>",
+    #        "<li><b><em>Correlation:</em></b> ", cor$cor %>% round(3), "</li>",
+    #        "<li><b><em>Lead/Lag of Highest Correlation:</em></b> ", cor$lag, " days</li>",
+    #        "</ul>")
+    
+    if(input$select_cor_type_country %in% "No Lead/Lag"){
+      out <- paste0("<b>Using data after ",
+                    input$select_begin_date_country, 
+                    ", the correlation between COVID-19 ",
+                    input$select_covid_type_map %>% tolower(), 
+                    " and search interest in \"",
+                    input$select_keyword_country, 
+                    "\" is ",
+                    cor$cor %>% round(3),
+                    "</b>")
+    } else{
+      
+      
+      out <- paste0("<b>Using data after ",
+                    input$select_begin_date_country, 
+                    ", <span style='color:#003cb3;'>the correlation between COVID-19 ",
+                    input$select_covid_type_map %>% tolower(), 
+                    " and search interest in \"",
+                    input$select_keyword_country, 
+                    "\"</span> is ",
+                    cor$cor %>% round(3),
+                    " when shifting COVID-19 ",
+                    input$select_covid_type_map %>% tolower(),
+                    " ",
+                    abs(cor$lag),
+                    " days into the ",
+                    ifelse(cor$lag <= 0, "past", "future"),
+                    ".</b>")
+    }
+    
+    
+    out    
     
   })
   
@@ -1572,7 +1670,8 @@ server = (function(input, output, session) {
                                   margin = list(l=45, r=45, b=5, t=10, pad=0),
                                   showlegend = F,
                                   #legend = list(orientation = 'h'),
-                                  #paper_bgcolor = 'transparent',
+                                  paper_bgcolor = 'transparent',
+                                  plot_bgcolor = 'transparent',
                                   yaxis = list(side = 'left', title = input$select_covid_type_map, showgrid = FALSE, zeroline = FALSE, color = "orange"),
                                   yaxis2 = list(side = 'right', 
                                                 overlaying = "y", 
@@ -1741,6 +1840,7 @@ server = (function(input, output, session) {
   # UIS ******************************** ---------------------------------------
   # ** Select Keyword: Global --------------------
   output$select_keyword_ui <- renderUI({
+    
     
     out <- selectInput(
       "select_keyword",
@@ -2036,7 +2136,7 @@ server = (function(input, output, session) {
   
   output$cor_title_text <- renderText({
     
-    paste0("Correlation between search interest of ",
+    paste0("Correlation between search interest in ",
            input$select_keyword, 
            " and COVID-19 ",
            input$select_covid_type)
@@ -2079,7 +2179,7 @@ server = (function(input, output, session) {
     
     paste0("We compare trends in <span style='color:orange;'>COVID-19 ",
            tolower(input$select_covid_type), 
-           "</span> and <span style='color:green;'>search interest of ",
+           "</span> and <span style='color:green;'>search interest in ",
            input$select_keyword, 
            ".</span> We show the correlation between the two and the number of
            days in the past when the search interest is most strongly 
@@ -2108,7 +2208,7 @@ server = (function(input, output, session) {
       dplyr::filter(type %in% input$select_covid_type) %>%
       filter(keyword_en %in% input$select_keyword) 
     
-    txt <- paste0("Across countries, the search term interest of ",
+    txt <- paste0("Across countries, the search term interest in ",
                   input$select_keyword,
                   " is most strongly correlated with COVID ",
                   input$select_covid_type, " ",
@@ -2132,7 +2232,7 @@ server = (function(input, output, session) {
       dplyr::filter(type %in% input$select_covid_type) %>%
       filter(keyword_en %in% input$select_keyword) 
     
-    txt <- paste0("Across countries, the average correlation between the search interest of ",
+    txt <- paste0("Across countries, the average correlation between the search interest in ",
                   input$select_keyword,
                   " and COVID ",
                   input$select_covid_type, 
