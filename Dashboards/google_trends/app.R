@@ -1079,39 +1079,67 @@ server = (function(input, output, session) {
     cor_df$keyword_en[cor_df$keyword_en %in% "Unemployment Insurance"] <- "Unemployment<br>Insurance"
     cor_df$keyword_en[cor_df$keyword_en %in% "Unemployment Benefits"] <- "Unemployment<br>Benefits"
     
-    aaaa <<- cor_df
+
     cor_df$keyword_en <- reorder(cor_df$keyword_en,
                                  cor_df$cor)
-    fig <- plot_ly(cor_df, x = ~cor, color = ~keyword_en, type = "box")
-    fig <- fig %>% layout(showlegend = FALSE)
-    fig
+
     
     #fig <- plot_ly(y = ~rnorm(50), type = "box", boxpoints = "all", jitter = 0.3,
     #               pointpos = -1.8)
     
+    # https://plotly.com/python/builtin-colorscales/
+    # https://community.plotly.com/t/what-colorscales-are-available-in-plotly-and-which-are-the-default/2079
+    # cor_df %>%
+    #   filter(keyword_en %in% c("Loss of Smell",
+    #                            "Fever")) %>%
+    #   plot_ly() %>% 
+    #   add_markers(y = ~jitter(as.numeric(keyword_en)), 
+    #               x = ~cor, 
+    #               color = ~cor,
+    #               marker = list(size = 6,
+    #                             line = list(color = 'black',
+    #                                         width = 1),
+    #                             #colorscale='Earth', # Viridis
+    #                             colorscale = list(list(0,"red"), list(0.5,"white"), list(1,"green")),
+    #                             reversescale =F,
+    #                             opacity = 1)
+    #   )
+    
     # https://plotly.com/r/hover-text-and-formatting/
+    colors <- brewer.pal(n = 9, 
+                         name = "RdYlGn")
+    
     p1 <- cor_df %>%
       plot_ly() %>% 
       add_markers(y = ~jitter(as.numeric(keyword_en)), 
                   x = ~cor, 
-                  color = ~keyword_en,
-                  marker = list(size = 6),
+                  color = ~cor,
+                  marker = list(size = 6,
+                                line = list(color = 'black',
+                                            width = 1),
+                                colorscale = list(list(0,"#D73027"), list(0.5,"#FFFFBF"), list(1,"#1A9850")),
+                                cauto = F,
+                                cmin = -1,
+                                cmax = 1,
+                                reversescale =F,
+                                opacity = 1),
                   #hoverinfo = "text",
                   # text = ~paste0(keyword_en,"<br>",
                   #               "<h4>",  name, "</h4>",
                   #                "<br>",cor %>% round(2)),
                   hovertemplate = ~paste('<b>',name,'</b><br>', 
-                                        'Correlation: %{x:.2f}<extra></extra>'),
+                                         'Correlation: %{x:.2f}<extra></extra>'),
                   # hovertemplate = paste('<i>Price</i>: $%{cor:.2f}',
                   #                       '<br><b>X</b>: %{x}<br>',
                   #                       '<b>%{text}</b>'),
                   showlegend = F) %>% 
       layout(
-      xaxis = list(title = "",
-                   showticklabels = T,
-                   side ="top")) %>%
+        xaxis = list(title = "",
+                     #range = c(-1,1),
+                     showticklabels = T,
+                     side ="top")) %>%
       layout(plot_bgcolor='transparent') %>% 
-    layout(paper_bgcolor='transparent') %>%
+      layout(paper_bgcolor='transparent') %>%
       config(displayModeBar = F) %>%
       layout(
         yaxis = list(
@@ -1119,7 +1147,8 @@ server = (function(input, output, session) {
           ticktext = as.list(unique(cor_df$keyword_en)), 
           tickvals = as.list(as.numeric(unique(cor_df$keyword_en))),
           tickmode = "array"
-        ))
+        )) %>%
+      hide_colorbar() 
     
     
     
@@ -1150,7 +1179,7 @@ server = (function(input, output, session) {
     #         legend.position = "top") +
     #   scale_y_continuous(position = "right") 
     # 
-
+    
     
     p1
     
@@ -1165,7 +1194,7 @@ server = (function(input, output, session) {
   # 
   output$max_cor_hist_ui <- renderUI({
     
-    height <- "2200px"
+    height <- "2500px"
     if(input$select_search_category == "Coronavirus General") height <- "600px"
     if(input$select_search_category == "Mental Health") height <- "900px"
     if(input$select_search_category == "Potential Consequences") height <- "500px"
@@ -1174,7 +1203,7 @@ server = (function(input, output, session) {
     if(input$select_search_category == "Treatment") height <- "500px"
     
     plotlyOutput("max_cor_hist",
-               height = height)
+                 height = height)
     
   })
   
@@ -2042,7 +2071,7 @@ server = (function(input, output, session) {
     out <- paste0(out, 
                   " Data after ", 
                   input$select_begin_date_country, 
-                  " is used to compute the correlation.")    
+                  " are used to compute the correlation.")    
     out
     
     
@@ -2058,8 +2087,8 @@ server = (function(input, output, session) {
            days in the past when the search interest is most strongly 
            correlated with COVID-19 ", tolower(input$select_covid_type), 
            ".")
-
-  
+    
+    
   })
   
   output$which_keyword_title <- renderText({
