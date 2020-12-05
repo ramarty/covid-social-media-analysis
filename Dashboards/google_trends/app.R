@@ -153,6 +153,8 @@ color_tile2 <- function (...) {
 # UI -==========================================================================
 ui <- fluidPage(
   
+  tags$head(includeHTML(("google-analytics.html"))),
+  
   navbarPage(
     theme = shinytheme("cosmo"), #cosmo, journal, flatly, sandstone
     collapsible = TRUE,
