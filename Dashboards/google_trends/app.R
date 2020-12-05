@@ -1252,7 +1252,7 @@ server = (function(input, output, session) {
                   showlegend = F) %>% 
       layout(
         xaxis = list(title = "",
-                     range = c((min(cor_df$cor)-.1),1),
+                     range = c((min(cor_df$cor)-.1),1.05),
                      showticklabels = T,
                      side ="top")) %>%
       layout(plot_bgcolor='transparent') %>% 
