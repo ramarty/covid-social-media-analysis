@@ -184,7 +184,7 @@ ui <- fluidPage(
                  <a href='https://blog.google/technology/health/using-symptoms-search-trends-inform-covid-19-research/'>many turn to Google</a>
                  before considering medical attention
                  to understand their symptoms and see options for home treatments.
-                    Using data from February 1 - October 31, 2020, this dashboard illustrates how search activity for specific symptoms
+                    Using data from February 1 - October 31, 2020, this dashboard illustrates how search interest for specific symptoms
                     strongly matches - and often preceeds - trends in COVID-19 cases.</h4>"),
                  br(),
                  
@@ -194,11 +194,11 @@ ui <- fluidPage(
                 This is particularly true in circumstances
                     when testing or data may not be widely available. Moreover, given that
                     Google trends information is updated in real time, sudden increases in 
-                    search activity can warn of potential growth in COVID-19 cases.</h4>"),
+                    search interest can warn of potential growth in COVID-19 cases.</h4>"),
                  
                  br(),
                  HTML("<h4>Google Trends can also be used to understand impacts of COVID-19 
-                      and search activity around prevention measures. Consequently, in addition 
+                      and search interest around prevention measures. Consequently, in addition 
                       to showing search interest in COVID-related symptoms, the dashboard also 
                       shows search interest related to 
                       <a href='https://psycnet.apa.org/fulltext/2020-59192-001.html'>mental health keywords</a> 
@@ -384,7 +384,7 @@ ui <- fluidPage(
         
         
         fluidRow(
-          column(6, offset = 3,
+          column(8, offset = 2,
                  wellPanel(id = "tPanel",style = "overflow-y:scroll; max-height: 500px",
                            fluidRow(
                              column(10, align = "center", offset = 1,
@@ -641,75 +641,6 @@ ui <- fluidPage(
       )
     ),
     
-    # ** Changes in Search Term ---------------------------------------------------------------
-    # tabPanel(
-    #   "Warning System",
-    #   tags$head(includeCSS("styles.css")),
-    #   
-    #   dashboardBody(
-    #     
-    #     h2("Warning System",
-    #        align = "center"),
-    #     
-    #     fluidRow(
-    #       column(8,
-    #              "This page shows the change in search term activity. We compare the
-    #               average search activity from the past week compared with the week before.",
-    #              offset = 2
-    #       ),
-    #     ),
-    #     
-    #     fluidRow(
-    #       
-    #       column(4,
-    #              # BLANK for offsetting
-    #       ),
-    #       
-    #       column(2,
-    #              selectInput(
-    #                "select_term_change",
-    #                label = strong("Select Term"),
-    #                choices = keyword_list,
-    #                selected = "Loss of Smell",
-    #                multiple = F
-    #              )
-    #       ),
-    #       
-    #       column(2,
-    #              selectInput(
-    #                "select_continent_change",
-    #                label = strong("Continent"),
-    #                choices = c("All",
-    #                            "Asia",
-    #                            "Africa",
-    #                            "Europe",
-    #                            "South America",
-    #                            "Oceania",
-    #                            "North America"),
-    #                selected = "All",
-    #                multiple = F
-    #              )
-    #       )
-    #       
-    #     ),
-    #     
-    #     fluidRow(
-    #       column(12,
-    #              
-    #              plotlyOutput("increase_map"),
-    #              
-    #              div(style = 'height:1000px; overflow-y: scroll',
-    #                  htmlOutput("cor_table"))
-    #              
-    #       )
-    #       
-    #       
-    #     )
-    #     
-    #     
-    #   )
-    # ),
-    
     
     # ** Information -----------------------------------------------------------
     tabPanel(
@@ -867,7 +798,7 @@ server = (function(input, output, session) {
     world_data$cor_keyword[!is.na(world_data$keyword)] <-
       paste0("<b><em>", world_data$keyword[!is.na(world_data$keyword)], "</em></b>")
     
-    world_data$l_covid_hits[is.na(world_data$l_covid_hits)] <- "<em>Low Google search activity<br>for this search term</em>"
+    world_data$l_covid_hits[is.na(world_data$l_covid_hits)] <- "<em>Low Google search interest<br>for this search term</em>"
     
     world_data$popup <- paste0("<h4>", world_data$name, "</h4>", 
                                world_data$cor_keyword,
@@ -934,7 +865,7 @@ server = (function(input, output, session) {
                 values = c(world_data$select_covid_type[!is.na(world_data$select_covid_type)], -1, 1),
                 title = paste0("Correlation<br>between<br>",
                                input$select_covid_type,
-                               " and<br>Search<br>Activity"),
+                               " and<br>Search<br>Interest"),
                 labFormat = labelFormat(transform = function(x) sort(x, decreasing = TRUE)),
                 opacity = 1,
                 bins = c(-1, -0.5, 0, 0.5, 1)) %>%
@@ -1145,6 +1076,8 @@ server = (function(input, output, session) {
     
     cor_df$keyword_en[cor_df$keyword_en %in% "What are the Symptoms of Coronavirus"] <- "What are the Symptoms<br>of Coronavirus"
     cor_df$keyword_en[cor_df$keyword_en %in% "How to Treat Coronavirus"] <- "How to Treat<br>Coronavirus"
+    cor_df$keyword_en[cor_df$keyword_en %in% "Unemployment Insurance"] <- "Unemployment<br>Insurance"
+    cor_df$keyword_en[cor_df$keyword_en %in% "Unemployment Benefits"] <- "Unemployment<br>Benefits"
     
     aaaa <<- cor_df
     cor_df$keyword_en <- reorder(cor_df$keyword_en,
@@ -1159,25 +1092,25 @@ server = (function(input, output, session) {
     
     p1 <- cor_df %>%
       plot_ly() %>% 
-      #add_trace(y = ~keyword_en,x = ~cor, type = "box", 
-      #          hoverinfo = 'name+y') %>%
       add_markers(y = ~jitter(as.numeric(keyword_en)), 
                   x = ~cor, 
                   color = ~keyword_en,
                   marker = list(size = 6),
                   hoverinfo = "text",
                   text = ~paste0(keyword_en,"<br>",
-                                 name,
-                                 "<br>xval: ",cor %>% round(2)),
+                                "<h4>",  name, "</h4>",
+                                 "<br>",cor %>% round(2)),
                   showlegend = F) %>% 
       layout(
-      xaxis = list(title = "Correlation",
-                   showticklabels = T)) %>%
+      xaxis = list(title = "",
+                   showticklabels = T,
+                   side ="top")) %>%
       layout(plot_bgcolor='transparent') %>% 
     layout(paper_bgcolor='transparent') %>%
       config(displayModeBar = F) %>%
       layout(
         yaxis = list(
+          title = "",
           ticktext = as.list(unique(cor_df$keyword_en)), 
           tickvals = as.list(as.numeric(unique(cor_df$keyword_en))),
           tickmode = "array"
@@ -1227,7 +1160,7 @@ server = (function(input, output, session) {
   # 
   output$max_cor_hist_ui <- renderUI({
     
-    height <- "2700px"
+    height <- "2200px"
     if(input$select_search_category == "Coronavirus General") height <- "600px"
     if(input$select_search_category == "Mental Health") height <- "900px"
     if(input$select_search_category == "Potential Consequences") height <- "500px"
@@ -2120,18 +2053,8 @@ server = (function(input, output, session) {
            days in the past when the search interest is most strongly 
            correlated with COVID-19 ", tolower(input$select_covid_type), 
            ".")
-    # 
-    # paste0("For each country, we determine when search activity of ",
-    #        input$select_keyword,
-    #        " has the highest correlation with COVID-19 ",
-    #        tolower(input$select_covid_type), 
-    #        ". ",
-    #        "Does search activity some days in the past have the strongest correlation
-    #        with COVID ", tolower(input$select_covid_type), "? If so, search activity may
-    #        predict future ", tolower(input$select_covid_type), ".")
-    
-    
-    
+
+  
   })
   
   output$which_keyword_title <- renderText({
