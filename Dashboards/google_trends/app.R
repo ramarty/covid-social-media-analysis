@@ -384,7 +384,7 @@ ui <- fluidPage(
         
         
         fluidRow(
-          column(8, offset = 2,
+          column(6, offset = 3,
                  wellPanel(id = "tPanel",style = "overflow-y:scroll; max-height: 500px",
                            fluidRow(
                              column(10, align = "center", offset = 1,
@@ -1261,8 +1261,6 @@ server = (function(input, output, session) {
       group_by(cor) %>%
       summarise(N = n()) %>%
       mutate(cor = cor %>% as.factor())
-    
-    
     
     p <- cor_neg1_pos1_df %>%
       left_join(cor_sum_df) %>%
