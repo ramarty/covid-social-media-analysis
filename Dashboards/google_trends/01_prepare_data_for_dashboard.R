@@ -89,8 +89,8 @@ for(begin_day_i in begin_day){
   
   gtrends_df <- gtrends_df %>%
     dplyr::select(keyword_en, keyword, date, hits, hits_ma7, name, geo, continent, cases_new, death_new,
-                  cor_casesMA7_hitsMA7_max, cor_casesMA7_hitsMA7_nolag, cor_casesMA7_hitsMA7_lag, cor_casesMA7_hitsMA7_zscore, cor_casesMA7_hitsMA7_nolag_zscore,
-                  cor_deathMA7_hitsMA7_max, cor_deathMA7_hitsMA7_nolag, cor_deathMA7_hitsMA7_lag, cor_deathMA7_hitsMA7_zscore, cor_deathMA7_hitsMA7_nolag_zscore,
+                  cor_casesMA7_hitsMA7_max, cor_casesMA7_hitsMA7_nolag, cor_casesMA7_hitsMA7_lag,
+                  cor_deathMA7_hitsMA7_max, cor_deathMA7_hitsMA7_nolag, cor_deathMA7_hitsMA7_lag,
                   cases_total, death_total)
   
   saveRDS(gtrends_df, file.path(DASHBOARD_PATH, paste0("gtrends_since_",begin_day_i,".Rds")))
@@ -204,14 +204,10 @@ for(begin_day_i in begin_day){
                 cor_casesMA7_hitsMA7_nolag  = cor_casesMA7_hitsMA7_nolag[1],
                 cor_casesMA7_hitsMA7_lag    = cor_casesMA7_hitsMA7_lag[1],
                 cor_casesMA7_hitsMA7_max    = cor_casesMA7_hitsMA7_max[1],
-                cor_casesMA7_hitsMA7_zscore = cor_casesMA7_hitsMA7_zscore[1],
-                cor_casesMA7_hitsMA7_nolag_zscore =  cor_casesMA7_hitsMA7_nolag_zscore[1],
                 
                 cor_deathMA7_hitsMA7_nolag  = cor_deathMA7_hitsMA7_nolag[1],
                 cor_deathMA7_hitsMA7_lag    = cor_deathMA7_hitsMA7_lag[1],
-                cor_deathMA7_hitsMA7_max    = cor_deathMA7_hitsMA7_max[1],
-                cor_deathMA7_hitsMA7_zscore = cor_deathMA7_hitsMA7_zscore[1],
-                cor_deathMA7_hitsMA7_nolag_zscore =  cor_deathMA7_hitsMA7_nolag_zscore[1]) %>%
+                cor_deathMA7_hitsMA7_max    = cor_deathMA7_hitsMA7_max[1]) %>%
       ungroup()
     
     gtrends_spark_df <- gtrends_spark_df %>%

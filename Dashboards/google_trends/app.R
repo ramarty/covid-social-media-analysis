@@ -2,6 +2,8 @@
 
 # https://shiny.rstudio.com/articles/plot-caching.html
 
+
+
 # PACKAGES AND SETUP ===========================================================
 
 #### Setting directory so will work locally
@@ -59,6 +61,26 @@ library(hrbrthemes)
 #hrbrthemes::import_roboto_condensed()
 shinyOptions(cache = diskCache("./cache"))
 
+# Functions --------------------------------------------------------------------
+as.character.htmlwidget <- function(x, ...) {
+  htmltools::HTML(
+    htmltools:::as.character.shiny.tag.list(
+      htmlwidgets:::as.tags.htmlwidget(
+        x
+      ),
+      ...
+    )
+  )
+}
+
+add_deps <- function(dtbl, name, pkg = name) {
+  tagList(
+    dtbl,
+    htmlwidgets::getDependency(name, pkg)
+  )
+}
+
+# Prep Objects -----------------------------------------------------------------
 cor_after_dates <- c("2020-02-01",
                      "2020-03-01",
                      "2020-04-01",
@@ -74,7 +96,13 @@ gtrends_df <- readRDS(file.path("data", paste0("gtrends_since_",cor_after_dates[
 gtrends_spark_df <- readRDS(file.path("data", paste0("gtrends_spark_since_",cor_after_dates[1],"_large.Rds")))
 cor_df     <- readRDS(file.path("data", paste0("correlations_since_",cor_after_dates[1],".Rds")))
 world      <- readRDS(file.path("data", "world.Rds"))
-#world <- thinnedSpatialPoly(world, tol=0.001, topologyPreserve=T)
+world <- thinnedSpatialPoly(world, tol=15, topologyPreserve=T)
+
+# Needed for keyword_cor
+cor_neg1_pos1_df <- seq(from=-1, to=1, by=.1) %>%
+  as.data.frame() %>%
+  dplyr::rename(cor = ".") %>%
+  mutate(cor = cor %>% as.factor())
 
 LOAD_GTRENDS_INIT <- TRUE
 
@@ -133,7 +161,7 @@ ui <- fluidPage(
     
     # ** Landing Page ----------------------------------------------------------
     tabPanel(
-      "Purpose",
+      "Overview",
       tags$head(includeCSS("styles.css")),
       
       dashboardBody(
@@ -217,7 +245,7 @@ ui <- fluidPage(
                       <b>Negative values</b> mean that search interest comes before COVID-19, helping to predict cases/deaths while
                       <b>positive values</b> indicate the search interest reacts to COVID-19 cases/deaths</h4></li>
                       </ul>"),
-
+                 
                  br()
           )
         ),
@@ -365,7 +393,7 @@ ui <- fluidPage(
                              )
                            ),
                            fluidRow(
-                          uiOutput("max_cor_hist_ui")
+                             uiOutput("max_cor_hist_ui")
                            )
                  ),
           ),
@@ -418,7 +446,7 @@ ui <- fluidPage(
                              
                              fluidRow(
                                column(12, align = "center", offset = 0,
-                                    uiOutput("cor_map_leaflet")
+                                      uiOutput("cor_map_leaflet")
                                       
                                )
                              )
@@ -793,23 +821,7 @@ server = (function(input, output, session) {
     gtrends_spark_df$name <- NULL
     
     # Step 1 convert htmlwidget to character representation of HTML components
-    as.character.htmlwidget <- function(x, ...) {
-      htmltools::HTML(
-        htmltools:::as.character.shiny.tag.list(
-          htmlwidgets:::as.tags.htmlwidget(
-            x
-          ),
-          ...
-        )
-      )
-    }
-    
-    add_deps <- function(dtbl, name, pkg = name) {
-      tagList(
-        dtbl,
-        htmlwidgets::getDependency(name, pkg)
-      )
-    }
+
     
     #### Subset world
     if(input$select_continent != "All"){
@@ -885,6 +897,7 @@ server = (function(input, output, session) {
     #   resolutions = 2^(16:7))
     # options = leafletOptions(crs = epsg2163)
     
+<<<<<<< HEAD
     # https://epsg.io/54030
     # crs_leaflet <- leafletCRS(
     #   crsClass = "L.Proj.CRS",
@@ -900,6 +913,8 @@ server = (function(input, output, session) {
     
     # options = leafletOptions(crs = epsg2163)
     
+=======
+>>>>>>> a6de4c7c9870bf2fe8a5f62f2c87cc3633b78052
     leaflet(height = "700px") %>%
       #addTiles() %>%
       addPolygons(data = world_data,
@@ -927,9 +942,9 @@ server = (function(input, output, session) {
                 bins = c(-1, -0.5, 0, 0.5, 1)) %>%
       setMapWidgetStyle(list(background= "white")) %>%
       setView(zoom = 2, lat=0, lng=0) %>%
-      add_deps("sparkline") #%>%
+      add_deps("sparkline") %>%
       #add_deps("highchart", 'highcharter') %>%
-      #browsable()
+      browsable()
     #) #%>%
     #add_deps("sparkline") 
     #browsable() %>%
@@ -975,7 +990,7 @@ server = (function(input, output, session) {
                       Trends = l_cases_hits,
                       "Correlation" = cor_casesMA7_hitsMA7_max,
                       "Lead/Lag" = cor_casesMA7_hitsMA7_lag)
-
+      
     } 
     if(input$select_covid_type %in% "Deaths"){
       
@@ -1270,10 +1285,8 @@ server = (function(input, output, session) {
       mutate(cor = cor %>% as.factor())
     
     
-    p <- seq(from=-1, to=1, by=.1) %>%
-      as.data.frame() %>%
-      dplyr::rename(cor = ".") %>%
-      mutate(cor = cor %>% as.factor()) %>%
+    
+    p <- cor_neg1_pos1_df %>%
       left_join(cor_sum_df) %>%
       mutate(N = N %>% replace_na(0)) %>%
       mutate(cor = cor %>% as.character() %>% as.numeric()) %>%
@@ -1427,7 +1440,7 @@ server = (function(input, output, session) {
                       Trends = l_cases_hits,
                       "Correlation" = cor_casesMA7_hitsMA7_max,
                       "Lead/Lag" = cor_casesMA7_hitsMA7_lag)
-
+      
       
     } 
     if(input$select_covid_type_map %in% "Deaths"){
@@ -1445,7 +1458,7 @@ server = (function(input, output, session) {
     
     gtrends_spark_df <- gtrends_spark_df %>%
       dplyr::select("Search Term", "Trends", "Correlation", "Lead/Lag")
-
+    
     #### Sort
     gtrends_spark_df <- gtrends_spark_df %>%
       arrange(-Correlation)
@@ -1530,7 +1543,7 @@ server = (function(input, output, session) {
            "<li><b><em>Correlation:</em></b> ", cor$cor %>% round(3), "</li>",
            "<li><b><em>Lead/Lag of Highest Correlation:</em></b> ", cor$lag, " days</li>",
            "</ul>")
-
+    
     
   })
   
@@ -1951,7 +1964,7 @@ server = (function(input, output, session) {
     
   })
   
-
+  
   
   # *** Country Trends -----------------------------------------------------------
   # country_data_react <- reactive({
@@ -1975,7 +1988,7 @@ server = (function(input, output, session) {
   # })
   
   #observe({
-
+  
   
   #})
   
@@ -2009,7 +2022,7 @@ server = (function(input, output, session) {
   
   
   
-
+  
   
   
   output$ui_select_covid_cases <- renderUI({
@@ -2201,4 +2214,13 @@ server = (function(input, output, session) {
 })
 
 # RUN THE APP ==================================================================
+# app <- shinyApp(ui, server)
+# 
+# profvis({
+#   runApp(app, display.mode="normal")
+# })
+
 shinyApp(ui, server)
+
+
+
