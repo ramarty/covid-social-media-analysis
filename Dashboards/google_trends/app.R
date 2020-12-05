@@ -96,7 +96,7 @@ gtrends_df <- readRDS(file.path("data", paste0("gtrends_since_",cor_after_dates[
 gtrends_spark_df <- readRDS(file.path("data", paste0("gtrends_spark_since_",cor_after_dates[1],"_large.Rds")))
 cor_df     <- readRDS(file.path("data", paste0("correlations_since_",cor_after_dates[1],".Rds")))
 world      <- readRDS(file.path("data", "world.Rds"))
-world <- thinnedSpatialPoly(world, tol=15, topologyPreserve=T)
+#world <- thinnedSpatialPoly(world, tol=15, topologyPreserve=T)
 
 # Needed for keyword_cor
 cor_neg1_pos1_df <- seq(from=-1, to=1, by=.1) %>%
@@ -897,7 +897,6 @@ server = (function(input, output, session) {
     #   resolutions = 2^(16:7))
     # options = leafletOptions(crs = epsg2163)
     
-<<<<<<< HEAD
     # https://epsg.io/54030
     # crs_leaflet <- leafletCRS(
     #   crsClass = "L.Proj.CRS",
@@ -912,9 +911,7 @@ server = (function(input, output, session) {
     #   resolutions = 1.55^(25:15))
     
     # options = leafletOptions(crs = epsg2163)
-    
-=======
->>>>>>> a6de4c7c9870bf2fe8a5f62f2c87cc3633b78052
+
     leaflet(height = "700px") %>%
       #addTiles() %>%
       addPolygons(data = world_data,
