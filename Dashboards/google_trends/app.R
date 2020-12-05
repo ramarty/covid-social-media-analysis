@@ -1606,7 +1606,7 @@ server = (function(input, output, session) {
                     input$select_keyword_country, 
                     "\" is ",
                     cor$cor %>% round(3),
-                    "</em></h5>")
+                    ".</em></h5>")
     } else{
       
       
