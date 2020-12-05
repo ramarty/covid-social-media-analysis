@@ -1556,8 +1556,11 @@ server = (function(input, output, session) {
                       "Lead/Lag" = cor_deathMA7_hitsMA7_lag)
     } 
     
+    # Without Lead/Lag ------------------------------------------------------------
+    if(input$select_cor_type_country %in% "No Lead/Lag"){
+    
     gtrends_spark_df <- gtrends_spark_df %>%
-      dplyr::select("Search Term", "Trends", "Correlation", "Lead/Lag")
+      dplyr::select("Search Term", "Trends", "Correlation")
     
     #### Sort
     gtrends_spark_df <- gtrends_spark_df %>%
@@ -1565,8 +1568,7 @@ server = (function(input, output, session) {
     
     #### Adjust Variables
     gtrends_spark_df <- gtrends_spark_df %>%
-      mutate(Correlation = Correlation %>% round(3),
-             `Lead/Lag` = paste(`Lead/Lag`, "days"))
+      mutate(Correlation = Correlation %>% round(3))
     #gtrends_spark_df$Correlation <- gtrends_spark_df$Correlation %>% round(3)
     #gtrends_spark_df$`Lead/Lag` <- paste(gtrends_spark_df$`Lead/Lag`, "days")
     
@@ -1575,7 +1577,6 @@ server = (function(input, output, session) {
     
     f_list <- list(
       `Search Term` = formatter("span", style = ~ style(color = "black", font.weight = "bold", width = "2px")),
-      `Lead/Lag` = formatter("span", style = ~ style(color = "black", font.weight = "bold")),
       `Correlation` = formatter(
         "span",
         style = x ~ style(
@@ -1599,9 +1600,9 @@ server = (function(input, output, session) {
     
     l <- formattable(
       gtrends_spark_df[1:table_max,] %>% as.data.table(),
-      align = c("c", "c", "l"),
+      align = c("c", "c"),
       f_list
-    ) %>% format_table(align = c("c", "c", "l", "l")) %>%
+    ) %>% format_table(align = c("c", "c", "l")) %>%
       htmltools::HTML() %>%
       div() %>%
       # use new sparkline helper for adding dependency
@@ -1609,6 +1610,68 @@ server = (function(input, output, session) {
       # use column for bootstrap sizing control
       # but could also just wrap in any tag or tagList
       {column(width=12, .)}
+    
+    
+    
+    } else{
+      
+      gtrends_spark_df <- gtrends_spark_df %>%
+        dplyr::select("Search Term", "Trends", "Correlation", "Lead/Lag")
+      
+      #### Sort
+      gtrends_spark_df <- gtrends_spark_df %>%
+        arrange(-Correlation)
+      
+      #### Adjust Variables
+      gtrends_spark_df <- gtrends_spark_df %>%
+        mutate(Correlation = Correlation %>% round(3),
+               `Lead/Lag` = paste(`Lead/Lag`, "days"))
+      #gtrends_spark_df$Correlation <- gtrends_spark_df$Correlation %>% round(3)
+      #gtrends_spark_df$`Lead/Lag` <- paste(gtrends_spark_df$`Lead/Lag`, "days")
+      
+      #### Make Table
+      bar_color <- "#FF9999"
+      
+      f_list <- list(
+        `Search Term` = formatter("span", style = ~ style(color = "black", font.weight = "bold", width = "2px")),
+        `Lead/Lag` = formatter("span", style = ~ style(color = "black", font.weight = "bold")),
+        `Correlation` = formatter(
+          "span",
+          style = x ~ style(
+            display = "inline-block",
+            direction = "lft",
+            font.weight = "bold",
+            #"border-radius" = "4px",
+            "padding-left" = "2px",
+            "background-color" = csscolor(bar_color),
+            width = percent(proportion(x)),
+            color = csscolor("black")
+          )
+        )
+        
+        #`Correlation` = formatter("span", style = ~ style(color = "black", font.weight = "bold"))
+      )
+      
+      gtrends_spark_df <- gtrends_spark_df[!is.na(gtrends_spark_df$Correlation),]
+      
+      table_max <- nrow(gtrends_spark_df)
+      
+      l <- formattable(
+        gtrends_spark_df[1:table_max,] %>% as.data.table(),
+        align = c("c", "c", "l"),
+        f_list
+      ) %>% format_table(align = c("c", "c", "l", "l")) %>%
+        htmltools::HTML() %>%
+        div() %>%
+        # use new sparkline helper for adding dependency
+        spk_add_deps() %>%
+        # use column for bootstrap sizing control
+        # but could also just wrap in any tag or tagList
+        {column(width=12, .)}
+      
+      
+      
+    }
     
     l
     
@@ -1647,7 +1710,7 @@ server = (function(input, output, session) {
     #        "</ul>")
     
     if(input$select_cor_type_country %in% "No Lead/Lag"){
-      out <- paste0("<h5><em><b>Trends in COVID-19 and Search Interest</b><br><br>Using data after ",
+      out <- paste0("<h5><b>Trends in COVID-19 and Search Interest</b><br><br><em>Using data after ",
                     input$select_begin_date_country, 
                     ", the correlation between COVID-19 ",
                     input$select_covid_type_map %>% tolower(), 
