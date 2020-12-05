@@ -751,6 +751,7 @@ ui <- fluidPage(
                       <li><a href='https://www.sciencedirect.com/science/article/pii/S1201971220302496'>Association of the COVID-19 pandemic with Internet Search Volumes: A Google Trends(TM) Analysis</a></li>
                       <li><a href='https://www.medrxiv.org/content/10.1101/2020.05.07.20093955v2'>Utility and limitations of Google searches for tracking disease: the case of taste and smell loss as markers for COVID-19</a></li>
                       <li><a href='https://www.nytimes.com/2020/04/05/opinion/coronavirus-google-searches.html'>Google Searches Can Help Us Find Emerging Covid-19 Outbreaks</a></li>
+                      <li><a href='https://www.washingtonpost.com/politics/2020/10/29/can-google-searches-predict-where-coronavirus-cases-will-soon-emerge/'>Can Google searches predict where coronavirus cases will soon emerge?</a></li>
                       <li><a href='https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7189861/'>The COVID-19 outbreak and Google searches: Is it really the time to worry about global mental health?</a></li>
                       <li><a href='https://ideas.repec.org/p/cep/cepdps/dp1693.html'>COVID-19, Lockdowns and Well-being: Evidence from Google Trends</a></li>
                       <li><a href='https://pubmed.ncbi.nlm.nih.gov/32279437/'>Use of Google Trends to investigate loss-of-smell-related searches during the COVID-19 outbreak</a></li>
@@ -1806,7 +1807,7 @@ server = (function(input, output, session) {
     if(!is.null(input$select_country)){
       if((input$select_country %in% "") & LOAD_GTRENDS_INIT){
         updateSelectInput(session, "select_country",
-                          selected = "United States")
+                           selected = "United States")
         LOAD_GTRENDS_INIT <<- F
       }
     }
@@ -1939,6 +1940,14 @@ server = (function(input, output, session) {
       
       # !!!!!!!!!!!!!!!!!!!!!!!!!! EDIT HERE !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
       
+      selected <- "United States"
+      
+      if(!is.null(input$select_country)){
+        if(input$select_country != ""){
+          selected <- input$select_country
+        }
+      }
+      
       ## Default
       out <- selectInput(
         "select_country",
@@ -1954,6 +1963,12 @@ server = (function(input, output, session) {
         keywords_vec <- keywords_df$keyword_en[keywords_df$category %in% input$select_search_category_country]
         
         cor_country_df <- cor_df[cor_df$keyword_en %in% keywords_vec,]
+        
+        # If the currently selected country is not in the new list of countries,
+        # change selected to United States (default)
+        if(!(selected %in% sort(unique(cor_country_df$name)))){
+          selected <- "United States"
+        }
       }
       
       
@@ -1961,7 +1976,7 @@ server = (function(input, output, session) {
         "select_country",
         label = strong("Search Country"),
         choices = sort(unique(cor_country_df$name)),
-        selected = "United States",
+        selected = selected,
         multiple = F
       )
       
