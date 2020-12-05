@@ -193,9 +193,14 @@ ui <- fluidPage(
                     strongly matches - and often preceeds - trends in COVID-19 cases.</h4>"),
                  br(),
                  
+                 # 
                  HTML("<h4>Trends in search interest in COVID-19 symptoms should not replace
                  administrative data on cases. The relation between the two is strong
-                 but <a href='https://www.nature.com/news/when-google-got-flu-wrong-1.12413'>not perfect</a>. However, Google data can supplement official data.
+                 but <a href='https://www.nature.com/news/when-google-got-flu-wrong-1.12413'>not perfect</a>.
+                 Search interest can be driven by 
+                 <a href='https://www.sciencedirect.com/science/article/pii/S1201971220304641'>news or other events</a>, 
+                 and the usefulness of search interest data depends on geographic characteristics such as internet access.
+                 However, Google data can supplement official data.
                 This is particularly true in circumstances
                     when testing or data may not be widely available. Moreover, given that
                     Google trends information is updated in real time, sudden increases in 
@@ -742,29 +747,65 @@ ui <- fluidPage(
                  
                  HTML("This dashboard builds off of a literature that
                       uses Google Trends to provide insight into COVID-19.
-                      Studies that were used to inform the dashboard include
-                      the following"),
+                      Articles that were used to inform the dashboard include
+                      the following:"),
                  
                  
                  # <li><a href='URL'>TITLE</a></li>
                  HTML("<br><br><ul>
-                      <li><a href='https://www.sciencedirect.com/science/article/pii/S1201971220302496'>Association of the COVID-19 pandemic with Internet Search Volumes: A Google Trends(TM) Analysis</a></li>
-                      <li><a href='https://www.medrxiv.org/content/10.1101/2020.05.07.20093955v2'>Utility and limitations of Google searches for tracking disease: the case of taste and smell loss as markers for COVID-19</a></li>
-                      <li><a href='https://www.nytimes.com/2020/04/05/opinion/coronavirus-google-searches.html'>Google Searches Can Help Us Find Emerging Covid-19 Outbreaks</a></li>
-                      <li><a href='https://www.washingtonpost.com/politics/2020/10/29/can-google-searches-predict-where-coronavirus-cases-will-soon-emerge/'>Can Google searches predict where coronavirus cases will soon emerge?</a></li>
-                      <li><a href='https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7189861/'>The COVID-19 outbreak and Google searches: Is it really the time to worry about global mental health?</a></li>
-                      <li><a href='https://ideas.repec.org/p/cep/cepdps/dp1693.html'>COVID-19, Lockdowns and Well-being: Evidence from Google Trends</a></li>
-                      <li><a href='https://pubmed.ncbi.nlm.nih.gov/32279437/'>Use of Google Trends to investigate loss-of-smell-related searches during the COVID-19 outbreak</a></li>
-                      <li><a href='https://europepmc.org/article/pmc/pmc7267744'>Predicting COVID-19 Incidence Using Anosmia and Other COVID-19 Symptomatology: Preliminary Analysis Using Google and Twitter</a></li>
-                      <li><a href='https://www.mayoclinicproceedings.org/article/S0025-6196(20)30934-4/fulltext'>Correlations Between COVID-19 Cases and Google Trends Data in the United States: A State-by-State Analysis</a></li>
                       <li><a href='https://www.chicagofed.org/publications/blogs/chicago-fed-insights/2020/closer-look-google-trends-unemployment'>A Closer Look at the Correlation Between Google Trends and Initial Unemployment Insurance Claims</a></li>
-
-                      
-                      
-                      
+                      <li><a href='https://www.sciencedirect.com/science/article/pii/S1201971220302496'>Association of the COVID-19 pandemic with Internet Search Volumes: A Google Trends(TM) Analysis</a></li>
+                      <li><a href='https://www.washingtonpost.com/politics/2020/10/29/can-google-searches-predict-where-coronavirus-cases-will-soon-emerge/'>Can Google searches predict where coronavirus cases will soon emerge?</a></li>
+                      <li><a href='https://www.mayoclinicproceedings.org/article/S0025-6196(20)30934-4/fulltext'>Correlations Between COVID-19 Cases and Google Trends Data in the United States: A State-by-State Analysis</a></li>
+                      <li><a href='https://ideas.repec.org/p/cep/cepdps/dp1693.html'>COVID-19, Lockdowns and Well-being: Evidence from Google Trends</a></li>
+                      <li><a href='https://europepmc.org/article/pmc/pmc7267744'>Predicting COVID-19 Incidence Using Anosmia and Other COVID-19 Symptomatology: Preliminary Analysis Using Google and Twitter</a></li>
+                      <li><a href='https://www.nytimes.com/2020/04/05/opinion/coronavirus-google-searches.html'>Google Searches Can Help Us Find Emerging Covid-19 Outbreaks</a></li>
+                      <li><a href='https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7189861/'>The COVID-19 outbreak and Google searches: Is it really the time to worry about global mental health?</a></li>
+                      <li><a href='https://pubmed.ncbi.nlm.nih.gov/32279437/'>Use of Google Trends to investigate loss-of-smell-related searches during the COVID-19 outbreak</a></li>
+                      <li><a href='https://www.medrxiv.org/content/10.1101/2020.05.07.20093955v2'>Utility and limitations of Google searches for tracking disease: the case of taste and smell loss as markers for COVID-19</a></li>
                       </ul>"),
           )
         ),
+        
+        fluidRow(
+          column(6, offset = 3,
+                 hr(),
+                 h2("Credits", align = "center"),
+
+                 HTML(" The dashboard and analytics were produced by Robert Marty, Manuel Maqueda,
+                 Nausheen Khan, Arndt Reichert and Bibind Vasu of the 
+                 
+                 <a href='https://www.worldbank.org/en/research/dime'>Development Impact Evaluation (DIME)</a>
+                Group at the World Bank.
+                      <br><br>
+                      The findings, interpretations, and conclusions expressed in this dashboard are entirely those
+                of the authors. They do not necessarily represent the views of the International Bank for Reconstruction and Development/World Bank and
+                its affiliated organizations, or those of the Executive Directors of the World Bank or the governments they represent.")
+                 
+
+                
+          )
+        ),
+        
+
+        #Suggested citation: WHO COVID-19 Explorer. Geneva: World Health Organization, 2020. Available online: https://worldhealthorg.shinyapps.io/covid/ (last cited: [date]).
+        
+     # br(),
+     # br(),
+     #   
+     #   fluidRow(
+     #     column(4, align = "left", offset = 4,
+     #            HTML("<h6><em>The findings, interpretations, and conclusions expressed in this dashboard are entirely those
+     #            of the authors. They do not necessarily represent the views of the International Bank for Reconstruction and Development/World Bank and
+     #            its affiliated organizations, or those of the Executive Directors of the World Bank or the governments they represent.</em></h6>"
+     #            )
+     #     )
+     #     
+     #   ),
+       
+       
+       
+
         
         fluidRow(
           column(12,
@@ -1216,6 +1257,13 @@ server = (function(input, output, session) {
                      side ="top")) %>%
       layout(plot_bgcolor='transparent') %>% 
       layout(paper_bgcolor='transparent') %>%
+      layout(margin = list(
+        l = 50,
+        r = 50,
+        b = 100,
+        t = 10,
+        pad = 4
+      )) %>%
       config(displayModeBar = F) %>%
       layout(
         yaxis = list(
@@ -1270,7 +1318,7 @@ server = (function(input, output, session) {
   # 
   output$max_cor_hist_ui <- renderUI({
     
-    height <- "2500px"
+    height <- "2300px"
     if(input$select_search_category == "Coronavirus General") height <- "600px"
     if(input$select_search_category == "Mental Health") height <- "900px"
     if(input$select_search_category == "Potential Consequences") height <- "500px"
@@ -1606,7 +1654,7 @@ server = (function(input, output, session) {
                     " and search interest in \"",
                     input$select_keyword_country, 
                     "\" is ",
-                    cor$cor %>% round(3),
+                    cor$cor %>% round(2),
                     ".</em></h5>")
     } else{
       
@@ -1618,7 +1666,7 @@ server = (function(input, output, session) {
                     " and search interest in \"",
                     input$select_keyword_country, 
                     "\"</span> is ",
-                    cor$cor %>% round(3),
+                    cor$cor %>% round(2),
                     " when shifting COVID-19 ",
                     input$select_covid_type_map %>% tolower(),
                     " ",
@@ -1672,11 +1720,13 @@ server = (function(input, output, session) {
             fig <- fig %>% add_trace(x = ~date, y = ~covid_new, type = 'bar', name = input$select_covid_type_map,
                                      marker = list(color = 'orange'),
                                      hoverinfo = "text",
-                                     text = ~paste(covid_new, input$select_covid_type_map, "<br>", date))
+                                     text = ~paste(covid_new %>% prettyNum(big.mark=",",scientific=FALSE), 
+                                                   input$select_covid_type_map, 
+                                                   "<br>", date))
             fig <- fig %>% add_trace(x = ~date, y = ~hits_ma7, type = 'scatter', mode = 'lines', name = 'Search Interest', yaxis = 'y2',
                                      line = list(color = 'forestgreen'),
                                      hoverinfo = "text",
-                                     text = ~paste(round(hits_ma7, 2),"<br>", date))
+                                     text = ~paste("Search Interest:", round(hits_ma7, 2),"<br>", date))
             fig <- fig %>% layout(title = '',
                                   xaxis = list(title = ""),
                                   margin = list(l=45, r=45, b=5, t=10, pad=0),
