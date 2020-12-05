@@ -217,10 +217,11 @@ ui <- fluidPage(
         fluidRow(
           column(6, align = "center", offset = 3,
                  hr(),
-                 h2("Determining correlation and prediction between Google search interest and COVID-19"),
+                 h2("Determining when the correlation between Google search interest and COVID-19 is strongest"),
                  HTML("<h4>In all figures and analysis, we use the number of new daily COVID-19 cases or deaths
                       and a 7 day moving average of Google Search Interest. We compute how strongly different 
-                      search terms correlate with COVID-19 cases and deaths. In addition, we determine whether search interest can help predict future cases or deaths
+                      search terms correlate with COVID-19 cases and deaths. In addition, we determine whether 
+                      search interest can help predict future cases or deaths
                       or whether search interest responds or comes after cases/deaths. To determine this, we shift COVID-19 cases/deaths
                       by up to 21 days from its actual date. We calculate the correlation between
                       the shifted COVID-19 and the search interest (this approach follows 
@@ -821,7 +822,7 @@ server = (function(input, output, session) {
     gtrends_spark_df$name <- NULL
     
     # Step 1 convert htmlwidget to character representation of HTML components
-
+    
     
     #### Subset world
     if(input$select_continent != "All"){
@@ -911,7 +912,7 @@ server = (function(input, output, session) {
     #   resolutions = 1.55^(25:15))
     
     # options = leafletOptions(crs = epsg2163)
-
+    
     leaflet(height = "700px") %>%
       #addTiles() %>%
       addPolygons(data = world_data,
@@ -1118,7 +1119,7 @@ server = (function(input, output, session) {
   })
   
   # **** Figure ---------------------------
-  output$max_cor_hist <- renderCachedPlot({
+  output$max_cor_hist <- renderPlotly({
     
     cor_df     <- readRDS(file.path("data", paste0("correlations_since_",
                                                    input$select_begin_date,
@@ -1142,47 +1143,59 @@ server = (function(input, output, session) {
     cor_df <- cor_df %>%
       dplyr::filter(type %in% input$select_covid_type) 
     
-    cor_df$keyword_en[cor_df$keyword_en %in% "What are the Symptoms of Coronavirus"] <- "What are the Symptoms\nof Coronavirus"
-    cor_df$keyword_en[cor_df$keyword_en %in% "How to Treat Coronavirus"] <- "How to Treat\nCoronavirus"
+    cor_df$keyword_en[cor_df$keyword_en %in% "What are the Symptoms of Coronavirus"] <- "What are the Symptoms<br>of Coronavirus"
+    cor_df$keyword_en[cor_df$keyword_en %in% "How to Treat Coronavirus"] <- "How to Treat<br>Coronavirus"
     
-    p1 <- ggplot() +
-      geom_dotplot(data = cor_df,
-                   aes(x = reorder(keyword_en,
-                                   cor),
-                       y = cor,
-                       fill = "=  One Country"),
-                   binaxis = "y", 
-                   stackdir = "center",
-                   dotsize = 1,
-                   binwidth = .02,
-                   color = "palegreen4") +
-      scale_fill_manual(values = c("palegreen3")) +
-      labs(fill = NULL) +
-      geom_hline(yintercept = 0) +
-      coord_flip() +
-      theme_minimal() +
-      labs(x = "",
-           y = "Correlation",
-           title = NULL) +
-      theme(axis.text.y = element_text(face = "bold", size = 14, color="black"),
-            axis.title.x = element_text(size = 14, color = "black", face="bold"),
-            axis.text.x = element_text(size = 14),
-            legend.text = element_text(size = 14),
-            legend.position = "top") +
-      scale_y_continuous(position = "right") 
+    aaaa <<- cor_df
+    cor_df$keyword_en <- reorder(cor_df$keyword_en,
+                                 cor_df$cor)
+    fig <- plot_ly(cor_df, x = ~cor, color = ~keyword_en, type = "box")
+    fig <- fig %>% layout(showlegend = FALSE)
+    fig
     
-    # cor_df$lag <- cor_df$lag + runif(cor_df$lag)
+    #fig <- plot_ly(y = ~rnorm(50), type = "box", boxpoints = "all", jitter = 0.3,
+    #               pointpos = -1.8)
+    
+    
+    p1 <- cor_df %>%
+      plot_ly() %>% 
+      #add_trace(y = ~keyword_en,x = ~cor, type = "box", 
+      #          hoverinfo = 'name+y') %>%
+      add_markers(y = ~jitter(as.numeric(keyword_en)), 
+                  x = ~cor, 
+                  color = ~keyword_en,
+                  marker = list(size = 6),
+                  hoverinfo = "text",
+                  text = ~paste0(keyword_en,"<br>",
+                                 name,
+                                 "<br>xval: ",cor %>% round(2)),
+                  showlegend = F) %>% 
+      layout(
+      xaxis = list(title = "Correlation",
+                   showticklabels = T)) %>%
+      layout(plot_bgcolor='transparent') %>% 
+    layout(paper_bgcolor='transparent') %>%
+      config(displayModeBar = F) %>%
+      layout(
+        yaxis = list(
+          ticktext = as.list(unique(cor_df$keyword_en)), 
+          tickvals = as.list(as.numeric(unique(cor_df$keyword_en))),
+          tickmode = "array"
+        ))
+    
+    
+    
     # 
-    # p2 <- ggplot() +
+    # p1 <- ggplot() +
     #   geom_dotplot(data = cor_df,
     #                aes(x = reorder(keyword_en,
     #                                cor),
-    #                    y = lag,
+    #                    y = cor,
     #                    fill = "=  One Country"),
     #                binaxis = "y", 
     #                stackdir = "center",
-    #                dotsize = 0.75,
-    #                binwidth = 0.5,
+    #                dotsize = 1,
+    #                binwidth = .02,
     #                color = "palegreen4") +
     #   scale_fill_manual(values = c("palegreen3")) +
     #   labs(fill = NULL) +
@@ -1190,27 +1203,28 @@ server = (function(input, output, session) {
     #   coord_flip() +
     #   theme_minimal() +
     #   labs(x = "",
-    #        y = "",
-    #        title = "Lag of Best Correlation") +
-    #   theme(axis.text.y = element_blank(),
+    #        y = "Correlation",
+    #        title = NULL) +
+    #   theme(axis.text.y = element_text(face = "bold", size = 14, color="black"),
+    #         axis.title.x = element_text(size = 14, color = "black", face="bold"),
     #         axis.text.x = element_text(size = 14),
     #         legend.text = element_text(size = 14),
-    #         legend.position = "top",
-    #         plot.title = element_text(size = 14, face = "bold", hjust = 0.5)) 
+    #         legend.position = "top") +
+    #   scale_y_continuous(position = "right") 
     # 
-    # ggarrange(p1, p2,
-    #           common.legend = T,
-    #           widths = c(.6,.4))
+
     
     p1
     
     
-  }, cacheKeyExpr = { list(input$select_begin_date,
-                           input$select_cor_type,
-                           input$select_search_category,
-                           input$select_continent,
-                           input$select_covid_type)}, bg="transparent")
+  })
   
+  # cacheKeyExpr = { list(input$select_begin_date,
+  #                       input$select_cor_type,
+  #                       input$select_search_category,
+  #                       input$select_continent,
+  #                       input$select_covid_type)}, bg="transparent")
+  # 
   output$max_cor_hist_ui <- renderUI({
     
     height <- "2700px"
@@ -1221,7 +1235,7 @@ server = (function(input, output, session) {
     if(input$select_search_category == "Symptoms") height <- "970px"
     if(input$select_search_category == "Treatment") height <- "500px"
     
-    plotOutput("max_cor_hist",
+    plotlyOutput("max_cor_hist",
                height = height)
     
   })
@@ -1895,7 +1909,7 @@ server = (function(input, output, session) {
       resolutions = 2^(25:15))
     
     # options = leafletOptions(crs = epsg2163)
-  
+    
     leaflet() %>%
       addProviderTiles(providers$OpenStreetMap.Mapnik) %>%
       setView(lat = 0, lng = 0, zoom = 1)
