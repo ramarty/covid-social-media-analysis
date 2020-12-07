@@ -186,12 +186,11 @@ ui <- fluidPage(
           ),
           column(6, align = "left", offset = 3,
                  
-                 HTML("<h4>When we fall ill, 
+                 HTML(paste0("<h4>When we fall ill, 
                  <a href='https://blog.google/technology/health/using-symptoms-search-trends-inform-covid-19-research/'>many of us turn to Google</a>
                  to understand our symptoms and treatment options.
-                    Using data from February 1 - ",END_DATE_TEXT,", 
-                    this dashboard illustrates how search interest for specific symptoms
-                    strongly matches - and often preceeds - trends in COVID-19 cases.</h4>"),
+                    Using data from February 1 - ",END_DATE_TEXT,", this dashboard illustrates how search interest for specific symptoms
+                    strongly matches - and often preceeds - trends in COVID-19 cases.</h4>")),
                  br(),
                  
                  # 
