@@ -163,169 +163,157 @@ ui <- fluidPage(
     
     id = "nav",
     
-    # ** Country Level ----------------------------------------------------------
+    # ** Landing Page ----------------------------------------------------------
     tabPanel(
-      id = "country_level",
-      "Country Level",
+      "Overview",
       tags$head(includeCSS("styles.css")),
+      
       
       dashboardBody(
         
         fluidRow(
-          column(3, align = "center", offset = 0,
-                 
-                 uiOutput("select_country_ui")
-                 
-                 # selectizeInput(
-                 #   "select_country",
-                 #   label = strong("Select Country"),
-                 #   choices = c("", sort(cor_df$name)),
-                 #   selected = "",
-                 #   multiple = F
-                 # )#,
-          ),
-          column(2, align = "center", offset = 0,
-                 selectInput(
-                   "select_covid_type_map",
-                   
-                   label = strong(HTML("Cases/Deaths")),
-                   choices = c("Cases", "Deaths"),
-                   selected = "Cases",
-                   multiple = F
-                 )
-          ),
-          column(2, align = "center",
-                 selectInput(
-                   "select_cor_type_country",
-                   label = strong("Correlation"),
-                   choices = c("Best Lead/Lag", "No Lead/Lag"),
-                   selected = "Best Lead/Lag",
-                   multiple = F
-                 )
-          ),
-          column(2, align = "center",
-                 selectInput(
-                   "select_begin_date_country",
-                   label = strong("Correlation After"),
-                   choices = cor_after_dates,
-                   selected = "2020-02-01",
-                   multiple = F
-                 )
-          ),
-          column(3, align = "center",
-                 selectInput(
-                   "select_search_category_country",
-                   label = strong("Search Term Categories"),
-                   choices = c("All",
-                               sort(unique(keywords_df$category))),
-                   selected = "Symptoms",
-                   multiple = F
-                 )
-          )
-        ),
-        
-        #br(),
-        
-        fluidRow(
           column(12, align = "center",
-                 h3(textOutput("country_name"))
+                 #h1("Google Trends Data for Understanding COVID-19")
+                 h1("The Evolution of the Pandemic Through the Lens of Google Searches"),
+                 h2("A Global Dashboard for Monitoring COVID-19")
           )
         ),
         
         fluidRow(
           column(6, align = "center", offset = 3,
-                 strong(htmlOutput("trends_country_subtitle"), align="center"),
+                 
+                 hr(),
+                 h2("Overview")
+          ),
+          column(6, align = "left", offset = 3,
+                 
+                 HTML(paste0("<h4>When we fall ill, 
+                 <a href='https://blog.google/technology/health/using-symptoms-search-trends-inform-covid-19-research/'>many of us turn to Google</a>
+                 to understand our symptoms and treatment options.
+                    Using data from February 1 - ",END_DATE_TEXT,", this dashboard illustrates how search interest for specific symptoms
+                    strongly matches - and often preceeds - trends in COVID-19 cases.</h4>")),
+                 br(),
+                 
+                 # 
+                 HTML("<h4>Trends in search interest in COVID-19 symptoms should not replace
+                 administrative data on cases. The relation between the two is strong
+                 but <a href='https://www.nature.com/news/when-google-got-flu-wrong-1.12413'>not perfect</a>.
+                 Search interest can be driven by 
+                 <a href='https://www.sciencedirect.com/science/article/pii/S1201971220304641'>news or other events</a>, 
+                 and the usefulness of search interest data depends on geographic characteristics such as internet access.
+                 However, Google data can supplement official data.
+                This is particularly true in circumstances
+                    when testing or data may not be widely available. Moreover, given that
+                    Google trends information is updated in real time, sudden increases in 
+                    search interest can warn of potential growth in COVID-19 cases.</h4>"),
+                 
+                 br(),
+                 HTML("<h4>Google Trends can also be used to understand impacts of COVID-19 
+                      and search interest around prevention measures. Consequently, in addition 
+                      to showing search interest in COVID-related symptoms, the dashboard also 
+                      shows search interest related to 
+                      <a href='https://psycnet.apa.org/fulltext/2020-59192-001.html'>mental health keywords</a> 
+                      (e.g., anxiety and loneliness), other potential consequences (e.g., <a href='https://www.chicagofed.org/publications/blogs/chicago-fed-insights/2020/closer-look-google-trends-unemployment'>unemployment</a> and debt), 
+                      prevention measures (e.g., face masks) and treatment measures (e.g., teleworking 
+                      and ventilators).</h4>")
+                 
+                 
+                 
+                 
+                 
+                 
+                 
+          )
+        ),
+        fluidRow(
+          column(6, align = "center", offset = 3,
+                 hr(),
+                 h2("Determining when the correlation between Google search interest and COVID-19 is strongest")
+          ),
+          column(6, align = "left", offset = 3,
+                 HTML("<h4>In all figures and analysis, we use the number of new daily COVID-19 cases or deaths
+                      and a 7 day moving average of Google Search Interest. We compute how strongly different 
+                      search terms correlate with COVID-19 cases and deaths. In addition, we determine whether 
+                      search interest can help predict future cases or deaths
+                      or whether search interest responds or comes after cases/deaths. To determine this, we shift COVID-19 cases/deaths
+                      by up to 21 days from its actual date. We calculate the correlation between
+                      the shifted COVID-19 and the search interest (this approach follows 
+                      <a href='https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7176069/'>research</a>
+                      <a href='https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7438693/'>from</a>
+                      <a href='https://www.sciencedirect.com/science/article/pii/S1201971220302496'>others</a>
+                      on COVID-19 and Google Trends). Using all these estimated correlations, we determine the 
+                      following metrics:</h4>")
+                 # HTML("<h4>For each search term, we seek to understand (1) the strength of the correlation
+                 #      between COVID-19 cases/deaths and Google search term interest and (2) when the correlation
+                 #      is strongest.</h4"),
+                 # br(),
+                 # HTML("<h4>We shift search interest by up to 21 days from its actual date. We calculte the correlation
+                 #      between COVID cases/deaths and the shifted search interest. The following values are determined:</h4>")
+          )
+        ),
+        fluidRow(
+          column(6, align = "left", offset = 3,
+                 HTML("<ul>
+                      <li><h4><b>Maximum Correlation</b></h4></li>
+                      <li><h4><b>Lead/Lag Days:</b> The number of days COVID-19 cases/deaths was shifted to obtain the maximum correlation.
+                      <b>Negative values</b> mean that search interest comes before COVID-19, helping to predict cases/deaths while
+                      <b>positive values</b> indicate the search interest reacts to COVID-19 cases/deaths</h4></li>
+                      </ul>"),
+                 
+                 br()
+          )
+        ),
+        
+        fluidRow(
+          column(12, align = "center",
+                 HTML("<strong>Correlation between <span style='color:orange;'>COVID-19 cases</span> (shifted) and <span style='color:green;'>Search Term Interest</span></strong>")
+          )
+        ),
+        fluidRow(
+          column(12, align = "center",
+                 img(src="cor.gif", width='70%')
           )
         ),
         
         br(),
+        br(),
+        br(),
+        br(),
+        br(),
+        br(),
+        br(),
+        br(),
+        br()
         
-        fluidRow(
-          column(8, align = "center", offset = 2,
-                 div(style = 'overflow-y: scroll; height:300px', htmlOutput("line_graph_country"))
-          )
-        ),
-        hr(),
         
-        wellPanel(
-          fluidRow(
-            column(4, align = "center", offset = 4,
-                   uiOutput("select_keyword_country_ui")
-            )
-          ),
-          
-          fluidRow(
-            column(6, align = "center", offset = 3,
-                   htmlOutput("translation_text")
-            )
-          ),
-          
-          fluidRow(
-            column(5, align = "center",
-                   h3("Historic Trends"),
-                   strong(paste0("Data Available Until ", END_DATE_TEXT))
-            ),
-            column(7, align = "center",
-                   h3("Real Time Data: Search Interest in Past 90 Days"),
-                   fluidRow(
-                     column(8, align = "center", offset = 2,
-                            HTML("<strong>Trends at different time spans and at subnational levels can be
-                            explored on the 
-                            <a href='https://trends.google.com/trends/'>Google Trends website.</a></strong>")
-                     )
-                   )
-            )
-          ),
-          
-          fluidRow(
-            column(5, align = "left", 
-                   #br(),
-                   # fluidRow(
-                   #   column(12, align = "center",
-                   #          htmlOutput("line_graph_country_key_title_1")
-                   #          )
-                   # ),
-                   # fluidRow(
-                   #   column(10, align = "left", offset = 1,
-                   #          htmlOutput("line_graph_country_key_title_2")
-                   #   )
-                   # ),
-                   
-                   #div(style='color:green; font-size:20px; background-color: white; border: 1px solid #ccc; border-radius: 3px; margin: 10px 0; padding: 10px; width: 700px',
-                   div(style='color:black; font-size:20px; background-color: white; border: 1px solid #ccc; border-radius: 3px; margin: 10px 0; padding-left: 16px; padding-right: 16px; padding-bottom: 5px; padding-top: 0px;',
-                       
-                       fluidRow(
-                         column(12, align = "left", offset = 0,
-                                htmlOutput("line_graph_country_key_title_2")
-                         )
-                       ),
-                       
-                       fluidRow(
-                         plotlyOutput("line_graph_country_key",
-                                      height = "270px") # 225
-                       ),
-                       fluidRow(
-                         column(11, offset = 1, align = "left",
-                                h6("We compute a 7 day moving average of Google search interest.
-                               Original daily values range from 0 to 100, where 100 represents
-                               peak search activity for a keyword.") 
-                         )
-                       )
-                       
-                   ),
-                   
-            ),
-            column(4, align = "center",
-                   tags$div(id="wrapper"),
-                   
-                   uiOutput("gtrends_html_trends")
-            ),
-            column(3, align = "center",
-                   tags$div(id="wrapper2"),
-                   uiOutput("gtrends_html_map")
-            )
-          )
-        )
+        # fluidRow(
+        #   column(6, align = "center", offset = 3,
+        #          hr(),
+        #          h2("Example"),
+        #          
+        #          h4("As an example, growth in the search popularity of 'Loss of Smell'
+        #             preceded an increase in COVID-19 cases by about 10 days in the 
+        #             United States in mid-June. The 
+        #             dashboard shows this trend holds across many countries.")
+        #   )
+        # ),
+        # 
+        # fluidRow(
+        #   #column(12,
+        #   #       ),
+        #   column(12, align = "center",
+        #          
+        #          plotOutput("us_ex_fig",
+        #                     height = "350px",
+        #                     width = "700px")
+        #          
+        #   )
+        #   #column(2,
+        #   #),
+        #   
+        #   
+        # )
+        
       )
     ),
     
@@ -544,124 +532,184 @@ ui <- fluidPage(
       )
     ),
     
-    # ** Landing Page ----------------------------------------------------------
+    # ** Country Level ----------------------------------------------------------
     tabPanel(
-      "Information",
+      id = "country_level",
+      "Country Level",
       tags$head(includeCSS("styles.css")),
-      
       
       dashboardBody(
         
         fluidRow(
+          column(3, align = "center", offset = 0,
+                 
+                 uiOutput("select_country_ui")
+                 
+                 # selectizeInput(
+                 #   "select_country",
+                 #   label = strong("Select Country"),
+                 #   choices = c("", sort(cor_df$name)),
+                 #   selected = "",
+                 #   multiple = F
+                 # )#,
+          ),
+          column(2, align = "center", offset = 0,
+                 selectInput(
+                   "select_covid_type_map",
+                   
+                   label = strong(HTML("Cases/Deaths")),
+                   choices = c("Cases", "Deaths"),
+                   selected = "Cases",
+                   multiple = F
+                 )
+          ),
+          column(2, align = "center",
+                 selectInput(
+                   "select_cor_type_country",
+                   label = strong("Correlation"),
+                   choices = c("Best Lead/Lag", "No Lead/Lag"),
+                   selected = "Best Lead/Lag",
+                   multiple = F
+                 )
+          ),
+          column(2, align = "center",
+                 selectInput(
+                   "select_begin_date_country",
+                   label = strong("Correlation After"),
+                   choices = cor_after_dates,
+                   selected = "2020-02-01",
+                   multiple = F
+                 )
+          ),
+          column(3, align = "center",
+                 selectInput(
+                   "select_search_category_country",
+                   label = strong("Search Term Categories"),
+                   choices = c("All",
+                               sort(unique(keywords_df$category))),
+                   selected = "Symptoms",
+                   multiple = F
+                 )
+          )
+        ),
+        
+        #br(),
+        
+        fluidRow(
           column(12, align = "center",
-                 #h1("Google Trends Data for Understanding COVID-19")
-                 h1("The Evolution of the Pandemic Through the Lens of Google Searches"),
-                 h2("A Global Dashboard for Monitoring COVID-19")
+                 h3(textOutput("country_name"))
           )
         ),
         
         fluidRow(
           column(6, align = "center", offset = 3,
-                 
-                 hr(),
-                 h2("Overview")
-          ),
-          column(6, align = "left", offset = 3,
-                 
-                 HTML(paste0("<h4>When we fall ill, 
-                 <a href='https://blog.google/technology/health/using-symptoms-search-trends-inform-covid-19-research/'>many of us turn to Google</a>
-                 to understand our symptoms and treatment options.
-                    Using data from February 1 - ",END_DATE_TEXT,", this dashboard illustrates how search interest for specific symptoms
-                    strongly matches - and often preceeds - trends in COVID-19 cases.</h4>")),
-                 br(),
-                 
-                 # 
-                 HTML("<h4>Trends in search interest in COVID-19 symptoms should not replace
-                 administrative data on cases. The relation between the two is strong
-                 but <a href='https://www.nature.com/news/when-google-got-flu-wrong-1.12413'>not perfect</a>.
-                 Search interest can be driven by 
-                 <a href='https://www.sciencedirect.com/science/article/pii/S1201971220304641'>news or other events</a>, 
-                 and the usefulness of search interest data depends on geographic characteristics such as internet access.
-                 However, Google data can supplement official data.
-                This is particularly true in circumstances
-                    when testing or data may not be widely available. Moreover, given that
-                    Google trends information is updated in real time, sudden increases in 
-                    search interest can warn of potential growth in COVID-19 cases.</h4>"),
-                 
-                 br(),
-                 HTML("<h4>Google Trends can also be used to understand impacts of COVID-19 
-                      and search interest around prevention measures. Consequently, in addition 
-                      to showing search interest in COVID-related symptoms, the dashboard also 
-                      shows search interest related to 
-                      <a href='https://psycnet.apa.org/fulltext/2020-59192-001.html'>mental health keywords</a> 
-                      (e.g., anxiety and loneliness), other potential consequences (e.g., <a href='https://www.chicagofed.org/publications/blogs/chicago-fed-insights/2020/closer-look-google-trends-unemployment'>unemployment</a> and debt), 
-                      prevention measures (e.g., face masks) and treatment measures (e.g., teleworking 
-                      and ventilators).</h4>")
-                 
-                 
-                 
-                 
-                 
-                 
-                 
-          )
-        ),
-        fluidRow(
-          column(6, align = "center", offset = 3,
-                 hr(),
-                 h2("Determining when the correlation between Google search interest and COVID-19 is strongest")
-          ),
-          column(6, align = "left", offset = 3,
-                 HTML("<h4>In all figures and analysis, we use the number of new daily COVID-19 cases or deaths
-                      and a 7 day moving average of Google Search Interest. We compute how strongly different 
-                      search terms correlate with COVID-19 cases and deaths. In addition, we determine whether 
-                      search interest can help predict future cases or deaths
-                      or whether search interest responds or comes after cases/deaths. To determine this, we shift COVID-19 cases/deaths
-                      by up to 21 days from its actual date. We calculate the correlation between
-                      the shifted COVID-19 and the search interest (this approach follows 
-                      <a href='https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7176069/'>research</a>
-                      <a href='https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7438693/'>from</a>
-                      <a href='https://www.sciencedirect.com/science/article/pii/S1201971220302496'>others</a>
-                      on COVID-19 and Google Trends). Using all these estimated correlations, we determine the 
-                      following metrics:</h4>")
-                 # HTML("<h4>For each search term, we seek to understand (1) the strength of the correlation
-                 #      between COVID-19 cases/deaths and Google search term interest and (2) when the correlation
-                 #      is strongest.</h4"),
-                 # br(),
-                 # HTML("<h4>We shift search interest by up to 21 days from its actual date. We calculte the correlation
-                 #      between COVID cases/deaths and the shifted search interest. The following values are determined:</h4>")
-          )
-        ),
-        fluidRow(
-          column(6, align = "left", offset = 3,
-                 HTML("<ul>
-                      <li><h4><b>Maximum Correlation</b></h4></li>
-                      <li><h4><b>Lead/Lag Days:</b> The number of days COVID-19 cases/deaths was shifted to obtain the maximum correlation.
-                      <b>Negative values</b> mean that search interest comes before COVID-19, helping to predict cases/deaths while
-                      <b>positive values</b> indicate the search interest reacts to COVID-19 cases/deaths</h4></li>
-                      </ul>"),
-                 
-                 br()
+                 strong(htmlOutput("trends_country_subtitle"), align="center"),
           )
         ),
         
-        fluidRow(
-          column(12, align = "center",
-                 HTML("<strong>Correlation between <span style='color:orange;'>COVID-19 cases</span> (shifted) and <span style='color:green;'>Search Term Interest</span></strong>")
-          )
-        ),
-        fluidRow(
-          column(12, align = "center",
-                 img(src="cor.gif", width='70%')
-          )
-        ),
+        br(),
         
+        fluidRow(
+          column(8, align = "center", offset = 2,
+                 div(style = 'overflow-y: scroll; height:300px', htmlOutput("line_graph_country"))
+          )
+        ),
         hr(),
+        
+        wellPanel(
+          fluidRow(
+            column(4, align = "center", offset = 4,
+                   uiOutput("select_keyword_country_ui")
+            )
+          ),
+          
+          fluidRow(
+            column(6, align = "center", offset = 3,
+                   htmlOutput("translation_text")
+            )
+          ),
+          
+          fluidRow(
+            column(5, align = "center",
+                   h3("Historic Trends"),
+                   strong(paste0("Data Available Until ", END_DATE_TEXT))
+            ),
+            column(7, align = "center",
+                   h3("Real Time Data: Search Interest in Past 90 Days"),
+                   fluidRow(
+                     column(8, align = "center", offset = 2,
+                            HTML("<strong>Trends at different time spans and at subnational levels can be
+                            explored on the 
+                            <a href='https://trends.google.com/trends/'>Google Trends website.</a></strong>")
+                     )
+                   )
+            )
+          ),
+          
+          fluidRow(
+            column(5, align = "left", 
+                   #br(),
+                   # fluidRow(
+                   #   column(12, align = "center",
+                   #          htmlOutput("line_graph_country_key_title_1")
+                   #          )
+                   # ),
+                   # fluidRow(
+                   #   column(10, align = "left", offset = 1,
+                   #          htmlOutput("line_graph_country_key_title_2")
+                   #   )
+                   # ),
+                   
+                   #div(style='color:green; font-size:20px; background-color: white; border: 1px solid #ccc; border-radius: 3px; margin: 10px 0; padding: 10px; width: 700px',
+                   div(style='color:black; font-size:20px; background-color: white; border: 1px solid #ccc; border-radius: 3px; margin: 10px 0; padding-left: 16px; padding-right: 16px; padding-bottom: 5px; padding-top: 0px;',
+                       
+                       fluidRow(
+                         column(12, align = "left", offset = 0,
+                                htmlOutput("line_graph_country_key_title_2")
+                         )
+                       ),
+
+                       fluidRow(
+                         plotlyOutput("line_graph_country_key",
+                                      height = "270px") # 225
+                       ),
+                       fluidRow(
+                         column(11, offset = 1, align = "left",
+                                h6("We compute a 7 day moving average of Google search interest.
+                               Original daily values range from 0 to 100, where 100 represents
+                               peak search activity for a keyword.") 
+                         )
+                       )
+                       
+                   ),
+                   
+            ),
+            column(4, align = "center",
+                   tags$div(id="wrapper"),
+                   
+                   uiOutput("gtrends_html_trends")
+            ),
+            column(3, align = "center",
+                   tags$div(id="wrapper2"),
+                   uiOutput("gtrends_html_map")
+            )
+          )
+        )
+      )
+    ),
+    
+    
+    # ** Information -----------------------------------------------------------
+    tabPanel(
+      "Information",
+      tags$head(includeCSS("styles.css")),
+      
+      dashboardBody(
         
         fluidRow(
           column(6, offset = 3,
                  h2("Data", align = "center"),
-                 HTML("<h4>We access COVID-19 Cases and Deaths from the
+                 HTML("We access COVID-19 Cases and Deaths from the
                       <a href='https://covid19.who.int/?gclid=Cj0KCQjw8fr7BRDSARIsAK0Qqr73Wij8AiyjGx8dOs-MYxN7oxF5pzYmurbdVxj-x65Gc8tx1jJykaYaAqQNEALw_wcB'>WHO</a>
                       and download 
                       <a href='https://trends.google.com/trends/'>Google Trends </a>
@@ -670,7 +718,7 @@ ui <- fluidPage(
                       only releases search interest data when there is a large enough search volume for a
                       specific search term. We translate search terms from English into
                       each country's most widely used language using Google Translate.
-                      The below table shows which language is used for each country.</h4>"),
+                      The below table shows which language is used for each country."),
                  
           )
         ),
@@ -684,16 +732,28 @@ ui <- fluidPage(
         fluidRow(
           column(6, offset = 3,
                  hr(),
+                 h2("Subnational Case Study: Brazil", align = "center"),
+                 HTML("While the dashboard shows country level results, the project
+                 team also conducted a 
+                 <a href='https://drive.google.com/file/d/1-DrtOdFdKCv99G-w3zHK0VyDK65GqEpJ/view?usp=sharing'>case study</a> 
+                 of Google Search interest and 
+                 COVID-19 at the subnational level in Brazil.")
+          )
+        ),
+        
+        fluidRow(
+          column(6, offset = 3,
+                 hr(),
                  h2("References", align = "center"),
                  
-                 HTML("<h4>This dashboard builds off of a literature that
+                 HTML("This dashboard builds off of a literature that
                       uses Google Trends to provide insight into COVID-19.
                       Articles that were used to inform the dashboard include
-                      the following:</h4>"),
+                      the following:"),
                  
                  
                  # <li><a href='URL'>TITLE</a></li>
-                 HTML("<br><ul>
+                 HTML("<br><br><ul>
                       <li><a href='https://www.chicagofed.org/publications/blogs/chicago-fed-insights/2020/closer-look-google-trends-unemployment'>A Closer Look at the Correlation Between Google Trends and Initial Unemployment Insurance Claims</a></li>
                       <li><a href='https://www.sciencedirect.com/science/article/pii/S1201971220302496'>Association of the COVID-19 pandemic with Internet Search Volumes: A Google Trends(TM) Analysis</a></li>
                       <li><a href='https://www.washingtonpost.com/politics/2020/10/29/can-google-searches-predict-where-coronavirus-cases-will-soon-emerge/'>Can Google searches predict where coronavirus cases will soon emerge?</a></li>
@@ -712,146 +772,60 @@ ui <- fluidPage(
           column(6, offset = 3,
                  hr(),
                  h2("Credits", align = "center"),
-                 
-                 HTML("<h4>The dashboard and analytics were produced by Robert Marty, Manuel Maqueda,
+
+                 HTML(" The dashboard and analytics were produced by Robert Marty, Manuel Maqueda,
                  Nausheen Khan, Arndt Reichert and Bibind Vasu of the 
                  
                  <a href='https://www.worldbank.org/en/research/dime'>Development Impact Evaluation (DIME)</a>
-                Group at the World Bank. The research team has published a 
-                <a href='https://blogs.worldbank.org/opendata/pandemic-unfolds-google-part-1-new-global-dashboard-covid-19-monitoring?cid=dec_tt_data_en_ext'>blog</a>
-                about the analysis and has also conducted analysis at the subnational level using 
-                <a href='https://drive.google.com/file/d/1-DrtOdFdKCv99G-w3zHK0VyDK65GqEpJ/view?usp=sharing'>Brazil as a case study.</a> 
-                
+                Group at the World Bank.
                       <br><br>
                       The findings, interpretations, and conclusions expressed in this dashboard are entirely those
                 of the authors. They do not necessarily represent the views of the International Bank for Reconstruction and Development/World Bank and
-                its affiliated organizations, or those of the Executive Directors of the World Bank or the governments they represent.</h4>")
+                its affiliated organizations, or those of the Executive Directors of the World Bank or the governments they represent.")
+                 
 
                 
           )
         ),
         
-        br(),
-        br(),
-        br(),
-        br(),
-        br(),
-        br(),
-        br(),
-        br(),
-        br()
+
+        #Suggested citation: WHO COVID-19 Explorer. Geneva: World Health Organization, 2020. Available online: https://worldhealthorg.shinyapps.io/covid/ (last cited: [date]).
+        
+     # br(),
+     # br(),
+     #   
+     #   fluidRow(
+     #     column(4, align = "left", offset = 4,
+     #            HTML("<h6><em>The findings, interpretations, and conclusions expressed in this dashboard are entirely those
+     #            of the authors. They do not necessarily represent the views of the International Bank for Reconstruction and Development/World Bank and
+     #            its affiliated organizations, or those of the Executive Directors of the World Bank or the governments they represent.</em></h6>"
+     #            )
+     #     )
+     #     
+     #   ),
+       
+       
+       
+
+        
+        fluidRow(
+          column(12,
+                 br(),
+                 br(),
+                 br(),
+                 br(),
+                 br(),
+                 br(),
+                 br(),
+                 br(),
+                 br(),
+                 br()
+          )
+        )
+        
         
       )
     )
-    
-    
-    # ** Information -----------------------------------------------------------
-    # tabPanel(
-    #   "Information",
-    #   tags$head(includeCSS("styles.css")),
-    #   
-    #   dashboardBody(
-    #     
-    #     fluidRow(
-    #       column(6, offset = 3,
-    #              h2("Data", align = "center"),
-    #              HTML("We access COVID-19 Cases and Deaths from the
-    #                   <a href='https://covid19.who.int/?gclid=Cj0KCQjw8fr7BRDSARIsAK0Qqr73Wij8AiyjGx8dOs-MYxN7oxF5pzYmurbdVxj-x65Gc8tx1jJykaYaAqQNEALw_wcB'>WHO</a>
-    #                   and download 
-    #                   <a href='https://trends.google.com/trends/'>Google Trends </a>
-    #                   data for all countries. In all analyses, we
-    #                   use a 7 day moving average of Google Search interest. To protect privacy, Google
-    #                   only releases search interest data when there is a large enough search volume for a
-    #                   specific search term. We translate search terms from English into
-    #                   each country's most widely used language using Google Translate.
-    #                   The below table shows which language is used for each country."),
-    #              
-    #       )
-    #     ),
-    #     fluidRow(
-    #       br(),
-    #       column(6, offset = 3, align = "center",
-    #              div(style = 'overflow-y: scroll; height:300px', tableOutput('language_table'))
-    #       )
-    #     ),
-    #     
-    #     fluidRow(
-    #       column(6, offset = 3,
-    #              hr(),
-    #              h2("Subnational Case Study: Brazil", align = "center"),
-    #              HTML("While the dashboard shows country level results, the project
-    #              team also conducted a 
-    #              <a href='https://drive.google.com/file/d/1-DrtOdFdKCv99G-w3zHK0VyDK65GqEpJ/view?usp=sharing'>case study</a> 
-    #              of Google Search interest and 
-    #              COVID-19 at the subnational level in Brazil.")
-    #       )
-    #     ),
-    #     
-    #     fluidRow(
-    #       column(6, offset = 3,
-    #              hr(),
-    #              h2("References", align = "center"),
-    #              
-    #              HTML("This dashboard builds off of a literature that
-    #                   uses Google Trends to provide insight into COVID-19.
-    #                   Articles that were used to inform the dashboard include
-    #                   the following:"),
-    #              
-    #              
-    #              # <li><a href='URL'>TITLE</a></li>
-    #              HTML("<br><br><ul>
-    #                   <li><a href='https://www.chicagofed.org/publications/blogs/chicago-fed-insights/2020/closer-look-google-trends-unemployment'>A Closer Look at the Correlation Between Google Trends and Initial Unemployment Insurance Claims</a></li>
-    #                   <li><a href='https://www.sciencedirect.com/science/article/pii/S1201971220302496'>Association of the COVID-19 pandemic with Internet Search Volumes: A Google Trends(TM) Analysis</a></li>
-    #                   <li><a href='https://www.washingtonpost.com/politics/2020/10/29/can-google-searches-predict-where-coronavirus-cases-will-soon-emerge/'>Can Google searches predict where coronavirus cases will soon emerge?</a></li>
-    #                   <li><a href='https://www.mayoclinicproceedings.org/article/S0025-6196(20)30934-4/fulltext'>Correlations Between COVID-19 Cases and Google Trends Data in the United States: A State-by-State Analysis</a></li>
-    #                   <li><a href='https://ideas.repec.org/p/cep/cepdps/dp1693.html'>COVID-19, Lockdowns and Well-being: Evidence from Google Trends</a></li>
-    #                   <li><a href='https://europepmc.org/article/pmc/pmc7267744'>Predicting COVID-19 Incidence Using Anosmia and Other COVID-19 Symptomatology: Preliminary Analysis Using Google and Twitter</a></li>
-    #                   <li><a href='https://www.nytimes.com/2020/04/05/opinion/coronavirus-google-searches.html'>Google Searches Can Help Us Find Emerging Covid-19 Outbreaks</a></li>
-    #                   <li><a href='https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7189861/'>The COVID-19 outbreak and Google searches: Is it really the time to worry about global mental health?</a></li>
-    #                   <li><a href='https://pubmed.ncbi.nlm.nih.gov/32279437/'>Use of Google Trends to investigate loss-of-smell-related searches during the COVID-19 outbreak</a></li>
-    #                   <li><a href='https://www.medrxiv.org/content/10.1101/2020.05.07.20093955v2'>Utility and limitations of Google searches for tracking disease: the case of taste and smell loss as markers for COVID-19</a></li>
-    #                   </ul>"),
-    #       )
-    #     ),
-    #     
-    #     fluidRow(
-    #       column(6, offset = 3,
-    #              hr(),
-    #              h2("Credits", align = "center"),
-    # 
-    #              HTML(" The dashboard and analytics were produced by Robert Marty, Manuel Maqueda,
-    #              Nausheen Khan, Arndt Reichert and Bibind Vasu of the 
-    #              
-    #              <a href='https://www.worldbank.org/en/research/dime'>Development Impact Evaluation (DIME)</a>
-    #             Group at the World Bank.
-    #                   <br><br>
-    #                   The findings, interpretations, and conclusions expressed in this dashboard are entirely those
-    #             of the authors. They do not necessarily represent the views of the International Bank for Reconstruction and Development/World Bank and
-    #             its affiliated organizations, or those of the Executive Directors of the World Bank or the governments they represent.")
-    #              
-    # 
-    #             
-    #       )
-    #     ),
-    #     
-    #     fluidRow(
-    #       column(12,
-    #              br(),
-    #              br(),
-    #              br(),
-    #              br(),
-    #              br(),
-    #              br(),
-    #              br(),
-    #              br(),
-    #              br(),
-    #              br()
-    #       )
-    #     )
-    #     
-    #     
-    #   )
-    # )
     
   )
 )
