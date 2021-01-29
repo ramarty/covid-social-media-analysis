@@ -17,8 +17,8 @@ language_codes_all <- language_codes_all[!is.na(language_codes_all)]
 language_codes_all <- language_codes_all[language_codes_all != ""]
 language_codes_all <- language_codes_all %>% sort()
 
-for(language in language_codes_all){
-  
+#for(language in language_codes_all){
+for(language in "sw"){
   # Terms to Scrape --------------------------------------------------------------
   keywords <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", 
                                  "keywords", "FinalData", "covid_keywords_alllanguages_clean.Rds"))
@@ -39,7 +39,7 @@ for(language in language_codes_all){
   iso2 <- languages$Code[languages$Language_code_main %in% language]
   iso2 <- iso2[!is.na(iso2)]
   
-  iso2 <- "BR"
+  iso2 <- "TZ"
   
   # Function to Scrape Data ----------------------------------------------------
   extract_trends <- function(iso_i,
