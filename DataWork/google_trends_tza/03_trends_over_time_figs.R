@@ -32,6 +32,7 @@ p <- df %>%
                 color="Search\nInterest\n7-Day MA"),
             size = 1) +
   scale_color_manual(values = c("forestgreen")) +
+  labs(color = "") +
   theme_minimal() +
   theme(strip.text = element_text(size = 12, face = "bold")) +
   ggplot2::facet_wrap(~keyword,
@@ -51,6 +52,7 @@ p <- df %>%
                 color="Search\nInterest\n7-Day MA"),
             size = 1) +
   scale_color_manual(values = c("forestgreen")) +
+  labs(color = "") +
   theme_minimal() +
   theme(strip.text = element_text(size = 12, face = "bold")) +
   ggplot2::facet_wrap(~keyword,
