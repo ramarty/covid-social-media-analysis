@@ -1,18 +1,17 @@
 # Applies equation to make hits comparable across time/states using a comparison
 # state
 
-comparison_iso <- "US"
-
 # Load Data --------------------------------------------------------------------
 gtrends_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
-                                "global_with_refstate",
-                                paste0("gl_gtrends_ref",comparison_iso,"_adj.Rds")))
+                                "gtrends_full_timeseries", "gtrends.Rds"))
 
 cases_df <- read.csv(file.path(dropbox_file_path, "Data", "global_admin_data", 
                                "RawData", "WHO-COVID-19-global-data.csv"),
                      stringsAsFactors = F)
 
-# Merge ------------------------------------------------------------------------
+wdi_df <- readRDS(file.path(dropbox_file_path, "Data", "wdi", "RawData", "wdi_data.Rds"))
+
+# Merge Cases ------------------------------------------------------------------
 gtrends_df <- gtrends_df %>%
   filter(!is.na(geo))
 
@@ -31,12 +30,18 @@ cases_df$death_new[cases_df$death_new < 0] <- 0
 
 gtrends_cases_df <- merge(gtrends_df, cases_df, by = c("geo", "date"), all.x=F, all.y=F)
 
+# Merge WDI --------------------------------------------------------------------
+gtrends_cases_df <- merge(gtrends_cases_df, wdi_df, by = "geo", all.x=T, all.y=F)
+
 # Export -----------------------------------------------------------------------
-gtrends_cases_df <- gtrends_cases_df %>% unique() # ?? why need
-saveRDS(gtrends_cases_df, file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
-                              "global_with_refstate",
-                              paste0("gl_gtrends_ref",comparison_iso,"_adj_cases.Rds")))
+gtrends_cases_df <- gtrends_cases_df %>% distinct() # ?? why need
+
+saveRDS(gtrends_cases_df,
+        file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
+                  "gtrends_full_timeseries", "gtrends_otherdata.Rds"))
 
 
 
-#unique(gtrends_df$geo)[!unique(gtrends_df$geo) %in% unique(cases_df$geo)]
+
+
+

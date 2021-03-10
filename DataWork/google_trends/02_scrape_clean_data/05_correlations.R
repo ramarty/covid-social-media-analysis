@@ -12,15 +12,17 @@
 
 # https://gist.github.com/drsimonj/2038ff9f9c67063f384f10fac95de566
 
-comparison_iso <- "US"
-
 begin_day <- c("2020-02-01",
                "2020-03-01",
                "2020-04-01",
                "2020-05-01",
                "2020-06-01",
                "2020-07-01",
-               "2020-08-01")
+               "2020-08-01",
+               "2020-09-01",
+               "2020-10-01",
+               "2020-11-01",
+               "2020-12-01")
 
 for(begin_day_i in begin_day){
   
@@ -28,16 +30,7 @@ for(begin_day_i in begin_day){
   
   # Load Data --------------------------------------------------------------------
   gtrends_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
-                                  "global_with_refstate",
-                                  paste0("gl_gtrends_ref",comparison_iso,"_adj_cases.Rds")))
-  
-  # Moving Average ---------------------------------------------------------------
-  gtrends_df <- gtrends_df %>%
-    arrange(date) %>%
-    group_by(geo, keyword_en) %>%
-    mutate(hits_ma7 = runMean(hits, n = 7),
-           cases_new_ma7 = runMean(cases_new, n = 7),
-           death_new_ma7 = runMean(death_new, n = 7))
+                                  "gtrends_full_timeseries", "gtrends_otherdata_varclean.Rds"))
   
   # Lags/Leads -------------------------------------------------------------------
   lead_lags <- 1:21
@@ -95,7 +88,7 @@ for(begin_day_i in begin_day){
     mutate(cor_casesMA7_hitsMA7 = cor(cases_new_ma7, hits_ma7),
            cor_deathMA7_hitsMA7 = cor(death_new_ma7, hits_ma7))
   
-  #### Add Z-Score
+  #### Summarize to geo/keyword level
   # If NA, give index of 1
   which.max_na <- function(x){
     out <- which.max(x)
@@ -105,7 +98,9 @@ for(begin_day_i in begin_day){
   
   gtrends_long_df <- gtrends_long_df %>%
     group_by(geo, keyword_en) %>%
-    dplyr::summarise(cor_casesMA7_hitsMA7_nolag = cor_casesMA7_hitsMA7[leadlag == 0][1],
+    dplyr::summarise(date_min_with_data_for_cor = min(date[!is.na(hits_ma7)]),
+                     date_max_with_data_for_cor = max(date[!is.na(hits_ma7)]),
+                     cor_casesMA7_hitsMA7_nolag = cor_casesMA7_hitsMA7[leadlag == 0][1],
                      cor_deathMA7_hitsMA7_nolag = cor_deathMA7_hitsMA7[leadlag == 0][1],
                      
                      cor_casesMA7_hitsMA7_max = max(cor_casesMA7_hitsMA7, na.rm=T),
@@ -137,7 +132,7 @@ for(begin_day_i in begin_day){
   gtrends_long_df$cor_deathMA7_hitsMA7_sd[is.na(gtrends_long_df$cor_deathMA7_hitsMA7_zscore)] <- NA
   gtrends_long_df$cor_deathMA7_hitsMA7_lag[is.na(gtrends_long_df$cor_deathMA7_hitsMA7_zscore)] <- NA
   
-  #### Append together
+  #### Append Cases/Deaths together
   cor_max_df <- bind_rows(gtrends_long_df %>%
                             dplyr::rename(cor_nolag = cor_casesMA7_hitsMA7_nolag,
                                           cor = cor_casesMA7_hitsMA7_max,
@@ -153,7 +148,7 @@ for(begin_day_i in begin_day){
                                           zscore = cor_deathMA7_hitsMA7_zscore,
                                           zscore_nolag = cor_deathMA7_hitsMA7_nolag_zscore) %>%
                             mutate(type = "Deaths")) %>%
-    dplyr::select(geo, keyword_en, cor, cor_nolag, lag, zscore, zscore_nolag, type) %>%
+    dplyr::select(geo, keyword_en, cor, cor_nolag, lag, zscore, zscore_nolag, type, date_min_with_data_for_cor, date_max_with_data_for_cor) %>%
     filter(!is.na(zscore))
   
   # Merge Correlations with main data --------------------------------------------
@@ -166,20 +161,16 @@ for(begin_day_i in begin_day){
     if(grepl("_lag_|_lead_", var)) gtrends_df[[var]] <- NULL
   }
   
-  #### Add total cases/deaths 
-  gtrends_df <- gtrends_df %>%
-    group_by(geo) %>%
-    mutate(cases_total = max(cases, na.rm = T),
-           death_total = max(death, na.rm = T))
-  
   # Export -----------------------------------------------------------------------
   saveRDS(gtrends_df, file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
-                                "global_with_refstate",
-                                paste0("gl_gtrends_ref","US","_adj_cases_cor_since_",begin_day_i,".Rds")))
+                                "gtrends_full_timeseries",
+                                "correlation_datasets",
+                                paste0("gtrends_otherdata_varclean_since",begin_day_i,".Rds")))
   
   saveRDS(cor_max_df, file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
-                                "global_with_refstate",
-                                paste0("gl_gtrends_ref","US","_adj_cases_correlations_since_",begin_day_i,".Rds")))
+                                "gtrends_full_timeseries",
+                                "correlation_datasets",
+                                paste0("correlations_gtrends_otherdata_varclean_since",begin_day_i,".Rds")))
 }
 
 

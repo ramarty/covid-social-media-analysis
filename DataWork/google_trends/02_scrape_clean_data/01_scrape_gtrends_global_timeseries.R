@@ -9,7 +9,8 @@
 # PARAMETERS
 SLEEP_TIME      <- 5 # number of seconds to pause after each scrape
 overwrite_files <- F # overwrite data?
-OUT_FOLDER_LIST <- c("timeseries_2020-06-01_2021-01-31")
+OUT_FOLDER_LIST <- c("timeseries_2020-06-01_2021-01-31",
+                     "timeseries_regions_2021-01-01_2021-01-31")
 select_countries_vec <- c("US", "BR") # only used if ALL_COUNTRIES = F
 
 # Function to Scrape Google Data -----------------------------------------------
@@ -83,7 +84,7 @@ for(OUT_FOLDER in OUT_FOLDER_LIST){
   
   if(grepl("timeseries_regions_", OUT_FOLDER)){
     ALL_TERMS <- F
-    ALL_COUNTRIES <- F
+    ALL_COUNTRIES <- T
     onlyInterest <- F
   } else{
     ALL_TERMS <- T
