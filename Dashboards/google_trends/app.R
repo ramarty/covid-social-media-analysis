@@ -2,8 +2,8 @@
 
 # https://shiny.rstudio.com/articles/plot-caching.html
 
-END_DATE_TEXT <- "October 31, 2020"
-END_DATE <- "2020-10-31"
+END_DATE_TEXT <- "Jaunary 31, 2021"
+END_DATE <- "2021-01-31"
 
 # PACKAGES AND SETUP ===========================================================
 
@@ -922,6 +922,7 @@ server = (function(input, output, session) {
     world_data$cor_keyword[!is.na(world_data$keyword)] <-
       paste0("<b><em>", world_data$keyword[!is.na(world_data$keyword)], "</em></b>")
     
+    world_data$l_covid_hits <- world_data$l_covid_hits %>% as.character()
     world_data$l_covid_hits[is.na(world_data$l_covid_hits)] <- "<em>Low Google search interest<br>for this search term</em>"
     
     world_data$popup <- paste0("<h4>", world_data$name, "</h4>", 
@@ -1352,6 +1353,7 @@ server = (function(input, output, session) {
     if(input$select_search_category == "Prevention") height <- "500px"
     if(input$select_search_category == "Symptoms") height <- "970px"
     if(input$select_search_category == "Treatment") height <- "500px"
+    if(input$select_search_category == "Vaccine") height <- "700px"
     
     plotlyOutput("max_cor_hist",
                  height = height)
