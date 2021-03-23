@@ -15,7 +15,8 @@ begin_day <- c("2020-02-01",
                "2020-05-01",
                "2020-06-01",
                "2020-07-01",
-               "2020-08-01")
+               "2020-08-01",
+               "2020-09-01")
 
 #begin_day <- "2020-02-01"
 
@@ -62,9 +63,14 @@ for(begin_day_i in begin_day){
   
   print(paste(begin_day_i, "-------------------------------------------------"))
   
+  # cor_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
+  #                             "global_with_refstate",
+  #                             paste0("gl_gtrends_ref","US","_adj_cases_correlations_since_",begin_day_i,".Rds")))
+  # 
   cor_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
-                              "global_with_refstate",
-                              paste0("gl_gtrends_ref","US","_adj_cases_correlations_since_",begin_day_i,".Rds")))
+                                "gtrends_full_timeseries",
+                                "correlation_datasets",
+                                paste0("correlations_gtrends_otherdata_varclean_since",begin_day_i,".Rds")))
   
   cor_df <- cor_df[tolower(cor_df$keyword_en) %in% keywords,]
   
@@ -76,8 +82,9 @@ for(begin_day_i in begin_day){
   
   # gTrends ----------------------------------------------------------------------
   gtrends_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
-                                  "global_with_refstate",
-                                  paste0("gl_gtrends_ref","US","_adj_cases_cor_since_",begin_day_i,".Rds")))
+                                "gtrends_full_timeseries",
+                                "correlation_datasets",
+                                paste0("gtrends_otherdata_varclean_since",begin_day_i,".Rds")))
   
   gtrends_df <- gtrends_df[tolower(gtrends_df$keyword_en) %in% keywords,]
   gtrends_df <- gtrends_df[!is.na(gtrends_df$keyword_en),]
