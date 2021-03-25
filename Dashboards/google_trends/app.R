@@ -2,8 +2,8 @@
 
 # https://shiny.rstudio.com/articles/plot-caching.html
 
-END_DATE_TEXT <- "October 31, 2020"
-END_DATE <- "2020-10-31"
+END_DATE_TEXT <- "Jaunary 31, 2021"
+END_DATE <- "2021-01-31"
 
 # PACKAGES AND SETUP ===========================================================
 
@@ -895,12 +895,12 @@ server = (function(input, output, session) {
       gtrends_spark_df$l_covid_hits <- gtrends_spark_df$l_cases_hits
       gtrends_spark_df$cor_covidMA7_hitsMA7_max <- gtrends_spark_df$cor_casesMA7_hitsMA7_max
       gtrends_spark_df$cor_covidMA7_hitsMA7_lag <- gtrends_spark_df$cor_casesMA7_hitsMA7_lag
-      gtrends_spark_df$cor_covidMA7_hitsMA7_zscore <- gtrends_spark_df$cor_casesMA7_hitsMA7_zscore %>% round(3)
+      #gtrends_spark_df$cor_covidMA7_hitsMA7_zscore <- gtrends_spark_df$cor_casesMA7_hitsMA7_zscore %>% round(3)
     } else{
       gtrends_spark_df$l_covid_hits <- gtrends_spark_df$l_death_hits
       gtrends_spark_df$cor_covidMA7_hitsMA7_max <- gtrends_spark_df$cor_deathMA7_hitsMA7_max
       gtrends_spark_df$cor_covidMA7_hitsMA7_lag <- gtrends_spark_df$cor_deathMA7_hitsMA7_lag
-      gtrends_spark_df$cor_covidMA7_hitsMA7_zscore <- gtrends_spark_df$cor_deathMA7_hitsMA7_zscore %>% round(3)
+      #gtrends_spark_df$cor_covidMA7_hitsMA7_zscore <- gtrends_spark_df$cor_deathMA7_hitsMA7_zscore %>% round(3)
     }
     
     #### Merge
@@ -922,6 +922,7 @@ server = (function(input, output, session) {
     world_data$cor_keyword[!is.na(world_data$keyword)] <-
       paste0("<b><em>", world_data$keyword[!is.na(world_data$keyword)], "</em></b>")
     
+    world_data$l_covid_hits <- world_data$l_covid_hits %>% as.character()
     world_data$l_covid_hits[is.na(world_data$l_covid_hits)] <- "<em>Low Google search interest<br>for this search term</em>"
     
     world_data$popup <- paste0("<h4>", world_data$name, "</h4>", 
@@ -940,8 +941,6 @@ server = (function(input, output, session) {
       palette = "RdYlGn",
       domain = c(world_data$cor_covidMA7_hitsMA7_max[!is.na(world_data$cor_covidMA7_hitsMA7_max)], -1, 1),
       reverse = T)
-    
-    #aa <<- world_data
     
     # +proj=wintri
     # epsg2163 <- leafletCRS(
@@ -1253,6 +1252,8 @@ server = (function(input, output, session) {
     colors <- brewer.pal(n = 9, 
                          name = "RdYlGn")
     
+    bb <<- cor_df
+    
     p1 <- cor_df %>%
       plot_ly() %>% 
       add_markers(y = ~jitter(as.numeric(keyword_en)), 
@@ -1291,7 +1292,7 @@ server = (function(input, output, session) {
         t = 10,
         pad = 4
       )) %>%
-      config(displayModeBar = F) %>%
+      plotly::config(displayModeBar = F) %>%
       layout(
         yaxis = list(
           title = "",
@@ -1352,6 +1353,7 @@ server = (function(input, output, session) {
     if(input$select_search_category == "Prevention") height <- "500px"
     if(input$select_search_category == "Symptoms") height <- "970px"
     if(input$select_search_category == "Treatment") height <- "500px"
+    if(input$select_search_category == "Vaccine") height <- "700px"
     
     plotlyOutput("max_cor_hist",
                  height = height)
@@ -1804,8 +1806,6 @@ server = (function(input, output, session) {
             gtrends_sub_df <- gtrends_sub_df %>%
               arrange(date)
             
-            #aa <<- gtrends_sub_df
-            
             fig <- plot_ly(gtrends_sub_df)
             fig <- fig %>% add_trace(x = ~date, y = ~covid_new, type = 'bar', name = input$select_covid_type_map,
                                      marker = list(color = 'orange'),
@@ -1832,7 +1832,7 @@ server = (function(input, output, session) {
                                                 showgrid = FALSE, 
                                                 zeroline = F,
                                                 color = "forestgreen")) 
-            fig <- fig %>% config(displayModeBar = F)
+            fig <- fig %>% plotly::config(displayModeBar = F)
             
             
             
