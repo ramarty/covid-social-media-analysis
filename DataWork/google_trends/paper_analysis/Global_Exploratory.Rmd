@@ -1,0 +1,86 @@
+---
+title: "Global_Exploratory"
+output: html_document
+---
+
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(fig.width=12, fig.height=8, warning=FALSE, message=FALSE)
+```
+
+```{r}
+#user info
+if(Sys.info()[["user"]] == "wb537287") dropbox_file_path <- "/Users/wb537287/Dropbox/COVID Social Media Analysis/"
+if(Sys.info()[["user"]] == "robmarty") dropbox_file_path <- "~/Dropbox/World Bank/Side Work/COVID Social Media Analysis"
+
+
+#packages
+library(tidyverse)
+
+data <- read_rds(file.path(dropbox_file_path, "Data/google_trends/FinalData/gtrends_full_timeseries/gtrends_otherdata_varclean.rds"))
+
+data_cor_02 <- read_rds(file.path(dropbox_file_path, "Data/google_trends/FinalData/gtrends_full_timeseries/correlation_datasets/correlations_gtrends_otherdata_varclean_since2020-02-01.rds"))
+
+```
+
+
+# Ungroup variables (which are grouped by geo)
+```{r}
+data_cor_02 <- 
+  data_cor_02 %>% 
+  ungroup(geo) 
+
+data_cor_02 %>% count(keyword_en, sort = TRUE)
+```
+
+# We create categories for key words
+
+```{r}
+data_cor_02 <- 
+  data_cor_02 %>% 
+  mutate(
+    categories = case_when(
+      keyword_en %in% 
+        c("divorce", "debt", "suicide",  "unemployment", "therapy",
+          "anxiety", "stress" ) ~ "consequences",
+      keyword_en %in% 
+        c("cama de hospital", "desinfetantes", "hidroxicloroquina", 
+          "máscara facial", "termômetros", "ventiladores") ~ "resources",
+      keyword_en %in% 
+        c( "fever", "cough", "falta de cheiro", 
+           "fever", "febre alta valor","perda de olfato", "cough",
+           "sintomas do coronavirus") ~ "symptoms",
+      keyword_en %in% 
+        c("distância social","fique em casa", "lavar as mãos") ~ "prevention", 
+      keyword_en%in% c("coronavirus", "covid-19") ~ "virus", 
+      keyword_en %in% c("vaccine") ~ "vaccine"
+      )
+  )
+```
+
+```{r}
+data_cor_02 %>% 
+  ungroup(geo) %>% 
+  count(keyword_en, sort = TRUE)
+
+
+  ggplot() + 
+  geom_point(aes())
+  
+```
+
+#Correlation lag 
+
+
+#which search terms correlate well across categories 
+
+#Underreporting (Highlighting the cases we mentioned + others)
+
+
+
+#Look at other variables that might explain where correlation is high v. not so high
+
+```{r}
+data_cor_02
+```
+
