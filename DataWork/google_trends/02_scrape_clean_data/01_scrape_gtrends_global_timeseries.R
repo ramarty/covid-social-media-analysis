@@ -37,7 +37,7 @@ select_countries_vec <- c("US", # United States
                           "AU", # Australia
                           "IN") 
 
-select_countries_vec <- c("IN")
+select_countries_vec <- c("US")
 
 # Function to Scrape Google Data -----------------------------------------------
 extract_trends <- function(iso_i,
@@ -128,10 +128,8 @@ for(OUT_FOLDER in OUT_FOLDER_LIST){
   } else{
     keywords_sub_df <- keywords_df[keywords_df$category %in% c("symptoms"),]
     
-    keywords_df <- keywords_df[keywords_df$keyword_en %in% c("loss of smell",
-                                                             "I can't smell",
-                                                             "I can't taste",
-                                                             "loss of taste"),]
+    keywords_df <- keywords_df[keywords_df$keyword_en %in% c("loss of smell"),]
+    #keywords_df$keyword_en <- "covid vaccine mark of the beast"
     
   }
   

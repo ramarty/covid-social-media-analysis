@@ -3,6 +3,7 @@
 library(usdata)
 library(urbnmapr)
 library(usmap)
+library(geofacet)
 
 # Prep Cases -------------------------------------------------------------------
 data(statepop)
@@ -42,18 +43,26 @@ cases_df <- cases_df %>%
 google_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
                                "gtrends_full_timeseries",
                                "gtrends_regional.Rds"))
-
-google_df <- google_df %>%
+# does covid vaccine change dna
+# covid vaccine mark of beast
+# can covid vaccine cause infertility
+google_df_dna <- google_df %>%
   filter(geo %in% "US",
-         keyword_en %in% "loss of smell") %>%
+         keyword %in% "covid vaccine cause infertility") %>%
   mutate(month = time_span %>% substring(1,10) %>% ymd()) %>%
   left_join(cases_df, by = c("location", "month")) 
 
-google_df %>%
-  filter(month %in% as.Date("2020-07-01")) %>%
-  ggplot() +
-  geom_point(aes(x = log(cases_new),
-                 y = hits))
+google_df_beast <- google_df %>%
+  filter(geo %in% "US",
+         keyword %in% "covid vaccine cause infertility") %>%
+  mutate(month = time_span %>% substring(1,10) %>% ymd()) %>%
+  left_join(cases_df, by = c("location", "month")) 
+
+google_df_inf <- google_df %>%
+  filter(geo %in% "US",
+         keyword %in% "covid vaccine cause infertility") %>%
+  mutate(month = time_span %>% substring(1,10) %>% ymd()) %>%
+  left_join(cases_df, by = c("location", "month")) 
 
 states <- get_urbn_map("states", sf = T) 
 states <- states %>%
@@ -74,40 +83,25 @@ for(month in c("2020-03-01",
   
   month_date <- as.Date(month)
   
-  google_df_i <- google_df %>%
+  google_df_dna_i <- google_df_dna %>%
     filter(month %in% !!month_date)
   
   
   states$location %in% google_df_i$location
   states_i <- merge(states, google_df_i)
   
-  p_cor <- states_i %>%
-    ggplot(aes(x = log(cases_new_pop),
-               y = log(hits))) +
-    geom_smooth(method = "lm", se = FALSE) +
-    geom_point() +
-    theme_minimal() +
-    labs(x = "Cases\nper capita",
-         y = "Search Interest")
-  
-  p_cases <- states_i %>%
+  p <- states_i %>%
     ggplot() +
-    geom_sf(aes(fill = log(cases_new_pop))) +
+    geom_sf(aes(fill = hits)) +
     scale_fill_viridis(na.value = "gray50") +
     theme_void() +
-    theme(legend.position = "bottom") +
-    labs(fill = "Cases\nper capita") 
-  
-  p_hits <- states_i %>%
-    ggplot() +
-    geom_sf(aes(fill = log(hits))) +
-    scale_fill_viridis(na.value = "gray50") +
-    theme_void() +
-    theme(legend.position = "bottom") +
-    labs(fill = "Search Interest")
-  
-  p <- ggarrange(p_cases, p_hits, p_cor, nrow = 1)
-  ggsave(p, filename = file.path("~/Desktop/us",
+    labs(fill = "Cases\nper capita",
+         title = month) +
+    theme(legend.position = "bottom",
+          plot.title = element_text(face = "bold", hjust = 0.5))
+
+  ggsave(p, filename = file.path("~/Desktop",
+                                 folder_i,
                                  paste0(as.character(month), ".png")),
          height = 4, width = 12)
 }
