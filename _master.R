@@ -39,6 +39,9 @@ brazil_twitter_figures_path <- file.path(dropbox_file_path, "Data", "twitter", "
 
 google_figures_path <- file.path(dropbox_file_path, "Data", "google_trends", "outputs", "figures")
 
-
+if(Sys.info()[["user"]] == "robmarty"){
+  paper_tables <- file.path("~/Dropbox/Apps/Overleaf/COVID-19 and Google Trends Paper/tables")
+  paper_figures <- file.path("~/Dropbox/Apps/Overleaf/COVID-19 and Google Trends Paper/figures")
+}
 
 

@@ -9,9 +9,35 @@
 # PARAMETERS
 SLEEP_TIME      <- 5 # number of seconds to pause after each scrape
 overwrite_files <- F # overwrite data?
-OUT_FOLDER_LIST <- c("timeseries_2020-06-01_2021-01-31",
-                     "timeseries_regions_2021-01-01_2021-01-31")
-select_countries_vec <- c("US", "BR") # only used if ALL_COUNTRIES = F
+OUT_FOLDER_LIST <- c(#"timeseries_2020-06-01_2021-01-31",
+                     "timeseries_regions_2020-01-01_2020-01-31",
+                     "timeseries_regions_2020-02-01_2020-02-29",
+                     "timeseries_regions_2020-03-01_2020-03-31",
+                     "timeseries_regions_2020-04-01_2020-04-30",
+                     "timeseries_regions_2020-05-01_2020-05-31",
+                     "timeseries_regions_2020-06-01_2020-06-30",
+                     "timeseries_regions_2020-07-01_2020-07-31",
+                     "timeseries_regions_2020-08-01_2020-08-31",
+                     "timeseries_regions_2020-09-01_2020-09-30",
+                     "timeseries_regions_2020-10-01_2020-10-31",
+                     "timeseries_regions_2020-11-01_2020-11-30",
+                     "timeseries_regions_2020-12-01_2020-12-31",
+                     "timeseries_regions_2021-01-01_2021-01-31",
+                     "timeseries_regions_2021-02-01_2021-02-28") 
+
+## Subset for regions
+# only used if ALL_COUNTRIES = F
+select_countries_vec <- c("US", # United States
+                          "CA", # Canada
+                          "BR", # Brazil
+                          "ZA", # South Africa
+                          "ID", # Indonesia
+                          "IT", # Italy
+                          "PH", # Phillipines
+                          "AU", # Australia
+                          "IN") 
+
+select_countries_vec <- c("IN")
 
 # Function to Scrape Google Data -----------------------------------------------
 extract_trends <- function(iso_i,
@@ -84,7 +110,7 @@ for(OUT_FOLDER in OUT_FOLDER_LIST){
   
   if(grepl("timeseries_regions_", OUT_FOLDER)){
     ALL_TERMS <- F
-    ALL_COUNTRIES <- T
+    ALL_COUNTRIES <- F
     onlyInterest <- F
   } else{
     ALL_TERMS <- T
@@ -100,7 +126,13 @@ for(OUT_FOLDER in OUT_FOLDER_LIST){
   if(ALL_TERMS){
     keywords_sub_df <- keywords_df
   } else{
-    keywords_sub_df <- keywords_df[keywords_df$category %in% "vaccine",]
+    keywords_sub_df <- keywords_df[keywords_df$category %in% c("symptoms"),]
+    
+    keywords_df <- keywords_df[keywords_df$keyword_en %in% c("loss of smell",
+                                                             "I can't smell",
+                                                             "I can't taste",
+                                                             "loss of taste"),]
+    
   }
   
   ## Check if root folter eixts; if not, create
