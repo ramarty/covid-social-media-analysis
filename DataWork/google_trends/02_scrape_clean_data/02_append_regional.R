@@ -25,6 +25,9 @@ region_df <- map_df(region_folders, function(region_folder_i){
 keywords <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", 
                               "keywords", "FinalData","covid_keywords_alllanguages_clean.Rds"))
 
+keywords$keyword_en <- keywords$keyword_en %>% str_replace_all("'", "") %>% tolower()
+region_df$keyword   <- region_df$keyword %>% str_replace_all("'", "") %>% tolower()
+
 #### Dataset with english and translated word
 keywords <- keywords %>%
   dplyr::select(names(keywords) %>% str_subset("keyword")) %>%
@@ -44,6 +47,5 @@ saveRDS(region_df,
         file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
                   "gtrends_full_timeseries",
                   "gtrends_regional.Rds"))
-
 
 
