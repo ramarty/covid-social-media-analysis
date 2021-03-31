@@ -81,6 +81,10 @@ for(month in c("2020-03-01",
   states$location %in% google_df_i$location
   states_i <- merge(states, google_df_i)
   
+  
+  cor.test(log(states_i$cases_new_pop),
+           log(states_i$hits))
+  
   p_cor <- states_i %>%
     ggplot(aes(x = log(cases_new_pop),
                y = log(hits))) +

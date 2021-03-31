@@ -19,26 +19,40 @@ google_df <- google_df %>%
 
 # Figures ----------------------------------------------------------------------
 google_df %>%
+  filter(keyword_en %in% "covid vaccine cause infertility") %>%
+  ggplot() +
+  geom_line(aes(x = date,
+                y = hits_ma7),
+            color = "forestgreen") +
+  labs(x = NULL,
+       y = "Search Interest") +
+  facet_wrap(~geo_name,
+             scales = "free_y") + 
+  theme_minimal() +
+  theme(strip.text = element_text(face = "bold",
+                                  size = 8)) +
+  ggsave(filename = file.path("~/Desktop","vx",
+                              "infert.png"),
+         height = 1.75, width = 4)
+
+
+google_df %>%
   filter(keyword_en %in% "does covid vaccine change dna") %>%
   ggplot() +
   geom_line(aes(x = date,
-                y = hits_ma7)) +
+                y = hits_ma7),
+            color = "forestgreen") +
   labs(x = NULL,
        y = "Search Interest") +
   facet_wrap(~geo_name,
              scales = "free_y") + 
-  theme_minimal()
+  theme_minimal() +
+  theme(strip.text = element_text(face = "bold",
+                                  size = 8)) +
+  ggsave(filename = file.path("~/Desktop","vx",
+                              "changedna.png"),
+         height = 3.5, width = 4)
 
-google_df %>%
-  filter(keyword_en %in% "covid vaccine safety") %>%
-  ggplot() +
-  geom_line(aes(x = date,
-                y = hits_ma7)) +
-  labs(x = NULL,
-       y = "Search Interest") +
-  facet_wrap(~geo_name,
-             scales = "free_y") + 
-  theme_minimal()
 
 google_df %>%
   filter(keyword_en %in% "covid vaccine side effects") %>%

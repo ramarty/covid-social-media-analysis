@@ -5,40 +5,6 @@ library(urbnmapr)
 library(usmap)
 library(geofacet)
 
-# Prep Cases -------------------------------------------------------------------
-data(statepop)
-statepop <- statepop %>%
-  dplyr::select(full, pop_2015) %>%
-  dplyr::rename(location = full)
-
-cases_df <- read.csv(file.path(dropbox_file_path, "Data", "usa_case_data", "RawData",
-                               "covid_confirmed_usafacts.csv"))
-
-cases_df <- cases_df %>%
-  dplyr::select(-c(countyFIPS)) %>%
-  pivot_longer(cols = -c(County.Name,
-                         State,
-                         StateFIPS)) %>%
-  mutate(name = name %>% str_replace_all("X", "") %>% ymd(),
-         month = name %>% round_date(unit = "month")) %>%
-  group_by(State, month) %>%
-  dplyr::summarise(value = max(value)) %>%
-  mutate(location = State %>% abbr2state) %>%
-  ungroup() %>%
-  dplyr::select(location, value, month) %>%
-  dplyr::rename(cases = value) %>%
-  arrange(month) %>%
-  ungroup() 
-
-cases_df$cases[cases_df$location %in% "West Virginia" & cases_df$month %in% as.Date("2021-01-01")] <- 10069
-
-cases_df <- cases_df %>%
-  dplyr::group_by(location) %>%
-  dplyr::mutate(cases_new = c(NA, diff(cases))) %>%
-  dplyr::mutate(cases_new = cases_new %>% replace_na(0)) %>%
-  left_join(statepop, by = "location") %>%
-  mutate(cases_new_pop = cases_new / pop_2015)
-
 # Prep Google -------------------------------------------------------------------
 google_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
                                "gtrends_full_timeseries",
@@ -48,21 +14,19 @@ google_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "Fina
 # can covid vaccine cause infertility
 google_df_dna <- google_df %>%
   filter(geo %in% "US",
-         keyword %in% "covid vaccine cause infertility") %>%
-  mutate(month = time_span %>% substring(1,10) %>% ymd()) %>%
-  left_join(cases_df, by = c("location", "month")) 
+         keyword %in% "does covid vaccine change dna") %>%
+  mutate(month = time_span %>% substring(1,10) %>% ymd()) 
 
 google_df_beast <- google_df %>%
   filter(geo %in% "US",
-         keyword %in% "covid vaccine mark of beast") %>%
-  mutate(month = time_span %>% substring(1,10) %>% ymd()) %>%
-  left_join(cases_df, by = c("location", "month")) 
+         keyword %in% "covid vaccine mark of the beast") %>%
+  mutate(month = time_span %>% substring(1,10) %>% ymd()) 
 
+# google_df$keyword_en %>% unique() %>% str_subset("inferti")
 google_df_inf <- google_df %>%
   filter(geo %in% "US",
-         keyword %in% "can covid vaccine cause infertility") %>%
-  mutate(month = time_span %>% substring(1,10) %>% ymd()) %>%
-  left_join(cases_df, by = c("location", "month")) 
+         keyword %in% "covid vaccine cause infertility") %>%
+  mutate(month = time_span %>% substring(1,10) %>% ymd()) 
 
 states <- get_urbn_map("states", sf = T) 
 states <- states %>%
@@ -76,6 +40,13 @@ for(month in c("2020-09-01",
                "2021-02-01")){
   
   month_date <- as.Date(month)
+  
+  month_name <- case_when(month %in% "2020-09-01" ~ "September, 2020",
+                          month %in% "2020-10-01" ~ "October, 2020",
+                          month %in% "2020-11-01" ~ "November, 2020",
+                          month %in% "2020-12-01" ~ "December, 2020",
+                          month %in% "2021-01-01" ~ "January, 2021",
+                          month %in% "2021-02-01" ~ "February, 2021")
   
   google_df_dna_i <- google_df_dna %>%
     filter(month %in% !!month_date) %>%
@@ -101,7 +72,8 @@ for(month in c("2020-09-01",
     geom_sf(aes(fill = hits_dna)) +
     scale_fill_viridis(na.value = "gray50") +
     theme_void() +
-    labs(fill = "Search Interest") +
+    labs(fill = "Search Interest",
+         title = "Does COVID Vaccine Change DNA") +
     theme(legend.position = "bottom",
           plot.title = element_text(face = "bold", hjust = 0.5))
   
@@ -110,7 +82,8 @@ for(month in c("2020-09-01",
     geom_sf(aes(fill = hits_beast)) +
     scale_fill_viridis(na.value = "gray50") +
     theme_void() +
-    labs(fill = "Search Interest") +
+    labs(fill = "Search Interest",
+         title = "COVID Vaccine Mark of the Beast") +
     theme(legend.position = "bottom",
           plot.title = element_text(face = "bold", hjust = 0.5))
   
@@ -119,15 +92,17 @@ for(month in c("2020-09-01",
     geom_sf(aes(fill = hits_inf)) +
     scale_fill_viridis(na.value = "gray50") +
     theme_void() +
-    labs(fill = "Search Interest") +
+    labs(fill = "Search Interest",
+         title = "COVID Vaccine Cause Infertility") +
     theme(legend.position = "bottom",
           plot.title = element_text(face = "bold", hjust = 0.5))
   
   p <- ggarrange(p_dna, p_beast, p_inf,
                  nrow = 1,
-                 common.legend = T)
+                 common.legend = T,
+                 legend = "bottom")
   p <- annotate_figure(p,
-      top = text_grob(month, color = "black", face = "bold", size = 14)
+      top = text_grob(month_name, color = "black", face = "bold", size = 14)
     )
   
   ggsave(p, filename = file.path("~/Desktop",
