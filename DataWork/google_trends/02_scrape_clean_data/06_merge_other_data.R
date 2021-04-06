@@ -26,19 +26,19 @@ for(begin_day_i in begin_day){
   
   gtrends_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
                                   "gtrends_full_timeseries", "correlation_datasets",
-                                  paste0("correlations_gtrends_since",begin_day_i,".Rds")))
-  
+                                  paste0("gtrends_since",begin_day_i,".Rds")))
+
   cor_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
                               "gtrends_full_timeseries", "correlation_datasets",
                               paste0("correlations_gtrends_since",begin_day_i,".Rds")))
   
-  gtrends_df <- merge(gtrends_df, otherdata_df, by = "geo", all.x=T, all.y=F)
+  #gtrends_df <- merge(gtrends_df, otherdata_df, by = "geo", all.x=T, all.y=F)
   cor_df     <- merge(cor_df,     otherdata_df, by = "geo", all.x=T, all.y=F)
   
   saveRDS(gtrends_df,
           file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
                     "gtrends_full_timeseries", "correlation_datasets",
-                    paste0("correlations_gtrends_otherdata_varclean_since",begin_day_i,".Rds")))
+                    paste0("gtrends_otherdata_varclean_since",begin_day_i,".Rds")))
   
   saveRDS(cor_df,
           file.path(dropbox_file_path, "Data", "google_trends", "FinalData",

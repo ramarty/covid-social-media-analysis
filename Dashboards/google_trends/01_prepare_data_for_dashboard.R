@@ -86,6 +86,8 @@ for(begin_day_i in begin_day){
                                 "correlation_datasets",
                                 paste0("gtrends_otherdata_varclean_since",begin_day_i,".Rds")))
   
+  #gtrends_df <- gtrends_df[gtrends_df$geo %in% c("US", "BR", "IN"),]
+  
   gtrends_df <- gtrends_df[tolower(gtrends_df$keyword_en) %in% keywords,]
   gtrends_df <- gtrends_df[!is.na(gtrends_df$keyword_en),]
   
@@ -205,8 +207,8 @@ for(begin_day_i in begin_day){
     ## Merge other data back in
     gtrends_sum_df <- gtrends_df %>%
       #filter(keyword_en %in% "Loss of Smell") %>%
-      group_by(group, name, keyword_en, keyword, continent, geo) %>%
-      summarise(cases_total = max(cases_total, na.rm=T),
+      dplyr::group_by(group, name, keyword_en, keyword, continent, geo) %>%
+      dplyr::summarise(cases_total = max(cases_total, na.rm=T),
                 death_total = max(death_total, na.rm=T),
                 cor_casesMA7_hitsMA7_nolag  = cor_casesMA7_hitsMA7_nolag[1],
                 cor_casesMA7_hitsMA7_lag    = cor_casesMA7_hitsMA7_lag[1],
