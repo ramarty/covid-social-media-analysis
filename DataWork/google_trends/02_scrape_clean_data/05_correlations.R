@@ -165,12 +165,12 @@ for(begin_day_i in begin_day){
   saveRDS(gtrends_df, file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
                                 "gtrends_full_timeseries",
                                 "correlation_datasets",
-                                paste0("gtrends_otherdata_varclean_since",begin_day_i,".Rds")))
+                                paste0("gtrends_since",begin_day_i,".Rds")))
   
   saveRDS(cor_max_df, file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
                                 "gtrends_full_timeseries",
                                 "correlation_datasets",
-                                paste0("correlations_gtrends_otherdata_varclean_since",begin_day_i,".Rds")))
+                                paste0("correlations_gtrends_since",begin_day_i,".Rds")))
 }
 
 

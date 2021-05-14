@@ -6,12 +6,42 @@
 # enables rerunning the code when new search terms have been added and having the code
 # only scrape those search terms).
 
+# Sys.setlocale("LC_CTYPE", "en_US.UTF-8")
+
 # PARAMETERS
-SLEEP_TIME      <- 5 # number of seconds to pause after each scrape
+SLEEP_TIME      <- 0.1 # number of seconds to pause after each scrape
 overwrite_files <- F # overwrite data?
-OUT_FOLDER_LIST <- c("timeseries_2020-06-01_2021-01-31",
-                     "timeseries_regions_2021-01-01_2021-01-31")
-select_countries_vec <- c("US", "BR") # only used if ALL_COUNTRIES = F
+
+OUT_FOLDER_LIST <- c("timeseries_2020-01-01_2020-09-26",
+                     "timeseries_2020-07-05_2021-03-31") %>% rev()
+                     # "timeseries_regions_2020-01-01_2020-01-31",
+                     # "timeseries_regions_2020-02-01_2020-02-29",
+                     # "timeseries_regions_2020-03-01_2020-03-31",
+                     # "timeseries_regions_2020-04-01_2020-04-30",
+                     # "timeseries_regions_2020-05-01_2020-05-31",
+                     # "timeseries_regions_2020-06-01_2020-06-30",
+                     # "timeseries_regions_2020-07-01_2020-07-31",
+                     # "timeseries_regions_2020-08-01_2020-08-31",
+                     # "timeseries_regions_2020-09-01_2020-09-30",
+                     # "timeseries_regions_2020-10-01_2020-10-31",
+                     # "timeseries_regions_2020-11-01_2020-11-30",
+                     # "timeseries_regions_2020-12-01_2020-12-31",
+                     # "timeseries_regions_2021-01-01_2021-01-31",
+                     # "timeseries_regions_2021-02-01_2021-02-28") 
+
+## Subset for regions
+# only used if ALL_COUNTRIES = F
+select_countries_vec <- c("US", # United States
+                          "CA", # Canada
+                          "BR", # Brazil
+                          "ZA", # South Africa
+                          "ID", # Indonesia
+                          "IT", # Italy
+                          "PH", # Phillipines
+                          "AU", # Australia
+                          "IN") 
+
+select_countries_vec <- c("US")
 
 # Function to Scrape Google Data -----------------------------------------------
 extract_trends <- function(iso_i,
@@ -30,7 +60,7 @@ extract_trends <- function(iso_i,
                  time = start_end_date,
                  onlyInterest = onlyInterest,
                  low_search_volume=T)
-  
+
   if(onlyInterest %in% T){
     
     # 2. Grab data, and convert variables to character to avoid type conflict late
@@ -64,6 +94,12 @@ extract_trends <- function(iso_i,
 keywords_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", 
                                  "keywords", "FinalData", "covid_keywords_alllanguages_clean.Rds"))
 
+# keywords_df <- read.csv(file.path(dropbox_file_path, "Data", "google_trends", 
+#                                   "keywords", "FinalData", "covid_keywords_alllanguages.csv"),
+#                         encoding="UTF-8", stringsAsFactors=FALSE)
+# keywords_df$keyword_zh 
+#keywords_df$keyword_zh 
+
 keywords_df <- keywords_df %>%
   arrange(priority_to_scrape) %>%
   filter(scrape %in% "yes")
@@ -84,7 +120,7 @@ for(OUT_FOLDER in OUT_FOLDER_LIST){
   
   if(grepl("timeseries_regions_", OUT_FOLDER)){
     ALL_TERMS <- F
-    ALL_COUNTRIES <- T
+    ALL_COUNTRIES <- F
     onlyInterest <- F
   } else{
     ALL_TERMS <- T
@@ -100,7 +136,9 @@ for(OUT_FOLDER in OUT_FOLDER_LIST){
   if(ALL_TERMS){
     keywords_sub_df <- keywords_df
   } else{
-    keywords_sub_df <- keywords_df[keywords_df$category %in% "vaccine",]
+    keywords_sub_df <- keywords_df[keywords_df$category %in% c("symptoms"),]
+    
+    keywords_df <- keywords_df[keywords_df$keyword_en %in% c("loss of smell"),]
   }
   
   ## Check if root folter eixts; if not, create

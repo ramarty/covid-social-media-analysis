@@ -15,7 +15,7 @@ pacman::p_load(gtrendsR, countrycode, parallel, pbmcapply, ggplot2, jsonlite,
                stringdist, stringr, rgdal, rgeos, geosphere, htmlwidgets,
                tidyverse, sf, raster, leaflet, leaflet.extras, plotly,
                geosphere, data.table, formattable, tidyr, viridis, data.table,
-               WDI, scales, rnaturalearth, sp)
+               WDI, scales, rnaturalearth, sp, utf8)
 
 # remotes::install_github("wilkelab/ggtext")
 # library(ggtext)
@@ -39,6 +39,9 @@ brazil_twitter_figures_path <- file.path(dropbox_file_path, "Data", "twitter", "
 
 google_figures_path <- file.path(dropbox_file_path, "Data", "google_trends", "outputs", "figures")
 
-
+if(Sys.info()[["user"]] == "robmarty"){
+  paper_tables <- file.path("~/Dropbox/Apps/Overleaf/COVID-19 and Google Trends Paper/tables")
+  paper_figures <- file.path("~/Dropbox/Apps/Overleaf/COVID-19 and Google Trends Paper/figures")
+}
 
 

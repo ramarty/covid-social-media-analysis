@@ -1,11 +1,22 @@
 # Append and Clean Google Trends Data
 
+
+
+
 # Load Data --------------------------------------------------------------------
 gtrends_1_df <- file.path(dropbox_file_path, "Data", "google_trends", "RawData",
-                          "timeseries_2020-03-05_2020-11-29") %>%
+                          "_archive",
+                          "global_with_ref_state_by_keyword_20201031") %>%
   list.files(pattern = "*.Rds", full.names = T) %>%
   map_df(readRDS) %>%
-  distinct(date, keyword, geo, time, language, .keep_all = T)
+  distinct(date, keyword, geo, time, language, .keep_all = T) %>%
+  filter(!is.na(date))
+
+# gtrends_1_df <- file.path(dropbox_file_path, "Data", "google_trends", "RawData",
+#                           "timeseries_2020-03-05_2020-11-29") %>%
+#   list.files(pattern = "*.Rds", full.names = T) %>%
+#   map_df(readRDS) %>%
+#   distinct(date, keyword, geo, time, language, .keep_all = T)
 
 gtrends_2_df <- file.path(dropbox_file_path, "Data", "google_trends", "RawData",
                           "timeseries_2020-06-01_2021-01-31") %>%

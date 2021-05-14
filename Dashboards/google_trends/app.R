@@ -1425,7 +1425,7 @@ server = (function(input, output, session) {
                color = "black",
                fill = "palegreen3") +
       labs(title = "Correlation",
-           subtitle = paste0("Average: ", round(mean(cor_df$cor), 2)),
+           subtitle = paste0("Average: ", round(mean(cor_df$cor, na.rm=T), 2)),
            x = NULL,
            y = "Number\nOf\nCountries") +
       scale_x_discrete(labels = c("-1", "",
@@ -1484,7 +1484,7 @@ server = (function(input, output, session) {
                      fill = "palegreen3",
                      bins = 15) + 
       labs(title = "Lead/Lag with Highest Correlation",
-           subtitle = paste0("Average ", round(mean(cor_df$lag),2), " days"), 
+           subtitle = paste0("Average ", round(mean(cor_df$lag, na.rm=T),2), " days"), 
            x = NULL,
            y = "Number\nOf\nCountries") +
       theme_minimal() +
