@@ -14,7 +14,7 @@ lm_post_confint_tidy <- function(lm){
   return(lm_confint)
 }
 
-# Load Data --------------------------------------------------------------------
+# 1. Load / Prep Data ----------------------------------------------------------
 gtrends_cases_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
                                       "gtrends_full_timeseries", "gtrends_otherdata_varclean.Rds"))
 
@@ -24,8 +24,32 @@ gtrends_cases_df <- gtrends_cases_df %>%
   mutate(days_since_lockdown_min_fact = factor(days_since_lockdown_min),
          days_since_lockdown_min_fact = days_since_lockdown_min_fact %>% relevel(ref = "-1")) 
 
+# 2.1: Before/After Locdown Average --------------------------------------------
+lockdown_ba_df <- gtrends_cases_df %>%
+  dplyr::filter(abs(days_since_lockdown_min) <= 31) %>%
+  mutate(post_lockdown = (days_since_lockdown_min >= 0)) %>%
+  group_by(geo, keyword_en, post_lockdown) %>%
+  summarise(hits_ma7 = mean(hits_ma7)) %>% 
+  pivot_wider(names_from = post_lockdown,
+              values_from = hits_ma7) %>%
+  dplyr::rename(pre_lockdown = "FALSE",
+                post_lockdown = "TRUE") %>%
+  dplyr::mutate(change = post_lockdown - pre_lockdown,
+                per_change = ((post_lockdown - pre_lockdown) / pre_lockdown) * 100,
+                per_change = case_when(pre_lockdown == post_lockdown ~ 0,
+                                       TRUE ~ per_change)) %>%
+  ungroup()
+
+lockdown_ba_keyavg <- lockdown_ba_df %>%
+  group_by(keyword_en) %>%
+  summarise(change     = mean(change, na.rm=T),
+            per_change = mean(per_change, na.rm=T))
+
+
+
+
 # Event Study: All Countries ---------------------------------------------------
-make_es_figure <- function(keyword){
+make_es_figure <- function(keyword, df){
   
   df <- gtrends_cases_df %>%
     filter(keyword_en %in% !!keyword,
@@ -66,7 +90,7 @@ make_es_figure <- function(keyword){
 }
 
 for(keyword_i in unique(gtrends_cases_df$keyword_en)){
-  p <- make_es_figure(keyword_i)
+  p <- make_es_figure(keyword_i, gtrends_cases_df)
   ggsave(p, filename = file.path("~/Desktop/es", paste0(keyword_i, ".png")),
          height = 3.5, width = 5.5)
 }
@@ -135,7 +159,7 @@ p <- gtrends_cases_df %>%
                          "Thailand",
                          "United Kingdom",
                          "Uruguay"
-                         )) %>%
+  )) %>%
   mutate(geo_name = case_when(geo_name %in% "Venezuela (Bolivarian Republic of)" ~ "Venezuela",
                               geo_name %in% "Bahamas (the)" ~ "Bahamas",
                               geo_name %in% "Russian Federation (the)" ~ "Russia",
