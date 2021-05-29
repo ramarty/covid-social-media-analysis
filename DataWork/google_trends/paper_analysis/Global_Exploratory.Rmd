@@ -1,0 +1,148 @@
+---
+title: "Global_Exploratory"
+output: html_document
+---
+
+
+```{r global_options, include=FALSE}
+knitr::opts_chunk$set(fig.width=12, fig.height=8, warning=FALSE, message=FALSE)
+```
+
+```{r}
+#user info
+if(Sys.info()[["user"]] == "wb537287") dropbox_file_path <- "/Users/wb537287/Dropbox/COVID Social Media Analysis/"
+if(Sys.info()[["user"]] == "robmarty") dropbox_file_path <- "~/Dropbox/World Bank/Side Work/COVID Social Media Analysis"
+
+
+#packages
+library(tidyverse)
+
+data <- read_rds(file.path(dropbox_file_path, "Data/google_trends/FinalData/gtrends_full_timeseries/gtrends_otherdata_varclean.rds"))
+
+data_cor_02 <- read_rds(file.path(dropbox_file_path, "Data/google_trends/FinalData/gtrends_full_timeseries/correlation_datasets/correlations_gtrends_otherdata_varclean_since2020-02-01.rds"))
+
+data_wdi'
+
+```
+
+
+# Ungroup variables (which are grouped by geo)
+```{r}
+data_cor_02 <- 
+  data_cor_02 %>% 
+  ungroup(geo) 
+
+data_cor_02 %>% count(keyword_en, sort = TRUE)
+```
+
+# We create categories for key words
+
+```{r}
+data_cor_02 <- 
+  data_cor_02 %>% 
+  mutate(
+    categories = case_when(
+      keyword_en %in% 
+        c("divorce", "debt",  "unemployment", "telework",
+          "social isolation", "unemployment insurance", "unemployment benefits", 
+          "unemployment office", "file for unemployment", "loan",
+          "online education") ~ "potential_consequences",
+      keyword_en %in% 
+        c("therapy","anxiety", "stress", "panic", "sadness", "fatigue", "insomnia", 
+          "suicide", "depression", "loneliness", "worry", "boredom") ~ "mental_health",
+      keyword_en %in% 
+        c("chloroquine", "doctor", "ventilators", "face mask", "coronavirus test", 
+          "thermometers", "doctors", "hospital", "hydroxychloroquine") ~ "treatment",
+      keyword_en %in% 
+        c( "fever", "cough", "pneumonia", "coronavirus symptoms", "tired", "cough",
+           "sintomas do coronavirus", "shortness of breath", "covid symptoms", 
+           "sore throat", "anosmia", "corona symptoms", "loss of smell",
+           "loss of taste", "what are the symptoms of coronavirus", "ageusia", 
+           "i have coronavirus", "coronavirus help", "i have a fever", "i have a cough",
+           "fever treatment", "my eyes hurt", "how to treat coronavirus", "i can't smell", 
+           "i can't taste", "difficulty breathing", "breathing") ~ "symptoms",
+      keyword_en %in% 
+        c("wash hands","stay at home", "social distance", "i stay at home",
+          "disinfectants") ~ "prevention", 
+      keyword_en%in% c("coronavirus", "covid-19") ~ "coronavirus_general", 
+      keyword_en %in% 
+        c("vaccine", "covid vaccine", "covid vaccine side effects",
+          "covid vaccine dangerous", "covid vaccine safety", "safety of covid vaccine", 
+          "covid vaccine change dna", "does covid vaccine change dna", 
+          "long term effects of covid vaccine", "can covid vaccine cause infertility", 
+          "is the covid vaccine the mark of the beast", "covid vaccine cause infertility", 
+          "does covid vaccine cause infertility", "is covid vaccine the mark of the beast", 
+          "negative side effects of covid vaccine") ~ "vaccine"
+      
+      )
+  )
+```
+
+
+#Overall Correlation & Correlation Lag 
+
+For this section, we want to keep words that appear at least 20 times, to prevent correlations based on very few observations; 
+these excluded words refer mostly to vaccine-related searches, which are not relevant for the prediction efforts. 
+```{r}
+common_keywords <- 
+  data_cor_02 %>% 
+  count(keyword_en, sort = TRUE) %>% 
+  filter(n > 20, !is.na(keyword_en)) %>% 
+  pull(keyword_en)
+
+data_cor_02 <- 
+  data_cor_02 %>% 
+  filter(keyword_en %in% common_keywords)
+```
+
+
+## Overall correlation of terms & associated lag -- Cases
+```{r}
+data_cor_02 %>% 
+  filter(type == "Cases") %>% 
+  group_by(keyword_en) %>% 
+  summarize(
+    mean_cor = mean(cor, na.rm = TRUE),
+    mean_lag = mean(lag, na.rm = TRUE)
+  ) %>% 
+  arrange(desc(mean_cor))
+```
+
+## Overall correlation of terms & associated lag -- Deaths
+
+```{r}
+data_cor_02 %>% 
+  filter(type == "Deaths") %>% 
+  group_by(keyword_en) %>% 
+  summarize(
+    mean_cor = mean(cor, na.rm = TRUE),
+    mean_lag = mean(lag, na.rm = TRUE)
+  ) %>% 
+  arrange(desc(mean_cor))
+```
+
+## Overall correlation & lag by category
+
+```{r}
+data_cor_02 %>% 
+  filter(type == "Deaths") %>% 
+  group_by(categories) %>% 
+  summarize(
+    mean_cor = mean(cor, na.rm = TRUE),
+    mean_lag = mean(lag, na.rm = TRUE)
+  ) %>% 
+  arrange(desc(mean_cor))
+```
+
+
+#Underreporting (Highlighting the cases we mentioned + others)
+
+
+
+#Look at other variables that might explain where correlation is high v. not so high
+
+```{r}
+data_cor_02 %>% count(geo, 
+data %>% count(geo, income, 
+```
+
