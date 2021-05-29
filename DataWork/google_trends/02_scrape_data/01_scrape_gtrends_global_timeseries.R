@@ -14,8 +14,8 @@ overwrite_files <- F # overwrite data?
 
 # OUT_FOLDER_LIST <- c("timeseries_2020-01-01_2020-09-26",
 #                      "timeseries_2020-07-05_2021-03-31") %>% rev()
-OUT_FOLDER_LIST <- c("timeseries_regions_2020-12-01_2021-05-25",
-                     "timeseries_regions_2021-03-01_2021-05-25") 
+OUT_FOLDER_LIST <- c("timeseries_regions_2020-12-01_2021-05-31",
+                     "timeseries_regions_2021-03-01_2021-05-31") 
                      # "timeseries_regions_2020-01-01_2020-01-31",
                      # "timeseries_regions_2020-02-01_2020-02-29",
                      # "timeseries_regions_2020-03-01_2020-03-31",
