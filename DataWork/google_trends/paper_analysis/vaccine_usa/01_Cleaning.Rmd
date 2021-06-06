@@ -1,0 +1,65 @@
+---
+title: "01_Cleaning"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+
+#user file
+if(Sys.info()[["user"]] == "wb537287") user <- "/Users/wb537287/"
+
+#folder path
+data_folder <- paste0(user, "Dropbox/COVID Social Media Analysis/Data/usa_vaccine/RawData/")
+gtrends_folder <- paste0(user, "Dropbox/COVID Social Media Analysis/Data/google_trends/FinalData/gtrends_regional/")
+
+#file_path
+file_doses_adm <- paste0(data_folder, "us-daily-covid-vaccine-doses-administered.csv")
+file_doses_dis <- paste0(data_folder, "us-total-covid-vaccine-doses-distributed.csv")
+file_share_used <- paste0(data_folder, "us-share-covid-19-vaccine-doses-used.csv")
+file_gtrends <- paste0(gtrends_folder, "gtrends_regional.Rds")
+
+
+data_doses_adm <- 
+  file_doses_adm %>% 
+  read_csv()
+
+data_doses_dis <- 
+  file_doses_dis %>% 
+  read_csv()
+
+data_share_used <- 
+  file_share_used %>% 
+  read_csv()
+
+data_gtrends <- 
+  file_gtrends %>% 
+  read_rds()
+```
+
+# Merging the 3 vaccine-related datasets
+
+```{r}
+data_vaccine <- 
+  data_doses_adm %>% 
+  left_join(data_doses_dis, by = c("Entity", "Day", "Code")) %>% 
+  left_join(data_share_used, by = c("Entity", "Day", "Code"))
+```
+
+#Merging vaccine and search data
+
+vaccine data is daily; search data is in 2 periods: 7 months (Dec,20-May 21) and 3 months (March-May 21)
+
+To merge, we can: 
+a) Create a variable of average/median doses for those 2 periods, then calculate correlations
+```{r}
+
+data_vaccine %>% 
+  left_join(data_gtrends, by = c("Entity" = "location"))
+
+?left_join
+data_gtrends
+```
+
