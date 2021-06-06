@@ -1,28 +1,19 @@
 # Append and Clean Google Trends Data
 
-
-
-
 # Load Data --------------------------------------------------------------------
 gtrends_1_df <- file.path(dropbox_file_path, "Data", "google_trends", "RawData",
-                          "_archive",
-                          "global_with_ref_state_by_keyword_20201031") %>%
+                          "timeseries_2020-01-01_2020-09-26") %>%
   list.files(pattern = "*.Rds", full.names = T) %>%
   map_df(readRDS) %>%
   distinct(date, keyword, geo, time, language, .keep_all = T) %>%
   filter(!is.na(date))
 
-# gtrends_1_df <- file.path(dropbox_file_path, "Data", "google_trends", "RawData",
-#                           "timeseries_2020-03-05_2020-11-29") %>%
-#   list.files(pattern = "*.Rds", full.names = T) %>%
-#   map_df(readRDS) %>%
-#   distinct(date, keyword, geo, time, language, .keep_all = T)
-
 gtrends_2_df <- file.path(dropbox_file_path, "Data", "google_trends", "RawData",
-                          "timeseries_2020-06-01_2021-01-31") %>%
+                          "timeseries_2020-07-05_2021-03-31") %>%
   list.files(pattern = "*.Rds", full.names = T) %>%
   map_df(readRDS) %>%
-  distinct(date, keyword, geo, time, language, .keep_all = T)
+  distinct(date, keyword, geo, time, language, .keep_all = T) %>%
+  filter(!is.na(date))
 
 # Hits to Numeric --------------------------------------------------------------
 gtrends_1_df$hits[gtrends_1_df$hits %in% "<1"] <- "1"
@@ -40,20 +31,6 @@ gtrends_1_df <- gtrends_1_df %>%
 gtrends_2_df <- gtrends_2_df %>% 
   dplyr::rename(hits_2 = hits) %>%
   dplyr::select(hits_2, date, keyword, geo, language)
-
-## Keep common keywords, languages, geo
-if(F){
-  gtrends_1_df$klg <- paste(gtrends_1_df$keyword, gtrends_1_df$language, gtrends_1_df$geo)
-  gtrends_2_df$klg <- paste(gtrends_2_df$keyword, gtrends_2_df$language, gtrends_2_df$geo) 
-  klg <- intersect(gtrends_1_df$klg %>% unique(), 
-                   gtrends_2_df$klg %>% unique())
-  
-  gtrends_1_df <- gtrends_1_df[gtrends_1_df$klg %in% klg,]
-  gtrends_2_df <- gtrends_2_df[gtrends_2_df$klg %in% klg,]
-  
-  gtrends_1_df$klg <- NULL
-  gtrends_2_df$klg <- NULL
-}
 
 ## Merge
 gtrends_df <- merge(gtrends_1_df, gtrends_2_df, by = c("date", "keyword", "geo", "language"), all = T)
@@ -137,7 +114,6 @@ keywords <- keywords %>%
 #### Merge
 gtrends_df <- merge(gtrends_df, keywords, by = "keyword", all.x=T, all.y=F)
 # TODO: Some keywords in different languages are mapped to the same english keyword
-
 
 # Cleanup ----------------------------------------------------------------------
 gtrends_df <- gtrends_df %>%

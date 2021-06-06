@@ -6,14 +6,16 @@
 # enables rerunning the code when new search terms have been added and having the code
 # only scrape those search terms).
 
-# Sys.setlocale("LC_CTYPE", "en_US.UTF-8")
+#Sys.setlocale("LC_CTYPE", "en_US.UTF-8")
 
 # PARAMETERS
-SLEEP_TIME      <- 0.1 # number of seconds to pause after each scrape
+SLEEP_TIME      <- 3 # number of seconds to pause after each scrape
 overwrite_files <- F # overwrite data?
 
-OUT_FOLDER_LIST <- c("timeseries_2020-01-01_2020-09-26",
-                     "timeseries_2020-07-05_2021-03-31") %>% rev()
+# OUT_FOLDER_LIST <- c("timeseries_2020-01-01_2020-09-26",
+#                      "timeseries_2020-07-05_2021-03-31") %>% rev()
+OUT_FOLDER_LIST <- c("timeseries_regions_2020-12-01_2021-05-31",
+                     "timeseries_regions_2021-03-01_2021-05-31") 
                      # "timeseries_regions_2020-01-01_2020-01-31",
                      # "timeseries_regions_2020-02-01_2020-02-29",
                      # "timeseries_regions_2020-03-01_2020-03-31",
@@ -115,6 +117,8 @@ language_codes_all <- language_codes_all[!is.na(language_codes_all)]
 language_codes_all <- language_codes_all[language_codes_all != ""]
 language_codes_all <- language_codes_all %>% sort()
 
+#language_codes_all <- language_codes_all[language_codes_all != "my"]
+
 # Prep Parameters Based on Folder Name -----------------------------------------
 for(OUT_FOLDER in OUT_FOLDER_LIST){
   
@@ -136,9 +140,7 @@ for(OUT_FOLDER in OUT_FOLDER_LIST){
   if(ALL_TERMS){
     keywords_sub_df <- keywords_df
   } else{
-    keywords_sub_df <- keywords_df[keywords_df$category %in% c("symptoms"),]
-    
-    keywords_df <- keywords_df[keywords_df$keyword_en %in% c("loss of smell"),]
+    keywords_sub_df <- keywords_df[keywords_df$category %in% c("vaccine"),]
   }
   
   ## Check if root folter eixts; if not, create
