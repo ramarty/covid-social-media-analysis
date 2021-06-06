@@ -55,11 +55,28 @@ vaccine data is daily; search data is in 2 periods: 7 months (Dec,20-May 21) and
 To merge, we can: 
 a) Create a variable of average/median doses for those 2 periods, then calculate correlations
 ```{r}
+data_vac_mean <- 
+  data_vaccine %>% 
+  group_by(Entity) %>% 
+  summarize_at(vars(daily_vaccinations, total_distributed, share_doses_used), ~mean(., na.rm = TRUE))
 
+#alternative
 data_vaccine %>% 
-  left_join(data_gtrends, by = c("Entity" = "location"))
+  group_by(Entity) %>% 
+  summarise(across(daily_vaccinations:share_doses_used, mean))
+```
 
-?left_join
-data_gtrends
+Merge vaccine and search data
+```{r}
+data <- 
+  data_gtrends %>% 
+  left_join(data_vac_mean, by = c("location" = "Entity"))
+
+data %>% 
+  count(keyword)
+```
+
+```{r}
+data %>% 
 ```
 
