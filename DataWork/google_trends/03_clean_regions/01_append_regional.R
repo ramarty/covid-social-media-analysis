@@ -3,7 +3,7 @@
 # Load Data --------------------------------------------------------------------
 region_folders <- file.path(dropbox_file_path, "Data", "google_trends", "RawData") %>%
   list.files("timeseries_regions") %>%
-  str_subset("2021-03-01_2021-05-25|timeseries_regions_2020-12-01_2021-05-25")
+  str_subset("2021-03-01_2021-05-31|2020-12-01_2021-05-31")
 
 region_df <- map_df(region_folders, function(region_folder_i){
   
