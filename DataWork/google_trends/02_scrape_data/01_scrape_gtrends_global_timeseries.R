@@ -104,7 +104,7 @@ keywords_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends",
 
 keywords_df <- keywords_df %>%
   arrange(priority_to_scrape) %>%
-  filter(scrape %in% "yes")
+  filter(scrape %in% "yes" | category %in% c("vaccine", "us election missinformation"))
 
 ## Language Dataset
 # Indicates which language to use for each country. 
@@ -140,7 +140,7 @@ for(OUT_FOLDER in OUT_FOLDER_LIST){
   if(ALL_TERMS){
     keywords_sub_df <- keywords_df
   } else{
-    keywords_sub_df <- keywords_df[keywords_df$category %in% c("vaccine"),]
+    keywords_sub_df <- keywords_df[keywords_df$category %in% c("vaccine", "us election missinformation"),]
   }
   
   ## Check if root folter eixts; if not, create

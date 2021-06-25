@@ -15,17 +15,11 @@ cor_01_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "Fina
                                "correlations_gtrends_since2020-01-01.Rds")) %>%
   dplyr::mutate(date_since = "2020-01-01")
 
-cor_05_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
+cor_12_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
                                "gtrends_full_timeseries",
                                "correlation_datasets",
-                               "correlations_gtrends_since2020-05-01.Rds")) %>%
-  dplyr::mutate(date_since = "2020-05-01")
-
-cor_10_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
-                               "gtrends_full_timeseries",
-                               "correlation_datasets",
-                               "correlations_gtrends_since2020-10-01.Rds")) %>%
-  dplyr::mutate(date_since = "2020-10-01")
+                               "correlations_gtrends_since2020-12-01.Rds")) %>%
+  dplyr::mutate(date_since = "2020-12-01")
 
 # Prep Data --------------------------------------------------------------------
 cor_df <- bind_rows(cor_01_df,

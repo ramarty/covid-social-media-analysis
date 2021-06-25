@@ -23,30 +23,32 @@ region_df <- map_df(region_folders, function(region_folder_i){
 })
 
 # Merge in English Version of Keyword ------------------------------------------
-keywords <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", 
-                              "keywords", "FinalData","covid_keywords_alllanguages_clean.Rds"))
+# keywords <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", 
+#                               "keywords", "FinalData","covid_keywords_alllanguages_clean.Rds"))
+# 
+# keywords$keyword_en <- keywords$keyword_en %>% str_replace_all("'", "") %>% tolower()
+# region_df$keyword   <- region_df$keyword %>% str_replace_all("'", "") %>% tolower()
+# 
+# #### Dataset with english and translated word
+# keywords <- keywords %>%
+#   dplyr::select(names(keywords) %>% str_subset("keyword")) %>%
+#   dplyr::mutate(keyword = keyword_en) %>%
+#   pivot_longer(cols = -c(keyword)) %>%
+#   dplyr::rename(keyword_en = keyword) %>%
+#   dplyr::rename(keyword = value) %>%
+#   dplyr::select(keyword_en, keyword) %>%
+#   
+#   mutate(keyword = keyword %>% tolower(),
+#          keyword_en = keyword_en %>% tolower())
+# 
+# region_df <- merge(region_df, keywords, by = "keyword", all.x=T, all.y=F)
 
-keywords$keyword_en <- keywords$keyword_en %>% str_replace_all("'", "") %>% tolower()
-region_df$keyword   <- region_df$keyword %>% str_replace_all("'", "") %>% tolower()
-
-#### Dataset with english and translated word
-keywords <- keywords %>%
-  dplyr::select(names(keywords) %>% str_subset("keyword")) %>%
-  dplyr::mutate(keyword = keyword_en) %>%
-  pivot_longer(cols = -c(keyword)) %>%
-  dplyr::rename(keyword_en = keyword) %>%
-  dplyr::rename(keyword = value) %>%
-  dplyr::select(keyword_en, keyword) %>%
-  
-  mutate(keyword = keyword %>% tolower(),
-         keyword_en = keyword_en %>% tolower())
-
-region_df <- merge(region_df, keywords, by = "keyword", all.x=T, all.y=F)
+region_df <- region_df %>%
+  mutate(keyword_en = keyword)
 
 # Export -----------------------------------------------------------------------
-saveRDS(region_df, 
+saveRDS(region_df,
         file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
                   "gtrends_regional",
                   "gtrends_regional.Rds"))
-
 
