@@ -9,33 +9,18 @@ keywords_en_use <- c("loss of smell",
                      "how to treat coronavirus")
 
 # Load Data --------------------------------------------------------------------
-cor_01_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
+cor_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
                                "gtrends_full_timeseries",
                                "correlation_datasets",
                                "correlations_gtrends_since2020-01-01.Rds")) %>%
   dplyr::mutate(date_since = "2020-01-01")
 
-cor_12_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
-                               "gtrends_full_timeseries",
-                               "correlation_datasets",
-                               "correlations_gtrends_since2020-12-01.Rds")) %>%
-  dplyr::mutate(date_since = "2020-12-01")
-
-# Prep Data --------------------------------------------------------------------
-cor_df <- bind_rows(cor_01_df,
-                    cor_05_df,
-                    cor_10_df) %>%
+cor_df <- cor_df %>%
   dplyr::filter(type %in% "Cases") %>%
-  dplyr::filter(keyword_en %in% keywords_en_use) %>%
-  group_by(keyword_en) %>%
-  dplyr::mutate(cor_since_01 = median(cor_nolag[date_since = "2020-01-01"]))
+  dplyr::filter(cor > 0.5)
 
-# Figures ----------------------------------------------------------------------
-cor_df %>%
-  ggplot() +
-  geom_boxplot(aes(y = keyword_en,
-                   x = cor,
-                   fill = date_since))
+cor_df <- cor_df %>%
+  dplyr::filter(keyword_en %in% "loss of smell") 
 
 
 

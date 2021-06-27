@@ -8,14 +8,24 @@
 
 #Sys.setlocale("LC_CTYPE", "en_US.UTF-8")
 
+keywords_en_use <- c("loss of smell", 
+                     "loss of taste",
+                     "pneumonia",
+                     "fever",
+                     "ageusia",
+                     "anosmia",
+                     "i can't smell",
+                     "how to treat coronavirus")
+
 # PARAMETERS
-SLEEP_TIME      <- 3 # number of seconds to pause after each scrape
+SLEEP_TIME      <- 12.5 # number of seconds to pause after each scrape
 overwrite_files <- F # overwrite data?
 
-# OUT_FOLDER_LIST <- c("timeseries_2020-01-01_2020-09-26",
-#                      "timeseries_2020-07-05_2021-03-31") %>% rev()
-OUT_FOLDER_LIST <- c("timeseries_regions_2020-12-01_2021-05-31",
-                     "timeseries_regions_2021-03-01_2021-05-31") 
+OUT_FOLDER_LIST <- c("timeseries_2020-01-01_2020-09-26",
+                     "timeseries_2020-07-05_2021-03-31",
+                     "timeseries_2020-09-04_2021-05-31") %>% rev()
+# OUT_FOLDER_LIST <- c("timeseries_regions_2020-12-01_2021-05-31",
+#                      "timeseries_regions_2021-03-01_2021-05-31") 
                      # "timeseries_regions_2020-01-01_2020-01-31",
                      # "timeseries_regions_2020-02-01_2020-02-29",
                      # "timeseries_regions_2020-03-01_2020-03-31",
@@ -95,6 +105,8 @@ extract_trends <- function(iso_i,
 ## Keywords Dataset
 keywords_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", 
                                  "keywords", "FinalData", "covid_keywords_alllanguages_clean.Rds"))
+
+keywords_df <- keywords_df[keywords_df$keyword_en %in% keywords_en_use,]
 
 # keywords_df <- read.csv(file.path(dropbox_file_path, "Data", "google_trends", 
 #                                   "keywords", "FinalData", "covid_keywords_alllanguages.csv"),
@@ -208,3 +220,10 @@ for(OUT_FOLDER in OUT_FOLDER_LIST){
   }
 }
 
+
+a <- gtrends("fever", 
+        geo = "US",
+        time = "2020-09-04 2021-05-31",
+        onlyInterest = T,
+        low_search_volume=T)
+a$interest_over_time
