@@ -1,0 +1,765 @@
+---
+title: "01_Cleaning"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(ggrepel)
+library(ggcorrplot)
+library(corrplot)
+library(Hmisc)
+library(PerformanceAnalytics)
+library(stringr)
+
+#user file
+if(Sys.info()[["user"]] == "wb537287") user <- "/Users/wb537287/"
+
+#folder path
+data_folder <- paste0(user, "Dropbox/COVID Social Media Analysis/Data/usa_vaccine/RawData/")
+elec_folder <- paste0(user, "Dropbox/COVID Social Media Analysis/Data/usa_elections/")
+gtrends_folder <- paste0(user, "Dropbox/COVID Social Media Analysis/Data/google_trends/FinalData/gtrends_regional/")
+output_folder <- paste0(user, "Dropbox/COVID Social Media Analysis/Paper Figures/Vaccine_Analysis/")
+
+#file_path
+file_doses_adm <- paste0(data_folder, "us-daily-covid-vaccine-doses-administered.csv")
+file_doses_dis <- paste0(data_folder, "us-total-covid-vaccine-doses-distributed.csv")
+file_share_used <- paste0(data_folder, "us-share-covid-19-vaccine-doses-used.csv")
+file_share_vac <- paste0(data_folder, "us-covid-19-share-people-vaccinated.csv")
+file_gtrends <- paste0(gtrends_folder, "gtrends_regional.Rds")
+file_elec <- paste0(elec_folder, "data_elec_cleaned.csv")
+
+
+data_doses_adm <- 
+  file_doses_adm %>% 
+  read_csv()
+
+data_doses_dis <- 
+  file_doses_dis %>% 
+  read_csv()
+
+data_share_used <- 
+  file_share_used %>% 
+  read_csv()
+
+data_share_vac <- 
+  file_share_vac %>% 
+  read_csv()
+
+data_gtrends <- 
+  file_gtrends %>% 
+  read_rds()
+
+data_elec <- 
+  file_elec %>% 
+  read_csv()
+
+#the data of share of people vaccinated as of June 18
+data_share_vac_jun18 <- 
+  data_share_vac %>% 
+  filter(Day == "2021-06-18")
+
+#removing duplicates from gtrends
+data_gtrends <- 
+  data_gtrends %>% 
+  group_by_all() %>%
+  filter(n() == 1)
+
+```
+
+# Merging the 3 vaccine-related datasets
+
+```{r}
+data_vaccine <- 
+  data_doses_adm %>% 
+  left_join(data_doses_dis, by = c("Entity", "Day", "Code")) %>% 
+  left_join(data_share_used, by = c("Entity", "Day", "Code")) %>% 
+  left_join(data_share_vac, by = c("Entity", "Day", "Code"))
+```
+
+#Merging vaccine and search data
+
+vaccine data is daily; search data is in 2 periods: 7 months (Dec,20-May 21) and 3 months (March-May 21)
+
+To merge, we can: 
+a) Create a variable of average/median doses for those 2 periods, then calculate correlations
+
+```{r}
+data_vac_mean <- 
+  data_vaccine %>% 
+  group_by(Entity) %>% 
+  summarise(
+    sum_vaccinations = sum(daily_vaccinations, na.rm = TRUE),
+    total_distributions = max(total_distributed, na.rm = TRUE), 
+    across(daily_vaccinations:share_doses_used, ~mean(., na.rm = TRUE))
+  )
+
+```
+
+Merge vaccine and search data
+```{r}
+data <- 
+  data_gtrends %>% 
+  left_join(data_vac_mean, by = c("location" = "Entity"))
+```
+
+Merging google trends data with the share of people vaccinated as of June 18
+
+```{r}
+data_jun18 <- 
+  data_gtrends %>% 
+  left_join(data_share_vac_jun18, by = c("location" = "Entity"))
+```
+
+We create an indicator variable for whether there is a search or a missing value 
+```{r}
+data_jun18 <- 
+  data_jun18 %>% 
+  mutate(
+    missing_search = is.na(hits), 
+    search = if_else(missing_search == FALSE, "yes", "no")
+  )
+```
+
+
+# Analysis
+
+we now need to decide what works to look at in order to evaluate their correlation with share of doses used
+We start with a few keywords just to check
+
+```{r}
+data %>% 
+  ungroup %>% 
+  count(keyword)
+```
+
+We select the keywords related to the vaccine or potential correlations with the anti-vaccine movement
+```{r}
+keywords_vaccine <- 
+c(
+  "can covid vaccine cause infertility",
+  "biden election fraud",
+  "biden stole the election",
+  "bill gates microchip",
+  "covid microchip",	
+  "covid symptoms",				
+  "covid vaccine",				
+#  "covid vaccine austism",			
+#  "covid vaccine cause autism",				
+  "covid vaccine cause infertility",				
+  "covid vaccine change dna",				
+  "covid vaccine dangerous",				
+  "covid vaccine infertility",				
+  "covid vaccine magnetic",				
+#  "covid vaccine mark of the best",				
+  "covid vaccine microchip",				
+  "covid vaccine safety",			
+  "covid vaccine side effects",	
+  "does covid vaccine cause infertility",				
+  "does covid vaccine change dna",
+  "election fraud",	
+  "election stolen",	
+  "fox news",	
+  "hunter biden laptop",	
+  "is covid vaccine the mark of the beast",			
+  "is the covid vaccine the mark of the beast",	
+  "long term effects of covid vaccine",	
+  "negative side effects of covid vaccine",	
+#  "newsmax",	
+  "parler",
+  "qanon",
+  "safety of covid vaccine",	
+  "stop the count",	
+  "vaccine",				
+  "vaccine cause autism"
+  )
+```
+
+
+```{r}
+# we filter for the broader time span; we convert NAs to 0 
+data %>% 
+  filter(time_span == "2020-12-01_2021-05-31", keyword %in% keywords_vaccine) %>% 
+  mutate(hits = replace(hits, is.na(hits), 0)) %>% 
+  ggplot(aes(share_doses_used, hits)) + 
+  geom_point() +
+  geom_smooth() + 
+  facet_wrap(vars(keyword)) + 
+  coord_cartesian(ylim = c(0,100))
+```
+
+Change the time span to only focus on March-May
+
+```{r}
+data %>% 
+  filter(time_span == "2021-03-01_2021-05-31", keyword %in% keywords_vaccine) %>% 
+  mutate(hits = replace(hits, is.na(hits), 0)) %>% 
+  ggplot(aes(share_doses_used, hits)) + 
+  geom_point() +
+  geom_smooth() + 
+  facet_wrap(vars(keyword)) + 
+  coord_cartesian(ylim = c(0,100))
+```
+
+- we find that there isn't much of a change from switching the time span from dec-march to may-march
+
+# Just focusing on "Covid vaccine side effects" 
+
+We look at the states with covid vaccine side effects
+```{r}
+data %>% 
+  filter(time_span == "2020-12-01_2021-05-31", keyword == "covid vaccine side effects") %>% 
+  mutate(hits = replace(hits, is.na(hits), 0)) %>% 
+  ggplot(aes(share_doses_used, hits)) + 
+  geom_point() +
+  geom_smooth() + 
+  geom_text_repel(aes(label = location)) + 
+  coord_cartesian(ylim = c(0,100))
+```
+
+
+# Changing dependent variable to share of people vaccinates
+
+```{r}
+# we filter for the broader time span; we convert NAs to 0 
+data_jun18 %>% 
+  filter(time_span == "2020-12-01_2021-05-31", keyword %in% keywords_vaccine) %>% 
+  ggplot(aes(people_vaccinated_per_hundred, hits)) + 
+  geom_point() +
+  geom_smooth() + 
+  facet_wrap(vars(keyword)) + 
+  coord_cartesian(ylim = c(0,100))
+```
+
+
+```{r}
+data_jun18 %>% 
+  filter(
+    time_span == "2020-12-01_2021-05-31",
+    keyword %in% 
+      c(
+        "covid vaccine",
+        "covid vaccine safety",
+        "covid vaccine side effects", 
+        "covid vaccine cause infertility",
+        "fox news",
+        "is the covid vaccine the mark of the beast",
+        "long term effects of covid vaccine",
+        "newsmax"
+      )
+  ) %>% 
+  ggplot(aes(people_vaccinated_per_hundred, hits)) + 
+  geom_point() +
+  geom_smooth() + 
+  facet_wrap(vars(keyword)) + 
+  coord_cartesian(ylim = c(0, 100))
+
+```
+
+```{r}
+data_jun18 %>% 
+  mutate(hits = replace(hits, is.na(hits), 0)) %>% 
+  filter(
+    time_span == "2020-12-01_2021-05-31",
+    keyword %in% 
+      c(
+        "covid vaccine",
+        "covid vaccine safety",
+        "covid vaccine side effects", 
+        "covid vaccine cause infertility",
+        "fox news",
+        "is the covid vaccine the mark of the beast",
+        "long term effects of covid vaccine",
+        "newsmax",
+        "vaccine"
+      )
+  ) %>% 
+  ggplot(aes(people_vaccinated_per_hundred, hits)) + 
+  geom_point() +
+  geom_smooth() + 
+  facet_wrap(vars(keyword)) + 
+  coord_cartesian(ylim = c(0, 100))
+```
+
+
+#Histogram of mark of the beast
+
+```{r}
+mark_beast <- 
+  data_jun18 %>% 
+  filter(keyword == "is the covid vaccine the mark of the beast") %>% 
+  ggplot(aes(people_vaccinated_per_hundred, group = search, color = search, fill = search)) +
+  geom_density(alpha = 0.5) +
+  labs(
+    title = "Searches for 'Is covid-19 the mark of the beast' across US states", 
+    subtitle = "States with searches for fake news have lower proportion of vaccinated people", 
+    x = "Percentage of people vaccinated"
+  )
+
+ggsave(mark_beast, filename = paste0(output_folder, "mark_beast.png"))
+
+```
+
+
+```{r}
+data_jun18 %>% 
+  filter(keyword == "long term effects of covid vaccine") %>% 
+  ggplot(aes(people_vaccinated_per_hundred, group = search, color = search, fill = search)) +
+  geom_density(alpha = 0.5) +
+  labs(
+    title = "Searches for 'long term effects of covid vaccine' across US states"
+  )
+```
+
+#Focus on vaccine-related searches - for % of vaccinated people
+
+```{r}
+data_jun18 %>% 
+  filter(
+    time_span == "2020-12-01_2021-05-31",
+    keyword %in% c("covid vaccine side effects")
+  ) %>% 
+  ggplot(aes(people_vaccinated_per_hundred, hits)) + 
+  geom_point() +
+  geom_smooth() + 
+  facet_wrap(vars(keyword)) 
+```
+
+```{r}
+vaccine_related <- 
+  data_jun18 %>% 
+  filter(
+    time_span == "2020-12-01_2021-05-31",
+    keyword %in% c("vaccine", "covid vaccine side effects","covid vaccine safety")
+  ) %>% 
+  ggplot(aes(people_vaccinated_per_hundred, hits)) + 
+  geom_point() +
+  geom_smooth(method = "lm") + 
+  facet_wrap(vars(keyword), scales = "free") +
+  labs(
+    title = "More vaccinated states have more vaccine-related searches", 
+    subtitle = "Searches for vaccine safety or side effects are higher in states with greater share of vaccinations",
+    x = "Percentage of people vaccinated for each state", 
+    y = "Hits in Google Searches"
+  )
+
+ggsave(vaccine_related, filename = paste0(output_folder, "vaccine_related.png"), width = 8)
+
+```
+
+
+## Limiting to safety and side effects 
+
+```{r}
+vaccine_safety <- 
+  data_jun18 %>% 
+  filter(
+    time_span == "2020-12-01_2021-05-31",
+    keyword %in% c("covid vaccine side effects","covid vaccine safety")
+  ) %>% 
+  ggplot(aes(people_vaccinated_per_hundred, hits)) + 
+  geom_point() +
+  geom_smooth(method = "lm") + 
+  facet_wrap(vars(keyword), scales = "free") +
+  labs(
+    title = "More vaccinated states search more about the safety of the vaccine", 
+    subtitle = "Searches for vaccine safety or side effects are higher in states with greater share of vaccinations",
+    x = "Percentage of people vaccinated for each state", 
+    y = "Hits in Google Searches"
+  )
+
+ggsave(vaccine_safety, filename = paste0(output_folder, "vaccine_safety.png"), width = 8)
+
+```
+
+#Focus on anti-vaxx searches
+
+```{r}
+antivax <- 
+  data_jun18 %>% 
+  filter(
+    time_span == "2020-12-01_2021-05-31",
+    keyword %in% 
+      c(
+        "fox news",
+        "is the covid vaccine the mark of the beast",
+        "newsmax"
+    )
+  ) %>% 
+  ggplot(aes(people_vaccinated_per_hundred, hits)) + 
+  geom_point() +
+  geom_smooth(method = "lm") + 
+  facet_wrap(vars(keyword), scales = "free") +
+  labs(
+    title = "Searches across US states", 
+    subtitle = "Searches for anti-vaxx or fox news are negatively correlated with share of vaccinations",
+    x = "Percentage of people vaccinated for each state", 
+    y = "Hits in Google Searches"
+  )
+
+ggsave(antivax, filename = paste0(output_folder, "antivax.png"), width = 10)
+
+```
+
+#Only vaccine searches
+
+```{r}
+vaccine <- 
+  data_jun18 %>% 
+  filter(
+    time_span == "2020-12-01_2021-05-31",
+    keyword %in% c("vaccine")
+  ) %>% 
+  ggplot(aes(people_vaccinated_per_hundred, hits)) + 
+  geom_point() +
+  geom_smooth(method = "lm") + 
+  geom_text_repel(aes(label = location)) + 
+  facet_wrap(vars(keyword), scales = "free") +
+  labs(
+    title = "More vaccinated states search more for the vaccine", 
+    subtitle = "There is a clear positive correlation between vaccine searches and share of vaccinations",
+    x = "Percentage of people vaccinated for each state", 
+    y = "Hits in Google Searches"
+  )
+
+ggsave(vaccine, filename = paste0(output_folder, "vaccine.png"), width = 8)
+
+```
+
+
+# All keywords
+```{r}
+all_terms <- 
+  data_jun18 %>% 
+  filter(
+    time_span == "2020-12-01_2021-05-31",
+    keyword %in% keywords_vaccine
+  ) %>% 
+  ggplot(aes(people_vaccinated_per_hundred, hits)) + 
+  geom_point() +
+  geom_smooth() + 
+  facet_wrap(vars(keyword)) +
+  labs(
+    title = "Vaccine-related searches and share of vaccinations across US states", 
+    x = "Percentage of people vaccinated for each state", 
+    y = "Hits in Google Searches"
+  ) + 
+  coord_cartesian(ylim = c(0, 100))
+
+ggsave(all_terms, filename = paste0(output_folder, "all_terms.png"), height = 9, width = 10)
+
+```
+
+# Vaccine Analysis
+
+## Merging election and vaccine data
+
+```{r}
+#clean data_elec
+data_elec <- 
+  data_elec %>% 
+  filter(winner == 1) %>% 
+  mutate(state = str_to_title(state)) %>% 
+  mutate(state = if_else(state == "District Of Columbia", "District of Columbia", state))
+
+
+#merge data_jun18 and data_elec
+data_jun18 <- 
+  data_jun18 %>% 
+  left_join(data_elec, by = c("location" = "state"))
+```
+
+## We compute the R^2
+
+```{r}
+data_jun18_vaccine <- 
+  data_jun18 %>% 
+  filter(
+    time_span == "2020-12-01_2021-05-31",
+    keyword %in% c("vaccine")
+  )
+
+data_jun18_side_effects <- 
+  data_jun18 %>% 
+  filter(
+    time_span == "2020-12-01_2021-05-31",
+    keyword %in% c("covid vaccine side effects")
+  )
+
+data_jun18_safety <- 
+  data_jun18 %>% 
+  filter(
+    time_span == "2020-12-01_2021-05-31",
+    keyword %in% c("covid vaccine safety")
+  )
+
+rsq <- function(x, y) summary(lm(y~x))$r.squared
+
+rsq_vaccine = 
+  rsq(data_jun18_vaccine$people_vaccinated_per_hundred, data_jun18_vaccine$hits) %>% 
+  round(digits = 2)
+
+rsq_side_effects = 
+  rsq(data_jun18_side_effects$people_vaccinated_per_hundred, data_jun18_side_effects$hits) %>% 
+  round(digits = 2)
+
+
+rsq_safety = 
+  rsq(data_jun18_safety$people_vaccinated_per_hundred, data_jun18_safety$hits) %>% 
+  round(digits = 2)
+```
+
+## Graphs
+
+```{r}
+vaccine_elections <- 
+  data_jun18 %>% 
+  filter(
+    time_span == "2020-12-01_2021-05-31",
+    keyword %in% c("vaccine")
+  ) %>% 
+  ggplot(aes(people_vaccinated_per_hundred, hits)) + 
+  geom_point(aes(color = as.factor(party_simplified)), size = 2) +
+  geom_smooth(method = "lm") + 
+  geom_text_repel(aes(label = location)) + 
+  facet_wrap(vars(keyword), scales = "free") +
+  labs(
+    title = "More vaccinated states search more for the vaccine", 
+    subtitle = "There is a clear positive correlation between vaccine searches and share of vaccinations",
+    x = "Percentage of people vaccinated for each state", 
+    y = "Hits in Google Searches", 
+    color = "Winner in 2020 Presidential Elections"
+  )
+
+ggsave(vaccine_elections, filename = paste0(output_folder, "vaccine_elections.png"), height = 9, width = 10)
+```
+
+```{r}
+vaccine_elections_rsq <- 
+  data_jun18 %>% 
+  filter(
+    time_span == "2020-12-01_2021-05-31",
+    keyword %in% c("vaccine")
+  ) %>% 
+  ggplot(aes(people_vaccinated_per_hundred, hits)) + 
+  geom_point(aes(color = as.factor(party_simplified)), size = 2) +
+  geom_smooth(method = "lm") + 
+  geom_text_repel(aes(label = location)) + 
+  annotate(geom="label", x=40, y=90, label = paste0("R^2 = ", rsq_vaccine), color="brown4", size = 8) +
+  facet_wrap(vars(keyword), scales = "free") +
+  labs(
+    title = "More vaccinated states search more for the vaccine", 
+    subtitle = "There is a clear positive correlation between vaccine searches and share of vaccinations",
+    x = "Percentage of people vaccinated for each state", 
+    y = "Hits in Google Searches", 
+    color = "Winner in 2020 Presidential Elections"
+  )
+
+ggsave(vaccine_elections_rsq, filename = paste0(output_folder, "vaccine_elections_rsq.png"), height = 9, width = 10)
+```
+
+```{r}
+vaccine_elections_safety <- 
+  data_jun18 %>% 
+  filter(
+    time_span == "2020-12-01_2021-05-31",
+    keyword %in% c("covid vaccine side effects","covid vaccine safety")
+  ) %>% 
+  ggplot(aes(people_vaccinated_per_hundred, hits)) + 
+  geom_point(aes(color = as.factor(party_simplified)), size = 2) +
+  geom_smooth(method = "lm") + 
+  facet_wrap(vars(keyword), scales = "free") +
+  labs(
+    title = "More vaccinated states search more for the vaccine", 
+    subtitle = "There is a clear positive correlation between vaccine searches and share of vaccinations",
+    x = "Percentage of people vaccinated for each state", 
+    y = "Hits in Google Searches", 
+    color = "Winner in 2020 Presidential Elections"
+  )
+
+ggsave(vaccine_elections_safety, filename = paste0(output_folder, "vaccine_elections_safety.png"), height = 9, width = 10)
+```
+
+
+```{r}
+vaccine_safety <- 
+  data_jun18 %>% 
+  filter(
+    time_span == "2020-12-01_2021-05-31",
+    keyword %in% c("covid vaccine side effects","covid vaccine safety")
+  ) %>% 
+  ggplot(aes(people_vaccinated_per_hundred, hits)) + 
+  geom_point() +
+  geom_smooth(method = "lm") + 
+  facet_wrap(vars(keyword), scales = "free") +
+  labs(
+    title = "More vaccinated states search more about the safety of the vaccine", 
+    subtitle = "Searches for vaccine safety or side effects are higher in states with greater share of vaccinations",
+    x = "Percentage of people vaccinated for each state", 
+    y = "Hits in Google Searches"
+  )
+
+ggsave(vaccine_safety, filename = paste0(output_folder, "vaccine_safety.png"), width = 8)
+
+```
+
+```{r}
+rsq_text <- data.frame(
+  label = c(paste0("R^2 = ", rsq_safety),paste0("R^2 = ", rsq_side_effects)),
+  keyword   = c("covid vaccine safety", "covid vaccine side effects")
+)
+
+vaccine_safety_rsq <- 
+data_jun18 %>% 
+  filter(
+    time_span == "2020-12-01_2021-05-31",
+    keyword %in% c("covid vaccine side effects","covid vaccine safety")
+  ) %>% 
+  ggplot(aes(people_vaccinated_per_hundred, hits)) + 
+  geom_point(aes(color = as.factor(party_simplified)), size = 2) +
+  geom_smooth(method = "lm") + 
+  geom_label(
+    data = rsq_text,
+    mapping = aes(x = c(45, 45), y = c(82, 90), label = label),
+    size = 6, 
+    color="brown4"
+  ) +
+  facet_wrap(vars(keyword), scales = "free") +
+  labs(
+    title = "More vaccinated states search more for the vaccine", 
+    subtitle = "There is a clear positive correlation between vaccine searches and share of vaccinations",
+    x = "Percentage of people vaccinated for each state", 
+    y = "Hits in Google Searches", 
+    color = "Winner in 2020 Presidential Elections"
+  )
+
+ggsave(vaccine_safety_rsq, filename = paste0(output_folder, "vaccine_safety_rsq.png"), height = 9, width = 10)
+```
+
+## Correlations
+
+
+# APPENDIX
+
+# Changing dependent variable to sum of daily vaccinations/maximum distributed
+
+We'd like to do sum of daily vaccinations divided by maximum of distributed
+```{r}
+data <- 
+  data %>% 
+  mutate(vaccination_usage = sum_vaccinations/total_distributions)
+  
+
+# we filter for the broader time span; we convert NAs to 0 
+data %>% 
+  filter(time_span == "2020-12-01_2021-05-31") %>% 
+  mutate(hits = replace(hits, is.na(hits), 0)) %>% 
+  ggplot(aes(vaccination_usage, hits)) + 
+  geom_point() +
+  geom_smooth() + 
+  facet_wrap(vars(keyword)) + 
+  coord_cartesian(ylim = c(0,100))
+```
+
+
+```{r}
+data %>% 
+  filter(time_span == "2020-12-01_2021-05-31", keyword == "covid vaccine side effects") %>% 
+  mutate(hits = replace(hits, is.na(hits), 0)) %>% 
+  ggplot(aes(vaccination_usage, hits)) + 
+  geom_point() +
+  geom_smooth() + 
+  geom_text_repel(aes(label = location)) + 
+  coord_cartesian(ylim = c(0,100))
+```
+
+
+#Correlation Plot of Keywords
+
+
+```{r}
+
+data_jun18_wide <- 
+  data_jun18 %>% 
+  filter(time_span == "2020-12-01_2021-05-31") %>% 
+  mutate(
+    hits = replace(hits, is.na(hits), 0), 
+    keyword = word(keyword,-2)
+  ) %>% 
+  group_by(location) %>% 
+  summarise(keyword, hits) %>% 
+  ungroup() %>% 
+  pivot_wider(names_from = keyword, values_from = hits)
+
+data_jun18_wide <- as.data.frame(data_jun18_wide)
+
+row.names(data_jun18_wide) <- data_jun18_wide$location
+
+data_jun18_wide <- data_jun18_wide %>% select(-location)
+
+
+cor_matrix <- cor(data_jun18_wide)
+
+corrplot(cor_matrix, method="color")
+
+
+data_jun18 %>% count(keyword)
+```
+
+
+```{r}
+rquery.cormat(data_jun18_wide)
+
+rcorr_matrix <- rcorr(as.matrix(data_jun18_wide %>% select(!location))) 
+M <- rcorr_matrix$r
+p_mat <- rcorr_matrix$P
+corrplot(M, type = "upper", order = "hclust", p.mat = p_mat, sig.level = 0.01)
+corrplot(M)
+??rcorr_matrix
+
+signif(rcorr_matrix$r, 2)
+
+chart.Correlation(data_jun18_wide %>% select(!location), histogram=TRUE, pch=19)
+
+cor(as.matrix(data_jun18_wide %>% select(!location)))
+
+data_jun18_wide %>% select(!location)
+
+
+corr <- cor(data_jun18_wide %>% select(!location), na.rm = TRUE)
+ggcorrplot(rcorr_matrix)
+
+
+
+corr <- round(cor(data_jun18_wide %>% select(!location)), 1)
+
+rcorr_matrix
+
+chart.Correlation(data_jun18_wide %>% select(!location), histogram=TRUE, pch=19)
+
+
+row.names(data_jun18_wide) <- data_data_jun18_wide <-  as.data.frame(data_jun18_wide)
+jun18_wide$location
+
+data_jun18_wide <- data_jun18_wide %>% select(-location)
+
+
+data_jun18_wide %>% 
+  mutate(hits = replace(hits, is.na(hits), 0)) %>% 
+
+
+cor(data_jun18_wide, na.rm = TRUE)
+
+?cor
+```
+
+
+```{r}
+data_jun18_wide %>% 
+  ggplot(aes(`is covid vaccine the mark of the beast`, `biden stole the election`)) + 
+  geom_point() +
+  geom_smooth(method = "lm")
+```
+

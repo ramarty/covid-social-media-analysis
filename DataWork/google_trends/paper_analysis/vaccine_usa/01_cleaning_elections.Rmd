@@ -1,0 +1,43 @@
+---
+title: "Cleaning_Elections"
+output: html_document
+---
+
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(lubridate)
+library(ggrepel)
+
+
+#user file
+if(Sys.info()[["user"]] == "wb537287") user <- "/Users/wb537287/"
+
+#folder path
+data_folder <- paste0(user, "Dropbox/COVID Social Media Analysis/Data/usa_elections/")
+
+#file_path
+data_elec <- paste0(data_folder, "1976-2020-president.csv")
+
+data_elec <- 
+  data_elec %>% 
+  read_csv()
+
+```
+
+```{r}
+data_elec <- 
+  data_elec %>% 
+  filter(year == 2020, party_simplified %in% c("DEMOCRAT", "REPUBLICAN")) %>% 
+  group_by(state) %>% 
+  mutate(
+    percent_vote = candidatevotes/totalvotes
+  )
+
+data_elec %>% 
+  group_by(state) %>% 
+  filter(percent_vote == max(percent_vote))
+
+
+```
+
