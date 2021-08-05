@@ -15,7 +15,7 @@ pacman::p_load(gtrendsR, countrycode, parallel, pbmcapply, ggplot2, jsonlite,
                stringdist, stringr, rgdal, rgeos, geosphere, htmlwidgets,
                tidyverse, sf, raster, leaflet, leaflet.extras, plotly,
                geosphere, data.table, formattable, tidyr, viridis, data.table,
-               WDI, scales, rnaturalearth, sp, utf8)
+               WDI, scales, rnaturalearth, sp, utf8, ggtext)
 
 # remotes::install_github("wilkelab/ggtext")
 # library(ggtext)
