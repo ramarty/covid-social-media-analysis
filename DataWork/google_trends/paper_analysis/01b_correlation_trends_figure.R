@@ -4,7 +4,9 @@
 gtrends_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
                                 "gtrends_full_timeseries",
                                 "correlation_datasets",
-                                paste0("gtrends_since","2020-01-01",".Rds")))
+                                "gtrends_since2020-01-01_until2021-07-31.Rds"))
+
+gtrends_df$cases_new <- gtrends_df$cases_new_ma7
 
 # Prep Data --------------------------------------------------------------------
 # (1) Filter and (2) Scale between 0 and 1 and (3) Rename
@@ -27,9 +29,16 @@ gtrends_df$Country = gtrends_df$Country %>% as.factor()
 gtrends_df$Country <- reorder(gtrends_df$Country, gtrends_df$cor_casesMA7_hitsMA7_nolag) %>% fct_rev
 
 # Figure: Top Countries --------------------------------------------------------
+gtrends_df %>%
+  dplyr::filter(cases_total > 0,
+                cor_casesMA7_hitsMA7_nolag > 0.505) %>%
+  pull(geo) %>%
+  unique() %>%
+  length()
+
 p_top <- gtrends_df %>%
   dplyr::filter(cases_total > 0,
-                cor_casesMA7_hitsMA7_nolag > 0.51) %>%
+                cor_casesMA7_hitsMA7_nolag > 0.505) %>%
   ggplot() +
   geom_col(aes(x = date, y = cases_new),
            fill = "#ffc266", # orange3

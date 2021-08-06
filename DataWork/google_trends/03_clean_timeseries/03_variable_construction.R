@@ -11,7 +11,7 @@ gtrends_ma_hits_df <- gtrends_df %>%
   filter(!is.na(hits)) %>%
   arrange(date) %>%
   group_by(geo, keyword_en) %>%
-  mutate(hits_ma7 = runMean(hits, n = 7)) %>%
+  dplyr::mutate(hits_ma7 = runMean(hits, n = 7)) %>%
   dplyr::select(geo, date, language, keyword, keyword_en, hits_ma7) 
 
 gtrends_df <- gtrends_df %>%

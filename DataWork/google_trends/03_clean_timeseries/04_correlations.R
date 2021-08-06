@@ -13,25 +13,26 @@
 # https://gist.github.com/drsimonj/2038ff9f9c67063f384f10fac95de566
 
 begin_day <- c("2020-01-01",
-               "2020-02-01",
-               "2020-03-01",
-               "2020-04-01",
-               "2020-05-01",
-               "2020-06-01",
-               "2020-07-01",
-               "2020-08-01",
-               "2020-09-01",
-               "2020-10-01",
-               "2020-11-01",
-               "2020-12-01",
+               # "2020-02-01",
+               # "2020-03-01",
+               # "2020-04-01",
+               # "2020-05-01",
+               # "2020-06-01",
+               # "2020-07-01",
+               # "2020-08-01",
+               # "2020-09-01",
+               # "2020-10-01",
+               # "2020-11-01",
+               # "2020-12-01",
                "2021-01-01")
 
-end_day <- c("2020-12-01", "2020-12-01")
+end_day <- c(#"2020-12-01", 
+             "2021-07-31")
 
 for(begin_day_i in begin_day){
   for(end_day_i in end_day){
     
-    if(end_day_i > begin_day) next
+    if(end_day_i < begin_day) next
     
     print(paste(begin_day_i, "================================================="))
     
@@ -45,7 +46,8 @@ for(begin_day_i in begin_day){
                     cases_new, death_new, 
                     hits_ma7, hits) %>%
       dplyr::filter(date >= as.Date(begin_day_i),
-                    date <= as.Date(end_day_i))
+                    date <= as.Date(end_day_i)) %>%
+      dplyr::arrange(date)
     
     # Correlations across different leads/lags -----------------------------------
     gtrends_cor_long_df <- map_df(-21:21, function(leadlag){
@@ -58,20 +60,29 @@ for(begin_day_i in begin_day){
       if(leadlag < 0){
         
         gtrends_df <- gtrends_df %>%
+          dplyr::arrange(date) %>%
+          dplyr::group_by(geo, keyword_en) %>%
           dplyr::mutate(hits_ma7_leadlag = dplyr::lag(hits_ma7, leadlag_abs),
-                        hits_leadlag = dplyr::lag(hits, leadlag_abs))
+                        hits_leadlag = dplyr::lag(hits, leadlag_abs)) %>%
+          dplyr::ungroup()
         
       } else if(leadlag > 0){
         
         gtrends_df <- gtrends_df %>%
+          dplyr::arrange(date) %>%
+          dplyr::group_by(geo, keyword_en) %>%
           dplyr::mutate(hits_ma7_leadlag = dplyr::lead(hits_ma7, leadlag_abs),
-                        hits_leadlag = dplyr::lead(hits, leadlag_abs))
+                        hits_leadlag = dplyr::lead(hits, leadlag_abs)) %>%
+          dplyr::ungroup()
         
       } else if(leadlag == 0){
         
         gtrends_df <- gtrends_df %>%
+          dplyr::arrange(date) %>%
+          dplyr::group_by(geo, keyword_en) %>%
           dplyr::mutate(hits_ma7_leadlag = hits_ma7,
-                        hits_leadlag = hits)
+                        hits_leadlag = hits) %>%
+          dplyr::ungroup()
         
       }
       

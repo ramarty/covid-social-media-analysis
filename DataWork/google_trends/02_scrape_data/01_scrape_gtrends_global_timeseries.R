@@ -12,34 +12,53 @@ keywords_en_use <- c("loss of smell",
                      "loss of taste",
                      "pneumonia",
                      "fever",
+                     "cough",
+                     "covid-19",
+                     "covid symptoms",
+                     "coronavirus",
+                     "difficulty breathing",
+                     "tired",
                      "ageusia",
                      "anosmia",
                      "i can't smell",
                      "how to treat coronavirus")
 
+keywords_en_use <- c("social distance", "stay at home", "boredom", "anxiety", "suicide", 
+                     "insomnia", "social isolation", "loneliness", "divorce", 
+                     "panic attack",
+                     "worried health", "hysteria", "overwhelmed", "anxiety symptoms",
+                     "anxiety attack", "symptoms of pannic attack",
+                     "depressed", "lonely", "suicidal", "abuse", 
+                     "therapist near me", "online therapist",
+                     "deep breathing", "body scan meditation",
+                     "unemployment", "unemployment insurance")
+
 # PARAMETERS
-SLEEP_TIME      <- 12.5 # number of seconds to pause after each scrape
+SLEEP_TIME      <- 2.1 # number of seconds to pause after each scrape
 overwrite_files <- F # overwrite data?
 
-OUT_FOLDER_LIST <- c("timeseries_2020-01-01_2020-09-26",
+OUT_FOLDER_LIST <- c("timeseries_2019-01-01_2019-09-27",
+                     "timeseries_2019-07-01_2020-03-26",
+                     "timeseries_2020-01-01_2020-09-26",
                      "timeseries_2020-07-05_2021-03-31",
-                     "timeseries_2020-09-04_2021-05-31") %>% rev()
-# OUT_FOLDER_LIST <- c("timeseries_regions_2020-12-01_2021-05-31",
-#                      "timeseries_regions_2021-03-01_2021-05-31") 
-                     # "timeseries_regions_2020-01-01_2020-01-31",
-                     # "timeseries_regions_2020-02-01_2020-02-29",
-                     # "timeseries_regions_2020-03-01_2020-03-31",
-                     # "timeseries_regions_2020-04-01_2020-04-30",
-                     # "timeseries_regions_2020-05-01_2020-05-31",
-                     # "timeseries_regions_2020-06-01_2020-06-30",
-                     # "timeseries_regions_2020-07-01_2020-07-31",
-                     # "timeseries_regions_2020-08-01_2020-08-31",
-                     # "timeseries_regions_2020-09-01_2020-09-30",
-                     # "timeseries_regions_2020-10-01_2020-10-31",
-                     # "timeseries_regions_2020-11-01_2020-11-30",
-                     # "timeseries_regions_2020-12-01_2020-12-31",
-                     # "timeseries_regions_2021-01-01_2021-01-31",
-                     # "timeseries_regions_2021-02-01_2021-02-28") 
+                     "timeseries_2020-11-04_2021-07-31") %>% rev()
+
+#OUT_FOLDER_LIST <- c("timeseries_regions_2020-12-01_2021-05-31",
+#                     "timeseries_regions_2021-03-01_2021-05-31")
+# "timeseries_regions_2020-01-01_2020-01-31",
+# "timeseries_regions_2020-02-01_2020-02-29",
+# "timeseries_regions_2020-03-01_2020-03-31",
+# "timeseries_regions_2020-04-01_2020-04-30",
+# "timeseries_regions_2020-05-01_2020-05-31",
+# "timeseries_regions_2020-06-01_2020-06-30",
+# "timeseries_regions_2020-07-01_2020-07-31",
+# "timeseries_regions_2020-08-01_2020-08-31",
+# "timeseries_regions_2020-09-01_2020-09-30",
+# "timeseries_regions_2020-10-01_2020-10-31",
+# "timeseries_regions_2020-11-01_2020-11-30",
+# "timeseries_regions_2020-12-01_2020-12-31",
+# "timeseries_regions_2021-01-01_2021-01-31",
+# "timeseries_regions_2021-02-01_2021-02-28") 
 
 ## Subset for regions
 # only used if ALL_COUNTRIES = F
@@ -72,7 +91,7 @@ extract_trends <- function(iso_i,
                  time = start_end_date,
                  onlyInterest = onlyInterest,
                  low_search_volume=T)
-
+  
   if(onlyInterest %in% T){
     
     # 2. Grab data, and convert variables to character to avoid type conflict late
@@ -114,9 +133,11 @@ keywords_df <- keywords_df[keywords_df$keyword_en %in% keywords_en_use,]
 # keywords_df$keyword_zh 
 #keywords_df$keyword_zh 
 
-keywords_df <- keywords_df %>%
-  arrange(priority_to_scrape) %>%
-  filter(scrape %in% "yes" | category %in% c("vaccine", "us election missinformation"))
+if(F){
+  keywords_df <- keywords_df %>%
+    arrange(priority_to_scrape) %>%
+    filter(scrape %in% c("yes", "no") | category %in% c("vaccine", "missinformation", "us election missinformation"))
+}
 
 ## Language Dataset
 # Indicates which language to use for each country. 
@@ -129,13 +150,15 @@ language_codes_all <- language_codes_all[!is.na(language_codes_all)]
 language_codes_all <- language_codes_all[language_codes_all != ""]
 language_codes_all <- language_codes_all %>% sort()
 
+language_codes_all <- language_codes_all %>% rev()
+
 #language_codes_all <- language_codes_all[language_codes_all != "my"]
 
 # Prep Parameters Based on Folder Name -----------------------------------------
 for(OUT_FOLDER in OUT_FOLDER_LIST){
   
   if(grepl("timeseries_regions_", OUT_FOLDER)){
-    ALL_TERMS <- F
+    ALL_TERMS <- T
     ALL_COUNTRIES <- F
     onlyInterest <- F
   } else{
@@ -152,7 +175,7 @@ for(OUT_FOLDER in OUT_FOLDER_LIST){
   if(ALL_TERMS){
     keywords_sub_df <- keywords_df
   } else{
-    keywords_sub_df <- keywords_df[keywords_df$category %in% c("vaccine", "us election missinformation"),]
+    keywords_sub_df <- keywords_df[keywords_df$category %in% c("vaccine", "missinformation", "us election missinformation"),]
   }
   
   ## Check if root folter eixts; if not, create
@@ -221,9 +244,5 @@ for(OUT_FOLDER in OUT_FOLDER_LIST){
 }
 
 
-a <- gtrends("fever", 
-        geo = "US",
-        time = "2020-09-04 2021-05-31",
-        onlyInterest = T,
-        low_search_volume=T)
-a$interest_over_time
+
+

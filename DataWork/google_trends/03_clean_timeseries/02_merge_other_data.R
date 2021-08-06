@@ -78,6 +78,26 @@ gtrends_df <- gtrends_df %>%
   left_join(gmobility_df,
             by = c("geo", "date"))
 
+# Merge Oxford Policy Response Data --------------------------------------------
+oxpol_df <- read_csv("https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker/master/data/OxCGRT_latest.csv")
+
+oxpol_clean_df <- oxpol_df %>%
+  dplyr::filter(Jurisdiction %in% "NAT_TOTAL") %>%
+  dplyr::mutate(Date = Date %>% as.character() %>% ymd(),
+                geo = countrycode(CountryCode, origin = "iso3c", destination = "iso2c")) %>%
+  dplyr::mutate(geo = case_when(
+    CountryCode == "RKS" ~ "RS",
+    TRUE ~ geo
+  )) %>%
+  dplyr::select(Date, geo, StringencyIndex, GovernmentResponseIndex, EconomicSupportIndex) %>%
+  dplyr::rename(date = Date)
+
+gtrends_df <- merge(gtrends_df, oxpol_clean_df, by = c("geo", "date"), all.x=T, all.y=F)
+
+# Add continent/regions --------------------------------------------------------
+gtrends_df$un_regionsub_name <- gtrends_df$geo %>% countrycode(origin = "iso2c", destination = "un.regionsub.name")
+gtrends_df$wb_region <- gtrends_df$geo %>% countrycode(origin = "iso2c", destination = "region")
+
 # Export -----------------------------------------------------------------------
 gtrends_df <- gtrends_df %>% distinct() 
 
