@@ -1,54 +1,73 @@
 # Append and Clean Google Trends Data
 
 # Load Data --------------------------------------------------------------------
-gtrends_1_df <- file.path(dropbox_file_path, "Data", "google_trends", "RawData",
+# Load data. Scraped from multiple time periods, which load separately. Use
+# data that uses Jan 1 2020 as "base" (0), then have datasets m[inus] 1 and 2
+# from base and datasets p[lus] 1 and 2 from base.
+
+clean_google_data <- function(df){
+  # Cleaning individual google trends files
+  
+  df$hits[df$hits %in% "<1"] <- "1"
+  df$hits <- df$hits %>% as.numeric()
+  
+  df <- df %>%
+    dplyr::select(hits, date, keyword, geo, language)
+  
+  return(df)
+}
+
+gtrends_m2_df <- file.path(dropbox_file_path, "Data", "google_trends", "RawData",
+                          "timeseries_2019-01-01_2019-09-27") %>%
+  list.files(pattern = "*.Rds", full.names = T) %>%
+  map_df(readRDS) %>%
+  distinct(date, keyword, geo, time, language, .keep_all = T) %>%
+  filter(!is.na(date)) %>%
+  clean_google_data() %>%
+  dplyr::rename(hits_tm2 = hits) 
+
+gtrends_m1_df <- file.path(dropbox_file_path, "Data", "google_trends", "RawData",
+                          "timeseries_2019-07-01_2020-03-26") %>%
+  list.files(pattern = "*.Rds", full.names = T) %>%
+  map_df(readRDS) %>%
+  distinct(date, keyword, geo, time, language, .keep_all = T) %>%
+  filter(!is.na(date)) %>%
+  clean_google_data() %>%
+  dplyr::rename(hits_tm1 = hits) 
+
+gtrends_0_df <- file.path(dropbox_file_path, "Data", "google_trends", "RawData",
                           "timeseries_2020-01-01_2020-09-26") %>%
   list.files(pattern = "*.Rds", full.names = T) %>%
   map_df(readRDS) %>%
   distinct(date, keyword, geo, time, language, .keep_all = T) %>%
-  filter(!is.na(date))
+  filter(!is.na(date)) %>%
+  clean_google_data() %>%
+  dplyr::rename(hits_t0 = hits) 
 
-gtrends_2_df <- file.path(dropbox_file_path, "Data", "google_trends", "RawData",
+gtrends_p1_df <- file.path(dropbox_file_path, "Data", "google_trends", "RawData",
                           "timeseries_2020-07-05_2021-03-31") %>%
   list.files(pattern = "*.Rds", full.names = T) %>%
   map_df(readRDS) %>%
   distinct(date, keyword, geo, time, language, .keep_all = T) %>%
-  filter(!is.na(date))
+  filter(!is.na(date)) %>%
+  clean_google_data() %>%
+  dplyr::rename(hits_tp1 = hits) 
 
-gtrends_3_df <- file.path(dropbox_file_path, "Data", "google_trends", "RawData",
+gtrends_p2_df <- file.path(dropbox_file_path, "Data", "google_trends", "RawData",
                           "timeseries_2020-11-04_2021-07-31") %>%
   list.files(pattern = "*.Rds", full.names = T) %>%
   map_df(readRDS) %>%
   distinct(date, keyword, geo, time, language, .keep_all = T) %>%
-  filter(!is.na(date))
-
-# Hits to Numeric --------------------------------------------------------------
-gtrends_1_df$hits[gtrends_1_df$hits %in% "<1"] <- "1"
-gtrends_1_df$hits <- gtrends_1_df$hits %>% as.numeric()
-
-gtrends_2_df$hits[gtrends_2_df$hits %in% "<1"] <- "1"
-gtrends_2_df$hits <- gtrends_2_df$hits %>% as.numeric()
-
-gtrends_3_df$hits[gtrends_3_df$hits %in% "<1"] <- "1"
-gtrends_3_df$hits <- gtrends_3_df$hits %>% as.numeric()
+  filter(!is.na(date)) %>%
+  clean_google_data() %>%
+  dplyr::rename(hits_tp2 = hits) 
 
 # Merge ------------------------------------------------------------------------
-## Rename/Select Variables
-gtrends_1_df <- gtrends_1_df %>% 
-  dplyr::rename(hits_t1 = hits) %>%
-  dplyr::select(hits_t1, date, keyword, geo, language)
-
-gtrends_2_df <- gtrends_2_df %>% 
-  dplyr::rename(hits_t2 = hits) %>%
-  dplyr::select(hits_t2, date, keyword, geo, language)
-
-gtrends_3_df <- gtrends_3_df %>% 
-  dplyr::rename(hits_t3 = hits) %>%
-  dplyr::select(hits_t3, date, keyword, geo, language)
-
-## Merge
-gtrends_df <- merge(gtrends_1_df, gtrends_2_df, by = c("date", "keyword", "geo", "language"), all = T)
-gtrends_df <- merge(gtrends_df,   gtrends_3_df, by = c("date", "keyword", "geo", "language"), all = T)
+gtrends_df <- gtrends_0_df %>%
+  full_join(gtrends_m2_df, by = c("date", "keyword", "geo", "language")) %>%
+  full_join(gtrends_m1_df, by = c("date", "keyword", "geo", "language")) %>%
+  full_join(gtrends_p1_df, by = c("date", "keyword", "geo", "language")) %>%
+  full_join(gtrends_p2_df, by = c("date", "keyword", "geo", "language"))
 
 # Blend hits -------------------------------------------------------------------
 # https://stats.stackexchange.com/questions/281162/scale-a-number-between-a-range
@@ -128,9 +147,13 @@ make_consistent_hits_var <- function(gtrends_df,
 #gtrends_df <- gtrends_df %>%
 #  dplyr::mutate(hits_t1 = hits_t1 + 1,
 #                hits_t2 = hits_t2 + 1)
+gtrends_df <- make_consistent_hits_var(gtrends_df, "hits_t0",      "hits_tm1", "hits_tm1_adj")
+gtrends_df <- make_consistent_hits_var(gtrends_df, "hits_tm1_adj", "hits_tm2", "hits_tm2_adj")
+gtrends_df <- make_consistent_hits_var(gtrends_df, "hits_tm2_adj", "hits_tp1", "hits_tp1_adj")
+gtrends_df <- make_consistent_hits_var(gtrends_df, "hits_tp1_adj", "hits_tp2", "hits_tp2_adj")
 
-gtrends_df <- make_consistent_hits_var(gtrends_df, "hits_t1",     "hits_t2", "hits_t2_adj")
-gtrends_df <- make_consistent_hits_var(gtrends_df, "hits_t2_adj", "hits_t3",  "hits_t3_adj")
+#gtrends_df <- make_consistent_hits_var(gtrends_df, "hits_t1",     "hits_t2", "hits_t2_adj")
+#gtrends_df <- make_consistent_hits_var(gtrends_df, "hits_t2_adj", "hits_t3",  "hits_t3_adj")
 
 # Choose One Language per Country ----------------------------------------------
 #### Merge in Language
@@ -175,10 +198,9 @@ gtrends_df <- merge(gtrends_df, keywords, by = "keyword", all.x=T, all.y=F)
 # Cleanup ----------------------------------------------------------------------
 gtrends_df <- gtrends_df %>%
   dplyr::select(keyword, keyword_en, geo, date, language, 
-                hits_t1, hits_t2, hits_t3, hits_t2_adj, hits_t3_adj) %>%
+                hits_t0, hits_tm1, hits_tm2, hits_tp1, hits_tp2, hits_tp2_adj) %>%
   dplyr::mutate(date = date %>% as.Date()) %>%
-  dplyr::rename(hits = hits_t3_adj) %>%
-  dplyr::select(-hits_t2_adj)
+  dplyr::rename(hits = hits_tp2_adj) 
 
 #gtrends_df$hits[gtrends_df$hits %in% Inf] <- NA
 

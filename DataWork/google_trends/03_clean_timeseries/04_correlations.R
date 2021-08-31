@@ -41,7 +41,7 @@ for(begin_day_i in begin_day){
                                          "gtrends_full_timeseries", "gtrends_otherdata_varclean.Rds"))
     
     gtrends_df <- gtrends_full_df %>%
-      dplyr::select(geo, date, keyword_en, 
+      dplyr::select(geo, date, keyword_en,
                     cases_new_ma7, death_new_ma7, 
                     cases_new, death_new, 
                     hits_ma7, hits) %>%

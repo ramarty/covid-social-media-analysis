@@ -23,7 +23,7 @@ cor_smell_df <- cor_df[cor_df$keyword_en %in% "loss of smell",]
 cor_taste_df <- cor_df[cor_df$keyword_en %in% "loss of taste",]
 
 lm_1 <- lm(cor_nolag ~ log(cases_total) , data = cor_smell_df)
-lm_2 <- lm(cor_nolag ~ log(cases_pc) , data = cor_smell_df) 
+lm_2 <- lm(cor_nolag ~ log(cases_pc) , data = cor_smell_df)
 lm_3 <- lm(cor_nolag ~ log(population), data = cor_smell_df) 
 lm_4 <- lm(cor_nolag ~ log(per_pop_using_internet), data = cor_smell_df) 
 lm_5 <- lm(cor_nolag ~ log(mobile_cell_sub_per100), data = cor_smell_df) 
