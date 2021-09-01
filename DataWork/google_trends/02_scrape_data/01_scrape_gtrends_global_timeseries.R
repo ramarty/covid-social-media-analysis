@@ -23,12 +23,13 @@ keywords_en_use <- c("loss of smell",
                      "i can't smell",
                      "how to treat coronavirus")
 
+# RUN THIS AGAIN!!!!
 # keywords_en_use <- c("social distance", "stay at home", "boredom", "anxiety", "suicide", 
 #                      "insomnia", "social isolation", "loneliness", "divorce", 
 #                      "panic attack",
 #                      "fever",
 #                      "worried health", "hysteria", "overwhelmed", "anxiety symptoms",
-#                      "anxiety attack", "symptoms of pannic attack",
+#                      "anxiety attack", "symptoms of panic attack",
 #                      "depressed", "lonely", "suicidal", "abuse", 
 #                      "therapist near me", "online therapist",
 #                      "deep breathing", "body scan meditation",
