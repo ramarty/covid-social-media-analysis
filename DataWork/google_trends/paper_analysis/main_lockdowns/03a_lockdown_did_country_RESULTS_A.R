@@ -70,52 +70,75 @@ keywords_en_use <- c("social distance",
                      "loneliness",
                      "divorce")
 
-run_reg <- function(keyword_i, region_i){
+# keywords_en_use <- c("boredom",
+#                      "unemployment",
+#                      "social isolation",
+#                      "anxiety",
+#                      "anxiety attack",
+#                      "suicide")
+
+gtrends_df <- gtrends_df %>%
+  dplyr::filter(keyword_en %in% keywords_en_use) %>%
+  dplyr::filter(!is.na(lockdown_date_min_yearcurrent),
+                !is.na(hits_ma7)) 
+
+keyword_i <- "social isolation"
+geo_i <- "US"
+
+run_reg <- function(keyword_i, geo_i){
   # Function to estimate model for keyword_i and region_i
-  print(region_i)
-  print(keyword_i)
   
-  df_i <- gtrends_df[gtrends_df$keyword_en %in% keyword_i,]
-  if(region_i != "Global"){
-    df_i <- df_i[df_i$wb_region %in% region_i,]
-  }
+  ## Subset to keyword and country
+  df_i <- gtrends_df %>%
+    dplyr::filter(keyword_en %in% keyword_i,
+                  geo %in% geo_i)
   
-  df_i <- df_i[!is.na(df_i$hits_ma7),]
-  df_i <- df_i[!is.na(df_i$days_since_lockdown_min_yearcurrent_post),] # must be a lockdown
+  have_gtrends_data <- ifelse(nrow(df_i[!is.na(df_i$hits_ma7),]) > 0, T, F)
+  have_lockdown_data <- ifelse(nrow(df_i[!is.na(df_i$days_since_lockdown_min_yearcurrent),]) > 0, T, F)
+  
+  ## Further subset
+  df_i <- df_i %>%
+    dplyr::filter(abs(days_since_lockdown_min_yearcurrent) <= 30) %>%
+    dplyr::filter(!is.na(hits_ma7),
+                  !is.na(days_since_lockdown_min_yearcurrent_post))
+  
   if((nrow(df_i) > 0) & (length(unique(df_i$year2020)) > 1)){
     
     # FE: mm_dd
-    
     out <- felm(hits_ma7_log ~ year2020 + 
                   days_since_lockdown_min_yearcurrent_post + 
-                  days_since_lockdown_min_yearcurrent_post_X_year2020 | week + wday + geo | 0 | geo, 
+                  days_since_lockdown_min_yearcurrent_post_X_year2020 | week + wday | 0 | 0, 
                 data = df_i) %>%
       lm_post_confint_tidy() %>%
       dplyr::mutate(keyword = keyword_i,
-                    region = region_i)
+                    geo = geo_i,
+                    have_gtrends_data = T,
+                    have_lockdown_data = T,
+                    wb_region = df_i$wb_region[1])
   } else{
-    out <- data.frame(NULL)
+    out <- data.frame(keyword = keyword_i,
+                      geo = geo_i,
+                      have_gtrends_data = have_gtrends_data,
+                      have_lockdown_data = have_lockdown_data)
   }
   
   return(out)
 }
 
 ## Grab list of regions
-wb_regions_all <- gtrends_df$wb_region %>% 
+wb_geo_all <- gtrends_df$geo %>% 
   unique() %>% 
   na.omit() %>% 
   as.character()
 
-global_results_df <- map_df(keywords_en_use, run_reg, "Global")
-region_results_df <- map_df(wb_regions_all, function(region_i){
-  map_df(keywords_en_use, run_reg, region_i)
+geo_results_df <- map_df(wb_geo_all, function(geo_i){
+  print(geo_i)
+  map_df(keywords_en_use, run_reg, geo_i)
 })
 
-results_all <- bind_rows(global_results_df, region_results_df)
-
 # Export Results ---------------------------------------------------------------
-saveRDS(results_all,
+saveRDS(geo_results_df,
         file.path(dropbox_file_path, "Data", "google_trends", "FinalData", "results", 
-                  "did_results.Rds"))
+                  "did_results_country.Rds"))
 
 

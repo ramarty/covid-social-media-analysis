@@ -37,7 +37,7 @@ make_es_data <- function(keyword, df){
   
   df <- df %>%
     filter(keyword_en %in% !!keyword,
-           abs(days_since_lockdown_min) <= 60) 
+           abs(days_since_lockdown_min) <= 30) 
   
   if(nrow(df) > 0){
     data_lm <- df %>%

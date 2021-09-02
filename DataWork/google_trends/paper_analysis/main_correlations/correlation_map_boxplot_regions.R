@@ -80,10 +80,10 @@ world_sp_tidy_long <- world_sp_tidy %>%
   ) %>%
     fct_rev)
 
-NA_COLOR <- "gray"
+NA_COLOR <- "gray40"
 p_map <- ggplot() +
   geom_polygon(data = world_sp_tidy_long[is.na(world_sp_tidy_long$cor),][1,] %>%
-                 mutate(temp = "Low Search Interest"),
+                 mutate(temp = "Low Search\nInterest"),
                aes(x = long, y = lat, group = group,
                    color = temp),
                fill = NA_COLOR) +
@@ -93,8 +93,7 @@ p_map <- ggplot() +
   theme_void() +
   coord_quickmap() +
   labs(fill = "Correlation\nbetween\nsearch term and\nCOVID-19 cases",
-       color = NULL,
-       title = "A") +
+       color = NULL) +
   scale_fill_gradient2(low = "firebrick", mid = "bisque", high = "forestgreen",
                        midpoint = 0,
                        limits = c(-1,1)) +
@@ -104,7 +103,7 @@ p_map <- ggplot() +
   facet_wrap(~search_term,
              nrow = 2) 
 ggsave(p_map, filename = file.path(paper_figures, "cor_map.png"),
-       height = 4, width = 7)
+       height = 7, width = 8)
 
 # Boxplot ======================================================================
 ALPHA_VLINE <- 0.3

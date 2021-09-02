@@ -8,6 +8,11 @@
 
 #Sys.setlocale("LC_CTYPE", "en_US.UTF-8")
 
+keywords_en_use <- c("debt", "file for unemployment", "find new job", 		
+                     "interview tips",
+                     "job interview", "loan", "unemployment benefits", "unemployment insurance", 	
+                     "unemployment office")
+
 keywords_en_use <- c("loss of smell", 
                      "loss of taste",
                      "pneumonia",
@@ -33,10 +38,14 @@ keywords_en_use <- c("loss of smell",
                      "depressed", "lonely", "suicidal", "abuse",
                      "therapist near me", "online therapist",
                      "deep breathing", "body scan meditation",
-                     "unemployment", "unemployment insurance")
+                     "unemployment", "unemployment insurance",
+                     "debt", "file for unemployment", "find new job", 		
+                     "interview tips",
+                     "job interview", "loan", "unemployment benefits", "unemployment insurance", 	
+                     "unemployment office")
 
 # PARAMETERS
-SLEEP_TIME      <- 0.001 # number of seconds to pause after each scrape
+SLEEP_TIME      <- 0.5 # number of seconds to pause after each scrape
 overwrite_files <- F # overwrite data?
 
 OUT_FOLDER_LIST <- c("timeseries_2019-01-01_2019-09-27",

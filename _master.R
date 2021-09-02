@@ -35,7 +35,11 @@ if(Sys.info()[["user"]] == "robmarty") github_file_path <- "~/Documents/Github/c
 if(Sys.info()[["user"]] == "WB521633") covid_twitter_github <- "C:/Users/wb521633/Documents/Github/COVID-19-TweetIDs"
 if(Sys.info()[["user"]] == "robmarty") covid_twitter_github <- "~/Documents/Github/COVID-19-TweetIDs"
 
+data_dir <- file.path(dropbox_file_path, "Data")
+vaccine_dir <- file.path(data_dir, "usa_vaccine")
+
 brazil_twitter_figures_path <- file.path(dropbox_file_path, "Data", "twitter", "Outputs", "figures")
+
 
 google_figures_path <- file.path(dropbox_file_path, "Data", "google_trends", "outputs", "figures")
 
