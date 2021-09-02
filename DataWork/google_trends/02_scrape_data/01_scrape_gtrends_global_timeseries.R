@@ -21,22 +21,22 @@ keywords_en_use <- c("loss of smell",
                      "ageusia",
                      "anosmia",
                      "i can't smell",
-                     "how to treat coronavirus")
-
-# RUN THIS AGAIN!!!!
-# keywords_en_use <- c("social distance", "stay at home", "boredom", "anxiety", "suicide", 
-#                      "insomnia", "social isolation", "loneliness", "divorce", 
-#                      "panic attack",
-#                      "fever",
-#                      "worried health", "hysteria", "overwhelmed", "anxiety symptoms",
-#                      "anxiety attack", "symptoms of panic attack",
-#                      "depressed", "lonely", "suicidal", "abuse", 
-#                      "therapist near me", "online therapist",
-#                      "deep breathing", "body scan meditation",
-#                      "unemployment", "unemployment insurance")
+                     "how to treat coronavirus",
+                     "social distance", "stay at home", "boredom", "anxiety", "suicide",
+                     "insomnia", "social isolation", "loneliness", "divorce",
+                     "panic attack",
+                     "fever",
+                     "panic",
+                     "worried health", "hysteria", "overwhelmed", "anxiety symptoms",
+                     "anxiety attack", "symptoms of panic attack",
+                     "depression",
+                     "depressed", "lonely", "suicidal", "abuse",
+                     "therapist near me", "online therapist",
+                     "deep breathing", "body scan meditation",
+                     "unemployment", "unemployment insurance")
 
 # PARAMETERS
-SLEEP_TIME      <- 0.4 # number of seconds to pause after each scrape
+SLEEP_TIME      <- 0.001 # number of seconds to pause after each scrape
 overwrite_files <- F # overwrite data?
 
 OUT_FOLDER_LIST <- c("timeseries_2019-01-01_2019-09-27",
