@@ -38,6 +38,7 @@ if(Sys.info()[["user"]] == "robmarty") covid_twitter_github <- "~/Documents/Gith
 
 data_dir <- file.path(dropbox_file_path, "Data")
 vaccine_dir <- file.path(data_dir, "usa_vaccine")
+oxpol_dir <- file.path(data_dir, "oxford_covid_policy_tracker")
 
 brazil_twitter_figures_path <- file.path(dropbox_file_path, "Data", "twitter", "Outputs", "figures")
 
@@ -48,5 +49,31 @@ if(Sys.info()[["user"]] == "robmarty"){
   paper_tables <- file.path("~/Dropbox/Apps/Overleaf/COVID-19 and Google Trends Paper/tables")
   paper_figures <- file.path("~/Dropbox/Apps/Overleaf/COVID-19 and Google Trends Paper/figures")
 }
+
+# Keywords ---------------------------------------------------------------------
+# Keywords to use to evaluate COVID containement policies
+KEYWORDS_CONTAIN_USE <- c("social distance",
+                          "stay at home",
+                          
+                          "unemployment",
+                          "unemployment insurance",
+                          "unemployment benefits",
+                          "unemployment office",
+                          "file for unemployment",
+                          "debt",
+                          
+                          "boredom",
+                          "anxiety",
+                          "anxiety attack",
+                          "anxiety symptoms",
+                          #"overwhelmed", # panic
+                          "panic",
+                          "hysteria",
+                          "suicide",
+                          "insomnia",
+                          "social isolation",
+                          "lonely",
+                          "loneliness",
+                          "divorce")
 
 

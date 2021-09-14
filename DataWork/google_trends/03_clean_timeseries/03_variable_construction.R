@@ -23,15 +23,11 @@ gtrends_df <- gtrends_df %>%
 
 gtrends_df <- gtrends_df %>%
   dplyr::mutate(year = date %>% year,
-                lockdown_date_max_mm_dd = lockdown_date_max %>% substring(6,10),
-                lockdown_date_min_mm_dd = lockdown_date_min %>% substring(6,10)) %>%
-  dplyr::mutate(lockdown_date_max_yearcurrent = paste0(year, "-", lockdown_date_max_mm_dd) %>% ymd(),
-                lockdown_date_min_yearcurrent = paste0(year, "-", lockdown_date_min_mm_dd) %>% ymd()) %>%
-  dplyr::mutate(days_since_lockdown_max_yearcurrent = date - lockdown_date_max_yearcurrent,
-                days_since_lockdown_min_yearcurrent = date - lockdown_date_min_yearcurrent) %>%
-  dplyr::mutate(days_since_lockdown_max_yearcurrent_post = days_since_lockdown_max_yearcurrent >= 0,
-                days_since_lockdown_min_yearcurrent_post = days_since_lockdown_min_yearcurrent >= 0) %>%
-  dplyr::select(-c(lockdown_date_min_mm_dd, lockdown_date_max_mm_dd))
+                c_policy_mm_dd = c_policy %>% substring(6,10)) %>%
+  dplyr::mutate(c_policy_yearcurrent = paste0(year, "-", c_policy_mm_dd) %>% ymd()) %>%
+  dplyr::mutate(days_since_c_policy_yearcurrent = date - c_policy_yearcurrent) %>%
+  dplyr::mutate(days_since_c_policy_yearcurrent_post = days_since_c_policy_yearcurrent >= 0) %>%
+  dplyr::select(-c(c_policy_mm_dd))
 
 # Variable Fixes ---------------------------------------------------------------
 gtrends_df <- gtrends_df %>%

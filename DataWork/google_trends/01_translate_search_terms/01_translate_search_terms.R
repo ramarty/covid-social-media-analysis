@@ -28,7 +28,7 @@ language_codes <- c(language_codes, "sw") # adding swahili
 # Scrape Translations ----------------------------------------------------------
 for(l_code_i in sort(language_codes)){
   print(l_code_i)
-
+  
   translations_out <- r_google_translate_vec(keywords_df$keyword_en,
                                              target = l_code_i,
                                              format = "text",

@@ -57,5 +57,5 @@ p <- results_df %>%
   theme(axis.text = element_text(face = "bold"))
 
 ggsave(p, filename = file.path(paper_figures, "did_country_dot_box.png"),
-       height = 6, width = 6)
-
+       height = 8, width = 6)
+# height = 6, width = 6

@@ -21,8 +21,7 @@ gtrends_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "Fin
 gtrends_df$geo_name <- gtrends_df$geo %>% countrycode(origin = "iso2c", destination = "iso.name.en")
 
 gtrends_df <- gtrends_df %>%
-  mutate(days_since_lockdown_min_fact = factor(days_since_lockdown_min),
-         days_since_lockdown_min_fact = days_since_lockdown_min_fact %>% relevel(ref = "-1")) 
+  mutate(days_since_c_policy_fact = factor(days_since_c_policy) %>% relevel(ref = "-1")) 
 
 gtrends_df <- gtrends_df[!is.na(gtrends_df$wb_region),]
 
@@ -37,15 +36,15 @@ make_es_data <- function(keyword, df){
   
   df <- df %>%
     filter(keyword_en %in% !!keyword,
-           abs(days_since_lockdown_min) <= 30) 
+           abs(days_since_c_policy) <= 30) 
   
   if(nrow(df) > 0){
     data_lm <- df %>%
-      felm(hits_ma7 ~ days_since_lockdown_min_fact | geo | 0 | date, data = .) %>%
+      felm(hits_ma7 ~ days_since_c_policy_fact | geo | 0 | date, data = .) %>%
       lm_post_confint_tidy() %>%
       filter(variable != "(Intercept)") %>%
       mutate(variable = variable %>%
-               str_replace_all("days_since_lockdown_min_fact", "") %>%
+               str_replace_all("days_since_c_policy_fact", "") %>%
                as.numeric()) 
     data_lm$N <- length(unique(df$geo))
     data_lm$keyword <- keyword
@@ -57,27 +56,11 @@ make_es_data <- function(keyword, df){
   return(data_lm)
 }
 
-df_fig <- map_df(c("social distance",
-                   "stay at home",
-                   "unemployment",
-                   "unemployment insurance",
-                   "boredom",
-                   "anxiety",
-                   "anxiety attack",
-                   "anxiety symptoms",
-                   "overwhelmed", # panic
-                   "hysteria",
-                   "suicide",
-                   "insomnia",
-                   "overwhelmed",
-                   "social isolation",
-                   "lonely",
-                   "loneliness",
-                   "divorce"), 
+df_fig <- map_df(KEYWORDS_CONTAIN_USE, 
                  make_es_data, 
                  gtrends_df) %>%
   dplyr::mutate(#region_name = paste0(region, "\nN Countries: ", N),
-                sig = (p025 > 0 & p975 > 0) | (p025 < 0 & p975 < 0)) %>%
+    sig = (p025 > 0 & p975 > 0) | (p025 < 0 & p975 < 0)) %>%
   dplyr::mutate(sig = ifelse(sig, "Yes", "No")) %>%
   dplyr::mutate(keyword = keyword %>% tools::toTitleCase())
 
@@ -107,7 +90,8 @@ p <- df_fig %>%
   scale_color_manual(values = c("black", "red")) +
   facet_wrap(~keyword,
              scales = "free_y",
-             nrow = 4) 
-
-ggsave(p, filename = file.path(paper_figures, "es_global.png"), height = 7, width = 12)
+             ncol = 4) 
+HEIGHT = 12
+WIDTH = 12
+ggsave(p, filename = file.path(paper_figures, "es_global.png"), height = HEIGHT, width = WIDTH)
 

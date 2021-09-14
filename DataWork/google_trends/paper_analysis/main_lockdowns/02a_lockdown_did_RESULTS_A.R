@@ -21,8 +21,8 @@ gtrends_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "Fin
 gtrends_df <- gtrends_df %>%
   dplyr::filter(year %in% c(2019, 2020)) %>%
   dplyr::mutate(year2020 = as.numeric(year >= 2020)) %>%
-  dplyr::mutate(days_since_lockdown_min_yearcurrent_post_X_year2020 = 
-                  days_since_lockdown_min_yearcurrent_post*year2020) %>%
+  dplyr::mutate(days_since_c_policy_yearcurrent_post_X_year2020 = 
+                  days_since_c_policy_yearcurrent_post*year2020) %>%
   dplyr::mutate(week = date %>% week,
                 wday = date %>% wday)
 
@@ -81,14 +81,14 @@ run_reg <- function(keyword_i, region_i){
   }
   
   df_i <- df_i[!is.na(df_i$hits_ma7),]
-  df_i <- df_i[!is.na(df_i$days_since_lockdown_min_yearcurrent_post),] # must be a lockdown
+  df_i <- df_i[!is.na(df_i$days_since_c_policy_yearcurrent_post_X_year2020),] # must be a lockdown
   if((nrow(df_i) > 0) & (length(unique(df_i$year2020)) > 1)){
     
     # FE: mm_dd
     
     out <- felm(hits_ma7_log ~ year2020 + 
-                  days_since_lockdown_min_yearcurrent_post + 
-                  days_since_lockdown_min_yearcurrent_post_X_year2020 | week + wday + geo | 0 | geo, 
+                  days_since_c_policy_yearcurrent_post + 
+                  days_since_c_policy_yearcurrent_post_X_year2020 | week + wday + geo | 0 | geo, 
                 data = df_i) %>%
       lm_post_confint_tidy() %>%
       dplyr::mutate(keyword = keyword_i,
