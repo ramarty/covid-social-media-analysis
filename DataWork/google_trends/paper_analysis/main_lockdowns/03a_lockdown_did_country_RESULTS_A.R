@@ -40,7 +40,7 @@ gtrends_df$hits_ma7_log <- log(gtrends_df$hits_ma7_log+1)
 
 # Regressions ------------------------------------------------------------------
 gtrends_df <- gtrends_df %>%
-  dplyr::filter(keyword_en %in% keywords_en_use) %>%
+  dplyr::filter(keyword_en %in% "stay at home") %>% # KEYWORDS_CONTAIN_USE
   dplyr::filter(!is.na(days_since_c_policy_yearcurrent),
                 !is.na(hits_ma7)) 
 
@@ -78,6 +78,7 @@ run_reg <- function(keyword_i, geo_i){
                     have_lockdown_data = T,
                     wb_region = df_i$wb_region[1])
   } else{
+    print(paste0("----", geo_i))
     out <- data.frame(keyword = keyword_i,
                       geo = geo_i,
                       have_gtrends_data = have_gtrends_data,

@@ -59,7 +59,7 @@ p_conspiracy <- gtrends_df %>%
   # Cleanup title
   dplyr::mutate(keyword = case_when(
     keyword == "is the covid vaccine the mark of the beast" ~ 
-      "is the covid vaccine the mark of\nthe beast",
+      "is the covid vaccine\nthe mark of the beast",
     TRUE ~ keyword),
     keyword = keyword %>% tools::toTitleCase(),
     title = paste0("Search interest in:\n", keyword)) %>%
@@ -90,17 +90,56 @@ p_conspiracy <- gtrends_df %>%
   scale_color_manual(values = c("blue", "red")) +
   facet_wrap(~title, nrow = 1)
 
+# C. Vaccine conspiracies popularity -------------------------------------------
+us_misinfo_df <- readRDS(file.path(gtrends_dir, "RawData", "search_interest_across_terms_us", 
+                                   "gtrends_missinfo_2020-12-01_2021-07-31.Rds"))
+
+us_misinfo_int_df <- us_misinfo_df$interest_over_time
+
+us_misinfo_int_popularity_df <- us_misinfo_int_df %>%
+  group_by(keyword) %>%
+  dplyr::summarise(hits = mean(hits)) %>%
+  ungroup() %>%
+  dplyr::mutate(hits = hits/max(hits)*100,
+                keyword = keyword %>% tools::toTitleCase(),
+                keyword = case_when(keyword %in% "Covid Vaccine Change Dna" ~
+                                      "COVID Vaccine\nChange DNA",
+                                    keyword %in% "Covid Vaccine Cause Infertility" ~
+                                      "COVID Vaccine\nCause Infertility",
+                                    keyword %in% "Covid Microchip" ~
+                                      "COVID Microchip",
+                                    keyword %in% "Is the Covid Vaccine the Mark of the Beast" ~
+                                      "Is the COVID Vaccine\nthe Mark of the Beast"),
+  ) 
+
+p_search_pop <- us_misinfo_int_popularity_df %>%
+  ggplot() +
+  geom_col(aes(y = reorder(keyword, hits), 
+               x = hits),
+           fill = "dodgerblue4") +
+  labs(x = "Search Interest",
+       y = NULL,
+       title = "C. Relative interest\nin missinformation\nsearch terms") +
+  theme_minimal() +
+  theme(axis.title.y = element_text(angle = 0, vjust = 0.5),
+        axis.text.y = element_text(face = "bold", color = "black"),
+        plot.title = element_text(hjust = 0, face = "bold")) 
+
 # Arrange ----------------------------------------------------------------------
-p <- ggarrange(p_vaccine, p_conspiracy,
+p_bottom <- ggarrange(p_conspiracy + theme(legend.position = "none"), 
+                      p_search_pop,
+                      widths = c(0.66, 0.37),
+                      ncol = 2)
+
+p <- ggarrange(p_vaccine, p_bottom,
                heights = c(0.66, 0.37),
-               ncol = 1,
-               common.legend = TRUE,
-               legend = "right")
+               ncol = 1)
 
 ggsave(p, filename = file.path(paper_figures, "vaccine_panels.png"),
        height = 13, width = 11)
 
-
+#common.legend = TRUE,
+#legend = "right"
 
 
 

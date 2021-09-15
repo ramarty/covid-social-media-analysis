@@ -4,18 +4,28 @@
 gtrends_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
                                 "gtrends_full_timeseries", "gtrends_otherdata_varclean.Rds"))
 
+n_countries_df <- gtrends_df %>%
+  dplyr::filter(!is.na(hits_ma7),
+                !is.na(days_since_c_policy_yearcurrent)) %>%
+  distinct(keyword_en, geo) %>%
+  group_by(keyword_en) %>%
+  dplyr::summarise(N_countries_keyword = n())
+
 gtrends_sum_df <- gtrends_df %>%
+  left_join(n_countries_df, by = "keyword_en") %>%
   dplyr::filter(year %in% c(2019, 2020),
                 keyword_en %in% KEYWORDS_CONTAIN_USE,
                 days_since_c_policy_yearcurrent > -60,
                 days_since_c_policy_yearcurrent < 60) %>%
+  dplyr::filter(!is.na(hits_ma7)) %>%
   group_by(keyword_en, geo) %>%
   dplyr::mutate(hits_ma7_min = min(hits_ma7, na.rm=T),
                 hits_ma7_max = max(hits_ma7, na.rm=T)) %>%
   ungroup() %>%
   dplyr::mutate(hits_ma7_std = ((hits_ma7 - hits_ma7_min) / (hits_ma7_max - hits_ma7_min))*100) %>%
-  dplyr::group_by(keyword_en, year, days_since_c_policy_yearcurrent) %>%
+  dplyr::group_by(keyword_en, year, N_countries_keyword, days_since_c_policy_yearcurrent) %>%
   dplyr::summarise(hits_ma7_std = mean(hits_ma7_std, na.rm = T)) %>%
+  #dplyr::mutate(keyword_en = keyword_en %>% tools::toTitleCase() %>% paste0("\nN Countries = ", N_countries_keyword))
   dplyr::mutate(keyword_en = keyword_en %>% tools::toTitleCase())
 
 p <- gtrends_sum_df %>% 

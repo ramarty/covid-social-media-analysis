@@ -7,7 +7,7 @@ results_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "Fin
 # Prep Data --------------------------------------------------------------------
 results_df$sig <- ifelse(results_df$pvalue <= 0.05, "Yes", "No") %>% fct_rev()
 results_df <- results_df[!is.na(results_df$b),]
-results_df <- results_df[results_df$variable %in% "days_since_lockdown_min_yearcurrent_post_X_year2020",]
+results_df <- results_df[results_df$variable %in% "days_since_c_policy_yearcurrent_post_X_year2020",]
 
 results_df <- results_df %>%
   group_by(keyword) %>%

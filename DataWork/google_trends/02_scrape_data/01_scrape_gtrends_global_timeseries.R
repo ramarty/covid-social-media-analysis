@@ -44,6 +44,8 @@ keywords_en_use <- c("loss of smell",
                      "job interview", "loan", "unemployment benefits", "unemployment insurance", 	
                      "unemployment office")
 
+keywords_en_use <- c("vaccine", "covid-19", "coronavirus", "covid vaccine")
+
 # PARAMETERS
 SLEEP_TIME      <- 0.5 # number of seconds to pause after each scrape
 overwrite_files <- F # overwrite data?
@@ -59,6 +61,12 @@ OUT_FOLDER_LIST <- c("timeseries_regions_2020-12-01_2021-05-31",
                      "timeseries_regions_2020-12-01_2021-07-31",
                      "timeseries_regions_2021-03-01_2021-07-31",
                      "timeseries_regions_2020-12-01_2021-08-31")
+
+OUT_FOLDER_LIST <- c("timeseriesALL_2020-12-01_2021-08-31",
+                     "timeseriesALL_2020-12-01_2021-07-31",
+                     "timeseriesALL_2021-01-03_2021-07-31",
+                     "timeseriesALL_2021-01-03_2021-08-31",
+                     "timeseriesALL_2021-06-01_2021-08-31")
 # "timeseries_regions_2020-01-01_2020-01-31",
 # "timeseries_regions_2020-02-01_2020-02-29",
 # "timeseries_regions_2020-03-01_2020-03-31",
@@ -86,7 +94,6 @@ select_countries_vec <- c("US", # United States
                           "AU", # Australia
                           "IN") 
 
-eeuu <- read.csv(file.path(data_dir, "eeuu_vaccine", "RawData", "data.csv"))
 select_countries_vec <- c("US")
 
 # Function to Scrape Google Data -----------------------------------------------
@@ -101,12 +108,26 @@ extract_trends <- function(iso_i,
   # because of google rate limits.
   
   # 1. Scrape
-  out <- gtrends(term_i, 
-                 geo = iso_i,
-                 time = start_end_date,
-                 onlyInterest = onlyInterest,
-                 low_search_volume=T)
-  
+  if(iso_i == "all"){
+    out <- gtrends(term_i, 
+                   time = start_end_date,
+                   onlyInterest = onlyInterest,
+                   low_search_volume=T)
+  } else{
+    out <- gtrends(term_i, 
+                   geo = iso_i,
+                   time = start_end_date,
+                   onlyInterest = onlyInterest,
+                   low_search_volume=T)
+    
+    out <- gtrends("vaccine", 
+                   geo = "DE",
+                   time = start_end_date,
+                   onlyInterest = F,
+                   low_search_volume=T)
+    
+  }
+
   if(onlyInterest %in% T){
     
     # 2. Grab data, and convert variables to character to avoid type conflict late
@@ -176,6 +197,10 @@ for(OUT_FOLDER in OUT_FOLDER_LIST){
     ALL_TERMS <- T
     ALL_COUNTRIES <- F
     onlyInterest <- F
+  } else if(grepl("timeseriesALL_", OUT_FOLDER)){
+    ALL_TERMS <- T
+    ALL_COUNTRIES <- T
+    onlyInterest <- F
   } else{
     ALL_TERMS <- T
     ALL_COUNTRIES <- T
@@ -184,6 +209,7 @@ for(OUT_FOLDER in OUT_FOLDER_LIST){
   
   start_end_date <- OUT_FOLDER %>% 
     str_replace_all("timeseries_regions_", "") %>% 
+    str_replace_all("timeseriesALL_", "") %>%
     str_replace_all("timeseries_", "") %>%
     str_replace_all("_", " ")
   
@@ -196,6 +222,8 @@ for(OUT_FOLDER in OUT_FOLDER_LIST){
   ## Check if root folter eixts; if not, create
   # dir.create only creates if doesn't already exist
   dir.create(file.path(dropbox_file_path, "Data", "google_trends", "RawData", OUT_FOLDER))
+  
+  if(grepl("timeseriesALL_", OUT_FOLDER)) language_codes_all <- "en"
   
   # Loop through languages, countries and terms ----------------------------------
   for(language in language_codes_all){
@@ -213,6 +241,8 @@ for(OUT_FOLDER in OUT_FOLDER_LIST){
     iso2 <- iso2[!is.na(iso2)]
     
     if(!ALL_COUNTRIES) iso2 <- iso2[iso2 %in% select_countries_vec]
+    
+    if(grepl("timeseriesALL_", OUT_FOLDER)) iso2 <- "all"
     
     ## SCRAPE DATA
     for(term_i in keywords_vec){
@@ -236,6 +266,7 @@ for(OUT_FOLDER in OUT_FOLDER_LIST){
           print(paste(language, iso_i, term_i, "-------------------------------"))
           
           tryCatch({
+            
             term_df <- extract_trends(iso_i,
                                       term_i,
                                       language,

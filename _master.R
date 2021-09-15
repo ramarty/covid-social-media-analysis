@@ -37,6 +37,7 @@ if(Sys.info()[["user"]] == "WB521633") covid_twitter_github <- "C:/Users/wb52163
 if(Sys.info()[["user"]] == "robmarty") covid_twitter_github <- "~/Documents/Github/COVID-19-TweetIDs"
 
 data_dir <- file.path(dropbox_file_path, "Data")
+gtrends_dir <- file.path(data_dir, "google_trends")
 vaccine_dir <- file.path(data_dir, "usa_vaccine")
 oxpol_dir <- file.path(data_dir, "oxford_covid_policy_tracker")
 
