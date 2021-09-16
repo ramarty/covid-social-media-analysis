@@ -4,10 +4,12 @@
 gtrends_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
                                 "gtrends_full_timeseries",
                                 "correlation_datasets",
-                                paste0("gtrends_since","2020-01-01",".Rds")))
+                                "gtrends_since2020-01-01_until2021-07-31.Rds"))
+
+gtrends_df$cases_new <- gtrends_df$cases_new_ma7
 
 # Prep Data --------------------------------------------------------------------
-# (1) Filter and (2) Scale between 0 and 1 and (3) Rename
+## Subset and scale between 0 and 1
 gtrends_df <- gtrends_df %>%
   filter(keyword_en %in% "loss of smell",
          !is.na(Country)) %>%
@@ -15,6 +17,7 @@ gtrends_df <- gtrends_df %>%
   mutate(hits_ma7 = hits_ma7 / max(hits_ma7, na.rm=T),
          cases_new = cases_new / max(cases_new, na.rm=T)) 
 
+## Shorten country name
 gtrends_df$Country[gtrends_df$Country %in% "occupied Palestinian territory, including east Jerusalem"] <- "Palestine"
 gtrends_df$Country[gtrends_df$Country %in% "Iran (Islamic Republic of)"] <- "Iran"
 gtrends_df$Country[gtrends_df$Country %in% "Bolivia (Plurinational State of)"] <- "Bolivia"
@@ -23,13 +26,24 @@ gtrends_df$Country[gtrends_df$Country %in% "Venezuela (Bolivarian Republic of)"]
 gtrends_df$Country[gtrends_df$Country %in% "Bosnia and Herzegovina"] <- "Bosnia & Herzegovina"
 gtrends_df$Country[gtrends_df$Country %in% "Viet Nam"] <- "Vietnam"
 
+## Correlation in title
+gtrends_df <- gtrends_df %>%
+  dplyr::mutate(Country = paste0(Country, "\nCorrelation: ", cor_casesMA7_hitsMA7_nolag %>% round(2)))
+
 gtrends_df$Country = gtrends_df$Country %>% as.factor()
 gtrends_df$Country <- reorder(gtrends_df$Country, gtrends_df$cor_casesMA7_hitsMA7_nolag) %>% fct_rev
 
 # Figure: Top Countries --------------------------------------------------------
+gtrends_df %>%
+  dplyr::filter(cases_total > 0,
+                cor_casesMA7_hitsMA7_nolag > 0.505) %>%
+  pull(geo) %>%
+  unique() %>%
+  length()
+
 p_top <- gtrends_df %>%
   dplyr::filter(cases_total > 0,
-                cor_casesMA7_hitsMA7_nolag > 0.51) %>%
+                cor_casesMA7_hitsMA7_nolag > 0.505) %>%
   ggplot() +
   geom_col(aes(x = date, y = cases_new),
            fill = "#ffc266", # orange3
@@ -60,7 +74,7 @@ p_top <- gtrends_df %>%
              scales = "free") 
 
 ggsave(p_top, filename = file.path(paper_figures, "cases_vs_loss_of_smell_trends_topcountries.png"),
-       heigh = 20, width=14.2)
+       heigh = 21, width=14.2)
 
 # Figure: All Countries --------------------------------------------------------
 p_all <- gtrends_df %>%
@@ -95,4 +109,4 @@ p_all <- gtrends_df %>%
              scales = "free") 
 
 ggsave(p_all, filename = file.path(paper_figures, "cases_vs_loss_of_smell_trends_allcountries.png"),
-       heigh = 16, width=15.2)
+       heigh = 17, width=15.2)

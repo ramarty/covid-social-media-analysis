@@ -8,38 +8,69 @@
 
 #Sys.setlocale("LC_CTYPE", "en_US.UTF-8")
 
+keywords_en_use <- c("debt", "file for unemployment", "find new job", 		
+                     "interview tips",
+                     "job interview", "loan", "unemployment benefits", "unemployment insurance", 	
+                     "unemployment office")
+
 keywords_en_use <- c("loss of smell", 
                      "loss of taste",
                      "pneumonia",
                      "fever",
+                     "cough",
+                     "covid-19",
+                     "covid symptoms",
+                     "coronavirus",
+                     "difficulty breathing",
+                     "tired",
                      "ageusia",
                      "anosmia",
                      "i can't smell",
-                     "how to treat coronavirus")
+                     "how to treat coronavirus",
+                     "social distance", "stay at home", "boredom", "anxiety", "suicide",
+                     "insomnia", "social isolation", "loneliness", "divorce",
+                     "panic attack",
+                     "fever",
+                     "panic",
+                     "worried health", "hysteria", "overwhelmed", "anxiety symptoms",
+                     "anxiety attack", "symptoms of panic attack",
+                     "depression",
+                     "depressed", "lonely", "suicidal", "abuse",
+                     "therapist near me", "online therapist",
+                     "deep breathing", "body scan meditation",
+                     "unemployment", "unemployment insurance",
+                     "debt", "file for unemployment", "find new job", 		
+                     "interview tips",
+                     "job interview", "loan", "unemployment benefits", "unemployment insurance", 	
+                     "unemployment office")
+
+keywords_en_use <- KEYWORDS_CONTAIN_USE
 
 # PARAMETERS
-SLEEP_TIME      <- 12.5 # number of seconds to pause after each scrape
+SLEEP_TIME      <- 0.5 # number of seconds to pause after each scrape
 overwrite_files <- F # overwrite data?
 
-OUT_FOLDER_LIST <- c("timeseries_2020-01-01_2020-09-26",
+OUT_FOLDER_LIST <- c("timeseries_2018-09-01_2019-05-28",
+                     "timeseries_2019-01-01_2019-09-27",
+                     "timeseries_2019-07-01_2020-03-26",
+                     "timeseries_2020-01-01_2020-09-26",
                      "timeseries_2020-07-05_2021-03-31",
-                     "timeseries_2020-09-04_2021-05-31") %>% rev()
-# OUT_FOLDER_LIST <- c("timeseries_regions_2020-12-01_2021-05-31",
-#                      "timeseries_regions_2021-03-01_2021-05-31") 
-                     # "timeseries_regions_2020-01-01_2020-01-31",
-                     # "timeseries_regions_2020-02-01_2020-02-29",
-                     # "timeseries_regions_2020-03-01_2020-03-31",
-                     # "timeseries_regions_2020-04-01_2020-04-30",
-                     # "timeseries_regions_2020-05-01_2020-05-31",
-                     # "timeseries_regions_2020-06-01_2020-06-30",
-                     # "timeseries_regions_2020-07-01_2020-07-31",
-                     # "timeseries_regions_2020-08-01_2020-08-31",
-                     # "timeseries_regions_2020-09-01_2020-09-30",
-                     # "timeseries_regions_2020-10-01_2020-10-31",
-                     # "timeseries_regions_2020-11-01_2020-11-30",
-                     # "timeseries_regions_2020-12-01_2020-12-31",
-                     # "timeseries_regions_2021-01-01_2021-01-31",
-                     # "timeseries_regions_2021-02-01_2021-02-28") 
+                     "timeseries_2020-11-04_2021-07-31") %>% rev()
+
+# "timeseries_regions_2020-01-01_2020-01-31",
+# "timeseries_regions_2020-02-01_2020-02-29",
+# "timeseries_regions_2020-03-01_2020-03-31",
+# "timeseries_regions_2020-04-01_2020-04-30",
+# "timeseries_regions_2020-05-01_2020-05-31",
+# "timeseries_regions_2020-06-01_2020-06-30",
+# "timeseries_regions_2020-07-01_2020-07-31",
+# "timeseries_regions_2020-08-01_2020-08-31",
+# "timeseries_regions_2020-09-01_2020-09-30",
+# "timeseries_regions_2020-10-01_2020-10-31",
+# "timeseries_regions_2020-11-01_2020-11-30",
+# "timeseries_regions_2020-12-01_2020-12-31",
+# "timeseries_regions_2021-01-01_2021-01-31",
+# "timeseries_regions_2021-02-01_2021-02-28") 
 
 ## Subset for regions
 # only used if ALL_COUNTRIES = F
@@ -67,11 +98,25 @@ extract_trends <- function(iso_i,
   # because of google rate limits.
   
   # 1. Scrape
-  out <- gtrends(term_i, 
-                 geo = iso_i,
-                 time = start_end_date,
-                 onlyInterest = onlyInterest,
-                 low_search_volume=T)
+  if(iso_i == "all"){
+    out <- gtrends(term_i, 
+                   time = start_end_date,
+                   onlyInterest = onlyInterest,
+                   low_search_volume=T)
+  } else{
+    out <- gtrends(term_i, 
+                   geo = iso_i,
+                   time = start_end_date,
+                   onlyInterest = onlyInterest,
+                   low_search_volume=T)
+    
+    out <- gtrends("vaccine", 
+                   geo = "DE",
+                   time = start_end_date,
+                   onlyInterest = F,
+                   low_search_volume=T)
+    
+  }
 
   if(onlyInterest %in% T){
     
@@ -114,9 +159,11 @@ keywords_df <- keywords_df[keywords_df$keyword_en %in% keywords_en_use,]
 # keywords_df$keyword_zh 
 #keywords_df$keyword_zh 
 
-keywords_df <- keywords_df %>%
-  arrange(priority_to_scrape) %>%
-  filter(scrape %in% "yes" | category %in% c("vaccine", "us election missinformation"))
+if(F){
+  keywords_df <- keywords_df %>%
+    arrange(priority_to_scrape) %>%
+    filter(scrape %in% c("yes", "no") | category %in% c("vaccine", "missinformation", "us election missinformation"))
+}
 
 ## Language Dataset
 # Indicates which language to use for each country. 
@@ -129,14 +176,20 @@ language_codes_all <- language_codes_all[!is.na(language_codes_all)]
 language_codes_all <- language_codes_all[language_codes_all != ""]
 language_codes_all <- language_codes_all %>% sort()
 
+language_codes_all <- language_codes_all 
+
 #language_codes_all <- language_codes_all[language_codes_all != "my"]
 
 # Prep Parameters Based on Folder Name -----------------------------------------
 for(OUT_FOLDER in OUT_FOLDER_LIST){
   
   if(grepl("timeseries_regions_", OUT_FOLDER)){
-    ALL_TERMS <- F
+    ALL_TERMS <- T
     ALL_COUNTRIES <- F
+    onlyInterest <- F
+  } else if(grepl("timeseriesALL_", OUT_FOLDER)){
+    ALL_TERMS <- T
+    ALL_COUNTRIES <- T
     onlyInterest <- F
   } else{
     ALL_TERMS <- T
@@ -146,18 +199,21 @@ for(OUT_FOLDER in OUT_FOLDER_LIST){
   
   start_end_date <- OUT_FOLDER %>% 
     str_replace_all("timeseries_regions_", "") %>% 
+    str_replace_all("timeseriesALL_", "") %>%
     str_replace_all("timeseries_", "") %>%
     str_replace_all("_", " ")
   
   if(ALL_TERMS){
     keywords_sub_df <- keywords_df
   } else{
-    keywords_sub_df <- keywords_df[keywords_df$category %in% c("vaccine", "us election missinformation"),]
+    keywords_sub_df <- keywords_df[keywords_df$category %in% c("vaccine", "missinformation", "us election missinformation"),]
   }
   
   ## Check if root folter eixts; if not, create
   # dir.create only creates if doesn't already exist
   dir.create(file.path(dropbox_file_path, "Data", "google_trends", "RawData", OUT_FOLDER))
+  
+  if(grepl("timeseriesALL_", OUT_FOLDER)) language_codes_all <- "en"
   
   # Loop through languages, countries and terms ----------------------------------
   for(language in language_codes_all){
@@ -175,6 +231,8 @@ for(OUT_FOLDER in OUT_FOLDER_LIST){
     iso2 <- iso2[!is.na(iso2)]
     
     if(!ALL_COUNTRIES) iso2 <- iso2[iso2 %in% select_countries_vec]
+    
+    if(grepl("timeseriesALL_", OUT_FOLDER)) iso2 <- "all"
     
     ## SCRAPE DATA
     for(term_i in keywords_vec){
@@ -198,6 +256,7 @@ for(OUT_FOLDER in OUT_FOLDER_LIST){
           print(paste(language, iso_i, term_i, "-------------------------------"))
           
           tryCatch({
+            
             term_df <- extract_trends(iso_i,
                                       term_i,
                                       language,
@@ -221,9 +280,5 @@ for(OUT_FOLDER in OUT_FOLDER_LIST){
 }
 
 
-a <- gtrends("fever", 
-        geo = "US",
-        time = "2020-09-04 2021-05-31",
-        onlyInterest = T,
-        low_search_volume=T)
-a$interest_over_time
+
+
