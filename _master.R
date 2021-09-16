@@ -16,7 +16,7 @@ pacman::p_load(gtrendsR, countrycode, parallel, pbmcapply, ggplot2, jsonlite,
                tidyverse, sf, raster, leaflet, leaflet.extras, plotly,
                geosphere, data.table, formattable, tidyr, viridis, data.table,
                WDI, scales, rnaturalearth, sp, utf8, ggtext, stargazer, lfe,
-               ggrepel)
+               ggrepel, Rfast)
 
 # remotes::install_github("wilkelab/ggtext")
 # library(ggtext)
@@ -76,5 +76,14 @@ KEYWORDS_CONTAIN_USE <- c("social distance",
                           "lonely",
                           "loneliness",
                           "divorce")
+
+KEYWORDS_SYMTPOMS <- c("loss of smell",
+                       "loss of taste",
+                       "i can't smell",
+                       "ageusia",
+                       "anosmia",
+                       "pneumonia",
+                       "fever",
+                       "how to treat coronavirus")
 
 

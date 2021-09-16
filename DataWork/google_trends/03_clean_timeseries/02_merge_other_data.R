@@ -2,7 +2,7 @@
 
 # Load Data --------------------------------------------------------------------
 gtrends_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
-                                "gtrends_full_timeseries", "gtrends.Rds"))
+                                "gtrends_full_timeseries", "gtrends_complete.Rds"))
 
 cases_df <- read.csv(file.path(dropbox_file_path, "Data", "global_admin_data", 
                                "RawData", "WHO-COVID-19-global-data.csv"),
@@ -24,7 +24,7 @@ gtrends_df <- gtrends_df %>%
   filter(!is.na(geo))
 
 cases_df <- cases_df %>%
-  dplyr::rename(Date_reported = X...Date_reported) %>%
+  dplyr::rename(Date_reported = Date_reported) %>%
   dplyr::select(Date_reported, Country_code, New_cases, Cumulative_cases, 
                 New_deaths, Cumulative_deaths, Country) %>%
   dplyr::rename(cases = Cumulative_cases,
@@ -77,41 +77,45 @@ gtrends_df <- gtrends_df %>%
          days_since_c_policy = date - c_policy)
 
 # Google Mobility --------------------------------------------------------------
-gmobility_df <- gmobility_df %>%
-  dplyr::filter(sub_region_1 %in% "",
-                sub_region_2 %in% "",
-                metro_area %in% "",
-                !is.na(country_region_code)) %>%
-  dplyr::select(country_region_code, date,
-                retail_and_recreation_percent_change_from_baseline,
-                grocery_and_pharmacy_percent_change_from_baseline,
-                parks_percent_change_from_baseline,
-                transit_stations_percent_change_from_baseline,
-                workplaces_percent_change_from_baseline,
-                residential_percent_change_from_baseline) %>% 
-  dplyr::rename(geo = country_region_code) %>%
-  rename_at(vars(-geo, -date), ~ paste0("gmobility_", .)) %>%
-  dplyr::mutate(date = date %>% as.Date)
-
-gtrends_df <- gtrends_df %>%
-  left_join(gmobility_df,
-            by = c("geo", "date"))
+if(F){
+  gmobility_df <- gmobility_df %>%
+    dplyr::filter(sub_region_1 %in% "",
+                  sub_region_2 %in% "",
+                  metro_area %in% "",
+                  !is.na(country_region_code)) %>%
+    dplyr::select(country_region_code, date,
+                  retail_and_recreation_percent_change_from_baseline,
+                  grocery_and_pharmacy_percent_change_from_baseline,
+                  parks_percent_change_from_baseline,
+                  transit_stations_percent_change_from_baseline,
+                  workplaces_percent_change_from_baseline,
+                  residential_percent_change_from_baseline) %>% 
+    dplyr::rename(geo = country_region_code) %>%
+    rename_at(vars(-geo, -date), ~ paste0("gmobility_", .)) %>%
+    dplyr::mutate(date = date %>% as.Date)
+  
+  gtrends_df <- gtrends_df %>%
+    left_join(gmobility_df,
+              by = c("geo", "date"))
+}
 
 # Merge Oxford Policy Response Data --------------------------------------------
-oxpol_df <- read_csv("https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker/master/data/OxCGRT_latest.csv")
-
-oxpol_clean_df <- oxpol_df %>%
-  dplyr::filter(Jurisdiction %in% "NAT_TOTAL") %>%
-  dplyr::mutate(Date = Date %>% as.character() %>% ymd(),
-                geo = countrycode(CountryCode, origin = "iso3c", destination = "iso2c")) %>%
-  dplyr::mutate(geo = case_when(
-    CountryCode == "RKS" ~ "RS",
-    TRUE ~ geo
-  )) %>%
-  dplyr::select(Date, geo, StringencyIndex, GovernmentResponseIndex, EconomicSupportIndex) %>%
-  dplyr::rename(date = Date)
-
-gtrends_df <- merge(gtrends_df, oxpol_clean_df, by = c("geo", "date"), all.x=T, all.y=F)
+if(F){
+  oxpol_df <- read_csv("https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker/master/data/OxCGRT_latest.csv")
+  
+  oxpol_clean_df <- oxpol_df %>%
+    dplyr::filter(Jurisdiction %in% "NAT_TOTAL") %>%
+    dplyr::mutate(Date = Date %>% as.character() %>% ymd(),
+                  geo = countrycode(CountryCode, origin = "iso3c", destination = "iso2c")) %>%
+    dplyr::mutate(geo = case_when(
+      CountryCode == "RKS" ~ "RS",
+      TRUE ~ geo
+    )) %>%
+    dplyr::select(Date, geo, StringencyIndex, GovernmentResponseIndex, EconomicSupportIndex) %>%
+    dplyr::rename(date = Date)
+  
+  gtrends_df <- merge(gtrends_df, oxpol_clean_df, by = c("geo", "date"), all.x=T, all.y=F)
+}
 
 # Add continent/regions --------------------------------------------------------
 gtrends_df$un_regionsub_name <- gtrends_df$geo %>% countrycode(origin = "iso2c", destination = "un.regionsub.name")
@@ -122,7 +126,7 @@ gtrends_df <- gtrends_df %>% distinct()
 
 saveRDS(gtrends_df,
         file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
-                  "gtrends_full_timeseries", "gtrends_otherdata.Rds"))
+                  "gtrends_full_timeseries", "gtrends_otherdata_complete.Rds"))
 
 
 

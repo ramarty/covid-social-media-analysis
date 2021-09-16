@@ -3,7 +3,7 @@
 
 # Load Data --------------------------------------------------------------------
 gtrends_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
-                                "gtrends_full_timeseries", "gtrends_otherdata.Rds"))
+                                "gtrends_full_timeseries", "gtrends_otherdata_complete.Rds"))
 
 # Moving Averaage --------------------------------------------------------------
 ## Doesn't work with non-leading NAs, so remove NAs then merge back in
@@ -24,10 +24,25 @@ gtrends_df <- gtrends_df %>%
 gtrends_df <- gtrends_df %>%
   dplyr::mutate(year = date %>% year,
                 c_policy_mm_dd = c_policy %>% substring(6,10)) %>%
-  dplyr::mutate(c_policy_yearcurrent = paste0(year, "-", c_policy_mm_dd) %>% ymd()) %>%
-  dplyr::mutate(days_since_c_policy_yearcurrent = date - c_policy_yearcurrent) %>%
+  dplyr::mutate(c_policy_2020 = paste0("2020-", c_policy_mm_dd) %>% ymd(),
+                c_policy_2019 = paste0("2019-", c_policy_mm_dd) %>% ymd(),
+                pandemic_time = as.numeric(date >= ymd("2019-09-01"))) %>%
+  dplyr::mutate(days_since_c_policy_2020 = as.numeric(date - c_policy_2020),
+                days_since_c_policy_2019 = as.numeric(date - c_policy_2019)) %>%
+  dplyr::mutate(days_since_c_policy_yearcurrent = case_when(
+    pandemic_time %in% 1 ~ days_since_c_policy_2020,
+    pandemic_time %in% 0 ~ days_since_c_policy_2019
+  )) %>%
   dplyr::mutate(days_since_c_policy_yearcurrent_post = days_since_c_policy_yearcurrent >= 0) %>%
   dplyr::select(-c(c_policy_mm_dd))
+
+#gtrends_df <- gtrends_df %>%
+#  dplyr::mutate(year = date %>% year,
+#                c_policy_mm_dd = c_policy %>% substring(6,10)) %>%
+#  dplyr::mutate(c_policy_yearcurrent = paste0(year, "-", c_policy_mm_dd) %>% ymd()) %>%
+#  dplyr::mutate(days_since_c_policy_yearcurrent = date - c_policy_yearcurrent) %>%
+#  dplyr::mutate(days_since_c_policy_yearcurrent_post = days_since_c_policy_yearcurrent >= 0) %>%
+#  dplyr::select(-c(c_policy_mm_dd))
 
 # Variable Fixes ---------------------------------------------------------------
 gtrends_df <- gtrends_df %>%
@@ -42,11 +57,10 @@ gtrends_df <- gtrends_df %>%
 gtrends_df <- gtrends_df %>%
   dplyr::mutate(mm_dd = date %>% substring(6,10))
 
-# Export -----------------------------------------------------------------------
+# Export =======================================================================
 saveRDS(gtrends_df,
         file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
-                  "gtrends_full_timeseries", "gtrends_otherdata_varclean.Rds"))
-
+                  "gtrends_full_timeseries", "gtrends_otherdata_varclean_complete.Rds"))
 
 
 

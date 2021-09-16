@@ -19,10 +19,8 @@ gtrends_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "Fin
                                 "gtrends_full_timeseries", "gtrends_otherdata_varclean.Rds"))
 
 gtrends_df <- gtrends_df %>%
-  dplyr::filter(year %in% c(2019, 2020)) %>%
-  dplyr::mutate(year2020 = as.numeric(year >= 2020)) %>%
   dplyr::mutate(days_since_c_policy_yearcurrent_post_X_year2020 = 
-                  days_since_c_policy_yearcurrent_post*year2020) %>%
+                  days_since_c_policy_yearcurrent_post*pandemic_time) %>%
   dplyr::mutate(week = date %>% week,
                 wday = date %>% wday)
 

@@ -44,29 +44,19 @@ keywords_en_use <- c("loss of smell",
                      "job interview", "loan", "unemployment benefits", "unemployment insurance", 	
                      "unemployment office")
 
-keywords_en_use <- c("vaccine", "covid-19", "coronavirus", "covid vaccine")
+keywords_en_use <- KEYWORDS_CONTAIN_USE
 
 # PARAMETERS
 SLEEP_TIME      <- 0.5 # number of seconds to pause after each scrape
 overwrite_files <- F # overwrite data?
 
-OUT_FOLDER_LIST <- c("timeseries_2019-01-01_2019-09-27",
+OUT_FOLDER_LIST <- c("timeseries_2018-09-01_2019-05-28",
+                     "timeseries_2019-01-01_2019-09-27",
                      "timeseries_2019-07-01_2020-03-26",
                      "timeseries_2020-01-01_2020-09-26",
                      "timeseries_2020-07-05_2021-03-31",
                      "timeseries_2020-11-04_2021-07-31") %>% rev()
 
-OUT_FOLDER_LIST <- c("timeseries_regions_2020-12-01_2021-05-31",
-                     "timeseries_regions_2021-03-01_2021-05-31",
-                     "timeseries_regions_2020-12-01_2021-07-31",
-                     "timeseries_regions_2021-03-01_2021-07-31",
-                     "timeseries_regions_2020-12-01_2021-08-31")
-
-OUT_FOLDER_LIST <- c("timeseriesALL_2020-12-01_2021-08-31",
-                     "timeseriesALL_2020-12-01_2021-07-31",
-                     "timeseriesALL_2021-01-03_2021-07-31",
-                     "timeseriesALL_2021-01-03_2021-08-31",
-                     "timeseriesALL_2021-06-01_2021-08-31")
 # "timeseries_regions_2020-01-01_2020-01-31",
 # "timeseries_regions_2020-02-01_2020-02-29",
 # "timeseries_regions_2020-03-01_2020-03-31",
@@ -186,7 +176,7 @@ language_codes_all <- language_codes_all[!is.na(language_codes_all)]
 language_codes_all <- language_codes_all[language_codes_all != ""]
 language_codes_all <- language_codes_all %>% sort()
 
-language_codes_all <- language_codes_all %>% rev()
+language_codes_all <- language_codes_all 
 
 #language_codes_all <- language_codes_all[language_codes_all != "my"]
 

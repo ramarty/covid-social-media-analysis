@@ -19,10 +19,8 @@ gtrends_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "Fin
                                 "gtrends_full_timeseries", "gtrends_otherdata_varclean.Rds"))
 
 gtrends_df <- gtrends_df %>%
-  dplyr::filter(year %in% c(2019, 2020)) %>%
-  dplyr::mutate(year2020 = as.numeric(year >= 2020)) %>%
   dplyr::mutate(days_since_c_policy_yearcurrent_post_X_year2020 = 
-                  days_since_c_policy_yearcurrent_post*year2020) %>%
+                  days_since_c_policy_yearcurrent_post*pandemic_time) %>%
   dplyr::mutate(week = date %>% week,
                 wday = date %>% wday)
 
@@ -40,7 +38,7 @@ gtrends_df$hits_ma7_log <- log(gtrends_df$hits_ma7_log+1)
 
 # Regressions ------------------------------------------------------------------
 gtrends_df <- gtrends_df %>%
-  dplyr::filter(keyword_en %in% "stay at home") %>% # KEYWORDS_CONTAIN_USE
+  dplyr::filter(keyword_en %in% KEYWORDS_CONTAIN_USE) %>% # KEYWORDS_CONTAIN_USE
   dplyr::filter(!is.na(days_since_c_policy_yearcurrent),
                 !is.na(hits_ma7)) 
 

@@ -18,6 +18,7 @@ lm_post_confint_tidy <- function(lm){
 gtrends_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
                                 "gtrends_full_timeseries", "gtrends_otherdata_varclean.Rds"))
 
+#### Adjust Variables
 gtrends_df$geo_name <- gtrends_df$geo %>% countrycode(origin = "iso2c", destination = "iso.name.en")
 
 gtrends_df <- gtrends_df %>%
@@ -28,6 +29,14 @@ gtrends_df <- gtrends_df[!is.na(gtrends_df$wb_region),]
 gtrends_df$wb_region[gtrends_df$wb_region %in% "Europe & Central Asia"]       <- "Europe & Cent. Asia"
 gtrends_df$wb_region[gtrends_df$wb_region %in% "Latin America & Caribbean"]   <- "Lat. Am. & Caribbean"
 gtrends_df$wb_region[gtrends_df$wb_region %in% "Middle East & North Africa"] <- "Middle East & N Africa"
+
+#### Remove if no hits or policy
+gtrends_df <- gtrends_df %>%
+  dplyr::group_by(geo, keyword_en) %>%
+  dplyr::mutate(hits_ma7_SUM = sum(hits_ma7, na.rm = T)) %>%
+  ungroup() %>%
+  dplyr::filter(hits_ma7_SUM > 0,
+                !is.na(days_since_c_policy))
 
 # 2. Event Study Figures -------------------------------------------------------
 #### Make Data
