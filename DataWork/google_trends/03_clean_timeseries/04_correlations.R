@@ -26,7 +26,7 @@ begin_day <- c("2020-01-01",
                # "2020-12-01",
                "2021-01-01")
 
-end_day <- c(#"2020-12-01", 
+end_day <- c("2020-12-01", 
              "2021-07-31")
 
 for(begin_day_i in begin_day){
@@ -38,7 +38,7 @@ for(begin_day_i in begin_day){
     
     # Load Data --------------------------------------------------------------------
     gtrends_full_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
-                                         "gtrends_full_timeseries", "gtrends_otherdata_varclean.Rds"))
+                                         "gtrends_full_timeseries", "gtrends_otherdata_varclean_complete.Rds"))
     
     gtrends_df <- gtrends_full_df %>%
       dplyr::select(geo, date, keyword_en,

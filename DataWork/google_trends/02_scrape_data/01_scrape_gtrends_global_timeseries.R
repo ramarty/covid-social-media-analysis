@@ -214,9 +214,9 @@ for(OUT_FOLDER in OUT_FOLDER_LIST){
   dir.create(file.path(dropbox_file_path, "Data", "google_trends", "RawData", OUT_FOLDER))
   
   if(grepl("timeseriesALL_", OUT_FOLDER)) language_codes_all <- "en"
-  
+
   # Loop through languages, countries and terms ----------------------------------
-  for(language in language_codes_all){
+  for(language in rev(language_codes_all)){
     
     ## KEYWORDS
     # Grab keyword for the language and cleanup keyword vector. Remove missing and

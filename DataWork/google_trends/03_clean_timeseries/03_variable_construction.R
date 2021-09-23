@@ -53,6 +53,9 @@ gtrends_df <- gtrends_df %>%
          death_total = max(death, na.rm = T)) %>%
   ungroup()
 
+gtrends_df$cases_total[gtrends_df$cases_total %in% -Inf] <- NA
+gtrends_df$death_total[gtrends_df$death_total %in% -Inf] <- NA
+
 # Other variables --------------------------------------------------------------
 gtrends_df <- gtrends_df %>%
   dplyr::mutate(mm_dd = date %>% substring(6,10))
