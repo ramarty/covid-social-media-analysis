@@ -37,6 +37,30 @@ gtrends_sum_df <- gtrends_sum_df %>%
   dplyr::summarise(hits_ma7_std = mean(hits_ma7_std, na.rm = T)) %>%
   #dplyr::mutate(keyword_en = keyword_en %>% tools::toTitleCase() %>% paste0("\nN Countries = ", N_countries_keyword))
   dplyr::mutate(keyword_en = keyword_en %>% tools::toTitleCase()) %>%
+  dplyr::mutate(keyword_en = keyword_en %>%
+                  factor(levels = c("Debt",
+                                    "File for Unemployment",
+                                    "Unemployment",
+                                    "Unemployment Benefits",
+                                    "Unemployment Insurance",
+                                    "Unemployment Office",
+                                    
+                                    "Anxiety",
+                                    "Anxiety Attack",
+                                    "Anxiety Symptoms",
+                                    "Boredom",
+                                    "Hysteria",
+                                    "Insomnia",
+                                    "Loneliness",
+                                    "Lonely",
+                                    "Panic",
+                                    "Social Isolation",
+                                    "Suicide",
+                                    
+                                    "Divorce",
+                                    
+                                    "Social Distance",
+                                    "Stay at Home"))) %>%
   dplyr::mutate(pandemic_time = case_when(
     pandemic_time == 1 ~ "Pandemic",
     pandemic_time == 0 ~ "Pre-Pandemic"
@@ -49,9 +73,11 @@ df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
 df <- df %>%
   dplyr::filter(variable %>% 
                   str_detect("days_since_c_policy_yearcurrent_post_X_year2020|did_")) %>%
-  dplyr::filter(type %in% c("did_gm_avg_min_AND_did_EconomicSupportIndex_max_INTER",
-                            "did_StringencyIndex_max_AND_did_EconomicSupportIndex_max_INTER",
-                            "Overall")) %>%
+  dplyr::filter(type %in% c(#"did_gm_avg_min_AND_did_EconomicSupportIndex_max_INTER",
+    #"did_StringencyIndex_max_AND_did_EconomicSupportIndex_max_INTER",
+    "did_gm_avg_min_AND_did_EconomicSupportIndex_max",
+    "did_StringencyIndex_max_AND_did_EconomicSupportIndex_max",
+    "Overall")) %>%
   mutate(variable = case_when(
     variable == "days_since_c_policy_yearcurrent_post_X_year2020" ~ "Post Policy X Pandemic",
     variable == "did_EconomicSupportIndex_max" ~ "Post Policy X Pandemic X Econ Support",
@@ -65,6 +91,8 @@ df <- df %>%
   mutate(type = case_when(
     type == "did_gm_avg_min_AND_did_EconomicSupportIndex_max_INTER" ~ "mobility_reduction",
     type == "did_StringencyIndex_max_AND_did_EconomicSupportIndex_max_INTER" ~ "stringency_index",
+    type == "did_gm_avg_min_AND_did_EconomicSupportIndex_max" ~ "mobility_reduction",
+    type == "did_StringencyIndex_max_AND_did_EconomicSupportIndex_max" ~ "stringency_index",
     TRUE ~ type,
   )) %>%
   mutate(sig = ifelse(pvalue <= 0.05, "Sig", "Not Sig")) %>%
@@ -133,14 +161,14 @@ p_trends <- gtrends_sum_df %>%
   geom_line(aes(x = days_since_c_policy_yearcurrent,
                 y = hits_ma7_std,
                 color = factor(pandemic_time))) +
-  labs(color = "Period",
+  labs(color = "Time Period",
        x = "Days Since Lockdown",
        y = "Average Search Interest",
        title = "A. Trends in Search Interest") +
   theme_minimal() +
   theme(strip.text = element_text(face = "bold", size = 9),
-        legend.position = "bottom") +
-  scale_color_manual(values = c("gray40", "darkorange")) +
+        legend.position = "top") +
+  scale_color_manual(values = c("darkorange", "gray40")) +
   facet_wrap(~keyword_en,
              ncol = 4) 
 #         axis.title.y = element_text(angle = 0, vjust = 0.5)
@@ -162,7 +190,7 @@ p_overall <- df %>%
   labs(color = "Category",
        x = "Coefficient (+/- 95% CI)",
        y = "Search Term",
-       title = "B. Diff-in-Diff Results: Overall Impact") +
+       title = "B. Diff-in-Diff Results: Impact of Contaiment Policies on Search Interest") +
   theme(legend.position = "none")
 
 # Interaction Figures ----------------------------------------------------------
@@ -196,8 +224,6 @@ for(type_i in c("stringency_index",
     facet_wrap(~keyword,
                scales = "free_x")
   
-  #ggsave(p, filename = file.path(paper_figures, paste0("did_pooled_",type_i,".png")),
-  #       height = 4.5, width = 13)
 }
 
 # Append Figures ---------------------------------------------------------------
@@ -211,10 +237,13 @@ p_top <- ggarrange(p_trends + title_theme,
                    widths = c(0.55, 0.45))
 p <- ggarrange(p_top, 
                p_interact$mobility_reduction +
-                 labs(title = "C. Diff-in-Diff Results: Heterogeneity of Impacts Across Contaiment Restriveness and Economic Support") +
+                 labs(title = "C. Diff-in-Diff Results: Heterogeneity of Impacts of Contaiment Policies on Search Interest\nby Levels of Contaiment Restriveness and Economic Support") +
                  title_theme,
                nrow = 2)
 
 ggsave(p, filename = file.path(paper_figures, paste0("did_pooled.png")),
-       height = 12, width = 13)
+       height = 15, width = 13)
 
+# Figure: Contaiment Restrictiveness - Strigency Index -------------------------
+ggsave(p_interact$stringency_index, filename = file.path(paper_figures, paste0("did_pooled_","strigency",".png")),
+       height = 5, width = 13)
