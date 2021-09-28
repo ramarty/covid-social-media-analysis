@@ -1,22 +1,8 @@
 # Lockdown Difference-in-Difference Analysis
 
-lm_post_confint_tidy <- function(lm){
-  
-  lm_confint <- confint(lm) %>% 
-    as.data.frame
-  names(lm_confint) <- c("p025", "p975")
-  lm_confint$b <- (lm_confint$p025 + lm_confint$p975)/2
-  lm_confint$variable <- row.names(lm_confint)
-  
-  lm_confint$tvalue <- summary(lm)$coefficients[,3] %>% as.vector()
-  lm_confint$pvalue <- summary(lm)$coefficients[,4] %>% as.vector()
-  
-  return(lm_confint)
-}
-
 # Load / Prep Data -------------------------------------------------------------
 gtrends_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
-                                "gtrends_full_timeseries", "gtrends_otherdata_varclean.Rds"))
+                                "gtrends_full_timeseries", "gtrends_otherdata_varclean_complete.Rds"))
 
 gtrends_df <- gtrends_df %>%
   dplyr::mutate(days_since_c_policy_yearcurrent_post_X_year2020 = 
@@ -29,8 +15,6 @@ max_lockdown_date <- gtrends_df$c_policy %>%
   max(na.rm=T) %m+% 
   months(1) %>%
   str_replace("2020-", "")
-
-#gtrends_df <- gtrends_df[gtrends_df$mm_dd <= max_lockdown_date,]
 
 # Log
 gtrends_df$hits_ma7_log <- gtrends_df$hits_ma7 + abs(min(gtrends_df$hits_ma7, na.rm=T))
@@ -65,22 +49,10 @@ run_reg <- function(keyword_i, geo_i){
   if((nrow(df_i) > 0) & (length(unique(df_i$pandemic_time)) > 1)){
     
     # FE: mm_dd
-    out <- felm(hits_ma7_log ~ pandemic_time + 
-                  days_since_c_policy_yearcurrent_post + 
-                  days_since_c_policy_yearcurrent_post_X_year2020 | week + wday | 0 | 0, 
-                data = df_i) %>%
-      lm_post_confint_tidy() %>%
-      dplyr::mutate(keyword = keyword_i,
-                    geo = geo_i,
-                    have_gtrends_data = T,
-                    have_lockdown_data = T,
-                    wb_region = df_i$wb_region[1])
+    out <- df_i
   } else{
     print(paste0("----", geo_i))
-    out <- data.frame(keyword = keyword_i,
-                      geo = geo_i,
-                      have_gtrends_data = have_gtrends_data,
-                      have_lockdown_data = have_lockdown_data)
+    out <- data.frame(NULL)
   }
   
   return(out)
@@ -94,12 +66,12 @@ wb_geo_all <- gtrends_df$geo %>%
 
 geo_results_df <- map_df(wb_geo_all, function(geo_i){
   print(geo_i)
-  map_df(keywords_en_use, run_reg, geo_i)
+  map_df(KEYWORDS_CONTAIN_USE, run_reg, geo_i)
 })
 
 # Export Results ---------------------------------------------------------------
 saveRDS(geo_results_df,
         file.path(dropbox_file_path, "Data", "google_trends", "FinalData", "results", 
-                  "did_results_country.Rds"))
+                  "did_pooled_data.Rds"))
 
 

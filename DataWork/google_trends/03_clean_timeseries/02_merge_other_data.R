@@ -77,7 +77,7 @@ gtrends_df <- gtrends_df %>%
          days_since_c_policy = date - c_policy)
 
 # Google Mobility --------------------------------------------------------------
-if(F){
+if(T){
   gmobility_df <- gmobility_df %>%
     dplyr::filter(sub_region_1 %in% "",
                   sub_region_2 %in% "",
