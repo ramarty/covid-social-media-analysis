@@ -30,14 +30,22 @@ data_elec <-
   data_elec %>% 
   filter(year == 2020, party_simplified %in% c("DEMOCRAT", "REPUBLICAN")) %>% 
   group_by(state) %>% 
-  mutate(
-    percent_vote = candidatevotes/totalvotes
-  )
+  mutate(percent_vote = candidatevotes/totalvotes)
 
-data_elec %>% 
+data_elec <- 
+  data_elec %>% 
   group_by(state) %>% 
-  filter(percent_vote == max(percent_vote))
+  mutate(winner = if_else(percent_vote == max(percent_vote), 1, 0))
+```
+
+```{r}
+data_elec %>% 
+  filter(is.na(party_simplified))
+```
 
 
+Save the data
+```{r}
+write.csv(data_elec, file = paste0(data_folder, "data_elec_cleaned.csv"))
 ```
 

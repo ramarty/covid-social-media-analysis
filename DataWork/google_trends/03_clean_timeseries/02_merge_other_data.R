@@ -100,7 +100,7 @@ if(T){
 }
 
 # Merge Oxford Policy Response Data --------------------------------------------
-if(F){
+if(T){
   oxpol_df <- read_csv("https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker/master/data/OxCGRT_latest.csv")
   
   oxpol_clean_df <- oxpol_df %>%

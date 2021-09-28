@@ -4,6 +4,7 @@
 df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "FinalData", "results", 
                         "did_pooled_data.Rds"))
 
+# Prep Data --------------------------------------------------------------------
 df <- df %>%
   dplyr::mutate(ln_cases_total = log(cases_total),
                 income_high = income == "High income",
@@ -31,6 +32,19 @@ df <- df %>%
   dplyr::mutate(gm_residential_max = 
                   max(gmobility_residential_percent_change_from_baseline[(pandemic_time == 1) & 
                                                                            (days_since_c_policy_yearcurrent_post %in% T)])) %>%
+  
+  dplyr::mutate(StringencyIndex_max = 
+                  min(StringencyIndex[(pandemic_time == 1) & 
+                                        (days_since_c_policy_yearcurrent_post %in% T)])) %>%
+  
+  dplyr::mutate(GovernmentResponseIndex_max = 
+                  min(GovernmentResponseIndex[(pandemic_time == 1) & 
+                                                (days_since_c_policy_yearcurrent_post %in% T)])) %>%
+  dplyr::mutate(EconomicSupportIndex_max = 
+                  min(EconomicSupportIndex[(pandemic_time == 1) & 
+                                             (days_since_c_policy_yearcurrent_post %in% T)])) %>%
+  
+  
   ungroup() %>%
   dplyr::mutate(gm_retail_min = gm_retail_min * -1,
                 gm_grocery_min = gm_grocery_min * -1,
@@ -47,7 +61,10 @@ df <- df %>%
                         gm_parks_min,
                         gm_transit_min,
                         gm_workplace_min,
-                        gm_avg_min), scale) %>%
+                        gm_avg_min,
+                        StringencyIndex_max, 
+                        GovernmentResponseIndex_max, 
+                        EconomicSupportIndex_max), scale) %>%
   dplyr::mutate(did_ln_cases_total = days_since_c_policy_yearcurrent_post_X_year2020 * ln_cases_total,
                 did_per_pop_using_internet = days_since_c_policy_yearcurrent_post_X_year2020 * per_pop_using_internet,
                 did_mobile_cell_sub_per100 = days_since_c_policy_yearcurrent_post_X_year2020 * mobile_cell_sub_per100,
@@ -62,12 +79,34 @@ df <- df %>%
                 did_income_high = days_since_c_policy_yearcurrent_post_X_year2020 * income_high,
                 did_income_low = days_since_c_policy_yearcurrent_post_X_year2020 * income_low,
                 did_income_low_middle = days_since_c_policy_yearcurrent_post_X_year2020 * income_low_middle,
-                did_income_upper_middle = days_since_c_policy_yearcurrent_post_X_year2020 * income_upper_middle) 
+                did_income_upper_middle = days_since_c_policy_yearcurrent_post_X_year2020 * income_upper_middle,
+                
+                did_StringencyIndex_max = days_since_c_policy_yearcurrent_post_X_year2020 * StringencyIndex_max,
+                did_GovernmentResponseIndex_max = days_since_c_policy_yearcurrent_post_X_year2020 * GovernmentResponseIndex_max,
+                did_EconomicSupportIndex_max = days_since_c_policy_yearcurrent_post_X_year2020 * EconomicSupportIndex_max) 
+
+# Analysis ---------------------------------------------------------------------
+out <- felm(hits_ma7_log ~ pandemic_time + 
+              days_since_c_policy_yearcurrent_post + 
+              days_since_c_policy_yearcurrent_post_X_year2020  | geo + week + wday | 0 | 0, 
+            data = df[df$keyword_en %in% "boredom",])
+summary(out)
+
+
 
 out <- felm(hits_ma7_log ~ pandemic_time + 
               days_since_c_policy_yearcurrent_post + 
-              days_since_c_policy_yearcurrent_post_X_year2020 | geo + week + wday | 0 | 0, 
-            data = df[df$keyword_en %in% "boredom",])
+              days_since_c_policy_yearcurrent_post_X_year2020 +
+              did_EconomicSupportIndex_max | geo + wday | 0 | 0, 
+            data = df[df$keyword_en %in% "social isolation",])
+summary(out)
+
+out <- felm(hits_ma7_log ~ pandemic_time + 
+              days_since_c_policy_yearcurrent_post + 
+              days_since_c_policy_yearcurrent_post_X_year2020 +
+              did_GovernmentResponseIndex_max | geo + wday | 0 | 0, 
+            data = df[df$keyword_en %in% "unemployment benefits",])
+summary(out)
 
 out <- felm(hits_ma7_log ~ pandemic_time + 
               days_since_c_policy_yearcurrent_post + 

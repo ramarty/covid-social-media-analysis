@@ -177,6 +177,7 @@ language_codes_all <- language_codes_all[language_codes_all != ""]
 language_codes_all <- language_codes_all %>% sort()
 
 language_codes_all <- language_codes_all 
+langauge_codes_all <- "en"
 
 #language_codes_all <- language_codes_all[language_codes_all != "my"]
 
