@@ -75,7 +75,18 @@ KEYWORDS_CONTAIN_USE <- c("social distance",
                           "social isolation",
                           "lonely",
                           "loneliness",
-                          "divorce")
+                          "divorce",
+                          "condom",
+                          "emergency pill",
+                          "pregnancy test", 
+                          "abortion",
+                          "plan child",
+                          "plan other children",
+                           "tinder",
+                          "relationship",
+                          "break up", 
+                          "wedding", 
+                          "dating app") 
 
 KEYWORDS_SYMTPOMS <- c("loss of smell",
                        "loss of taste",
@@ -86,4 +97,18 @@ KEYWORDS_SYMTPOMS <- c("loss of smell",
                        "fever",
                        "how to treat coronavirus")
 
-
+# Common Functions -------------------------------------------------------------
+lm_post_confint_tidy <- function(lm){
+  # Extract coefficients and confidence interval from regression coefficients
+  
+  lm_confint <- confint(lm) %>% 
+    as.data.frame
+  names(lm_confint) <- c("p025", "p975")
+  lm_confint$b <- (lm_confint$p025 + lm_confint$p975)/2
+  lm_confint$variable <- row.names(lm_confint)
+  
+  lm_confint$tvalue <- summary(lm)$coefficients[,3] %>% as.vector()
+  lm_confint$pvalue <- summary(lm)$coefficients[,4] %>% as.vector()
+  
+  return(lm_confint)
+}

@@ -8,42 +8,6 @@
 
 #Sys.setlocale("LC_CTYPE", "en_US.UTF-8")
 
-keywords_en_use <- c("debt", "file for unemployment", "find new job", 		
-                     "interview tips",
-                     "job interview", "loan", "unemployment benefits", "unemployment insurance", 	
-                     "unemployment office")
-
-keywords_en_use <- c("loss of smell", 
-                     "loss of taste",
-                     "pneumonia",
-                     "fever",
-                     "cough",
-                     "covid-19",
-                     "covid symptoms",
-                     "coronavirus",
-                     "difficulty breathing",
-                     "tired",
-                     "ageusia",
-                     "anosmia",
-                     "i can't smell",
-                     "how to treat coronavirus",
-                     "social distance", "stay at home", "boredom", "anxiety", "suicide",
-                     "insomnia", "social isolation", "loneliness", "divorce",
-                     "panic attack",
-                     "fever",
-                     "panic",
-                     "worried health", "hysteria", "overwhelmed", "anxiety symptoms",
-                     "anxiety attack", "symptoms of panic attack",
-                     "depression",
-                     "depressed", "lonely", "suicidal", "abuse",
-                     "therapist near me", "online therapist",
-                     "deep breathing", "body scan meditation",
-                     "unemployment", "unemployment insurance",
-                     "debt", "file for unemployment", "find new job", 		
-                     "interview tips",
-                     "job interview", "loan", "unemployment benefits", "unemployment insurance", 	
-                     "unemployment office")
-
 keywords_en_use <- KEYWORDS_CONTAIN_USE
 
 # PARAMETERS

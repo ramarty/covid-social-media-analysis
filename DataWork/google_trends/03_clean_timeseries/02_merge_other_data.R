@@ -111,7 +111,23 @@ if(T){
       CountryCode == "RKS" ~ "RS",
       TRUE ~ geo
     )) %>%
-    dplyr::select(Date, geo, StringencyIndex, GovernmentResponseIndex, EconomicSupportIndex) %>%
+    dplyr::select(Date, geo, 
+                  "E1_Income support",
+                  "E2_Debt/contract relief",
+                  "E3_Fiscal measures",
+                  "E4_International support",
+                  "C1_School closing",
+                  "C2_Workplace closing",
+                  "C3_Cancel public events",
+                  "C4_Restrictions on gatherings",
+                  "C5_Close public transport",
+                  "C6_Stay at home requirements",
+                  "C7_Restrictions on internal movement",
+                  "C8_International travel controls",
+                  StringencyIndex, 
+                  GovernmentResponseIndex, 
+                  EconomicSupportIndex,
+                  ContainmentHealthIndex) %>%
     dplyr::rename(date = Date)
   
   gtrends_df <- merge(gtrends_df, oxpol_clean_df, by = c("geo", "date"), all.x=T, all.y=F)
