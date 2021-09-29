@@ -59,24 +59,28 @@ for(keyword_en_i in c("fever")){
                              geo = iso_i,
                              n_languages = 1)
       } else{
+        print("Extract G-Trends!")
         out <- gtrends(unique(terms_i), 
                        geo = iso_i,
                        time = "2020-01-01 2020-12-31",
                        onlyInterest = F,
                        low_search_volume=T)
+        
+        # Grab data, and convert variables to character to avoid type conflict later
+        df_out <- out$interest_over_time
+        for(var in names(df_out)) df_out[[var]] <- df_out[[var]] %>% as.character()
+        
         Sys.sleep(sleep_time)
         
         ### Error check
         # Didn't return error, but no hits. Object will be null, which will cause
         # error later. In this case, we just want to skip.
-        if((class(out)[1] %in% "gtrends") & is.null(out_df)){
+        if((class(out)[1] %in% "gtrends") & is.null(df_out)){
           df_out <- data.frame(language = NA,
                                geo = iso_i,
                                n_languages = NA,
                                gtrends_nohits = T)
         } else{
-          
-          df_out <- out$interest_over_time
           
           df_out <- df_out %>%
             left_join(term_lng_df, by = "keyword")
