@@ -1,12 +1,5 @@
 # Translate Search Terms
 
-#### API Key
-api_key <- read_csv(file.path("~", "Dropbox", "World Bank", "Webscraping", "Files for Server", 
-                              "api_keys.csv")) %>%
-  filter(Account %in% "robertandrew311@gmail.com",
-         Service %in% "Google Directions API") %>%
-  pull(Key)
-
 # Load Data --------------------------------------------------------------------
 ## Keywords to srape
 keywords_df <- read_csv(file.path(dropbox_file_path, "Data", "google_trends", 
@@ -14,19 +7,22 @@ keywords_df <- read_csv(file.path(dropbox_file_path, "Data", "google_trends",
 
 ## Language for each country
 languages_df <- read_csv(file.path(dropbox_file_path, "Data", 
-                                   "country_primary_language", "countries_lang.csv"))
+                                   "country_primary_language", "RawData",
+                                   "countries_modified.csv"))
+languages_df <- languages_df %>%
+  dplyr::filter(!is.na(Language_code_5))
 
-## Cleanup language codes
-language_codes <- languages_df$Language_code_main %>%
+## Vector of language codes
+language_codes <- languages_df$Language_code_5 %>%
+  str_split(",") %>%
+  unlist() %>%
   unique() %>%
-  na.omit() %>%
-  as.vector()
+  sort()
 
 language_codes <- language_codes[language_codes != "en"] # remove english
-language_codes <- c(language_codes, "sw") # adding swahili
 
 # Scrape Translations ----------------------------------------------------------
-for(l_code_i in sort(language_codes)){
+for(l_code_i in language_codes){
   print(l_code_i)
   
   translations_out <- r_google_translate_vec(keywords_df$keyword_en,
@@ -37,7 +33,12 @@ for(l_code_i in sort(language_codes)){
                                              key = api_key,
                                              sleep = 0)
   
-  keywords_df[[paste0("keyword_", l_code_i)]] <- translations_out
+  if(!is.null(translations_out)){
+    keywords_df[[paste0("keyword_", l_code_i)]] <- translations_out
+  } else{
+    print("Null!")
+  }
+  
 }
 
 # Export -----------------------------------------------------------------------

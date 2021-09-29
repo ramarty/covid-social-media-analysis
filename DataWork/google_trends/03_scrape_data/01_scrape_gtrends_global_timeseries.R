@@ -8,51 +8,37 @@
 
 #Sys.setlocale("LC_CTYPE", "en_US.UTF-8")
 
-keywords_en_use <- KEYWORDS_CONTAIN_USE
-
-# PARAMETERS
+# Setup ------------------------------------------------------------------------
+## Parameters
 SLEEP_TIME      <- 0.5 # number of seconds to pause after each scrape
 overwrite_files <- F # overwrite data?
 
+## Timeframe to scrape
+# -- [timeseries]_[begin date]_[end date] to scrape time series data for all 
+#   countries
+# -- [timeseries_regions]_[begin date]_[end date] to only scrape data for the US
+#    for select keywords and to capture data at the State level; does not 
+#    capture the time series
 OUT_FOLDER_LIST <- c("timeseries_2018-09-01_2019-05-28",
                      "timeseries_2019-01-01_2019-09-27",
                      "timeseries_2019-07-01_2020-03-26",
                      "timeseries_2020-01-01_2020-09-26",
                      "timeseries_2020-07-05_2021-03-31",
-                     "timeseries_2020-11-04_2021-07-31") %>% rev()
+                     "timeseries_2020-11-04_2021-07-31",
+                     "timeseries_regions_2020-12-01_2021-05-31",
+                     "timeseries_regions_2020-12-01_2021-07-31") 
 
-# "timeseries_regions_2020-01-01_2020-01-31",
-# "timeseries_regions_2020-02-01_2020-02-29",
-# "timeseries_regions_2020-03-01_2020-03-31",
-# "timeseries_regions_2020-04-01_2020-04-30",
-# "timeseries_regions_2020-05-01_2020-05-31",
-# "timeseries_regions_2020-06-01_2020-06-30",
-# "timeseries_regions_2020-07-01_2020-07-31",
-# "timeseries_regions_2020-08-01_2020-08-31",
-# "timeseries_regions_2020-09-01_2020-09-30",
-# "timeseries_regions_2020-10-01_2020-10-31",
-# "timeseries_regions_2020-11-01_2020-11-30",
-# "timeseries_regions_2020-12-01_2020-12-31",
-# "timeseries_regions_2021-01-01_2021-01-31",
-# "timeseries_regions_2021-02-01_2021-02-28") 
-
-## Subset for regions
-# only used if ALL_COUNTRIES = F
-select_countries_vec <- c("US", # United States
-                          "CA", # Canada
-                          "BR", # Brazil
-                          "ZA", # South Africa
-                          "ID", # Indonesia
-                          "IT", # Italy
-                          "PH", # Phillipines
-                          "AU", # Australia
-                          "IN") 
-
+## Which countries to use when scraping [timeseries_region]
 select_countries_vec <- c("US")
+
+## Which keywords to scrape for [timeseries]. For [timeseries_region], uses
+# vaccine and missinformation related keywords
+keywords_en_timeseries <- c(KEYWORDS_SYMTPOMS, KEYWORDS_CONTAIN_USE)
 
 # Function to Scrape Google Data -----------------------------------------------
 extract_trends <- function(iso_i,
                            term_i, 
+                           term_en_i,
                            language,
                            start_end_date,
                            onlyInterest,
@@ -60,6 +46,14 @@ extract_trends <- function(iso_i,
   # DESCRIPTION: Given an country, term, and start/end date, scrapes the data. 
   # Asks for the language code to add to the resulting dataset. sleep_time is done
   # because of google rate limits.
+  # ARGS
+  # -- iso_i: Two-letter country code
+  # -- term_i: Term to scrape
+  # -- term_en_i: English version of the search term to scrape
+  # -- language: Language code
+  # -- start_end_date: Start/end date to scrape [yyyy-mm-dd yyyy-mm-dd]
+  # -- onlyInterest: T/F; where to only grab search interest data
+  # -- sleep_time: Time to pause code after each scrape (do b/c of rate limiting)
   
   # 1. Scrape
   if(iso_i == "all"){
@@ -73,15 +67,8 @@ extract_trends <- function(iso_i,
                    time = start_end_date,
                    onlyInterest = onlyInterest,
                    low_search_volume=T)
-    
-    out <- gtrends("vaccine", 
-                   geo = "DE",
-                   time = start_end_date,
-                   onlyInterest = F,
-                   low_search_volume=T)
-    
   }
-
+  
   if(onlyInterest %in% T){
     
     # 2. Grab data, and convert variables to character to avoid type conflict late
@@ -89,16 +76,17 @@ extract_trends <- function(iso_i,
     for(var in names(out_df)) out_df[[var]] <- out_df[[var]] %>% as.character()
     
     # 3. Error check
-    # Didn't return error, but no hits? Object will be null, which will cause
+    # Didn't return error, but no hits. Object will be null, which will cause
     # error later. In this case, we just want to skip.
     if((class(out)[1] %in% "gtrends") & is.null(out_df)){
       out_df <- data.frame(NULL)
     } else{
       out_df$language <- language
+      out_df$keyword_en <- term_en_i
     }
     
     # 4. Take a quick nap b/c of google rate limits
-    Sys.sleep(sleep_time) #  + runif(1)*2
+    Sys.sleep(sleep_time)
     
     print(iso_i)
     print(nrow(out_df))
@@ -115,20 +103,6 @@ extract_trends <- function(iso_i,
 keywords_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", 
                                  "keywords", "FinalData", "covid_keywords_alllanguages_clean.Rds"))
 
-keywords_df <- keywords_df[keywords_df$keyword_en %in% keywords_en_use,]
-
-# keywords_df <- read.csv(file.path(dropbox_file_path, "Data", "google_trends", 
-#                                   "keywords", "FinalData", "covid_keywords_alllanguages.csv"),
-#                         encoding="UTF-8", stringsAsFactors=FALSE)
-# keywords_df$keyword_zh 
-#keywords_df$keyword_zh 
-
-if(F){
-  keywords_df <- keywords_df %>%
-    arrange(priority_to_scrape) %>%
-    filter(scrape %in% c("yes", "no") | category %in% c("vaccine", "missinformation", "us election missinformation"))
-}
-
 ## Language Dataset
 # Indicates which language to use for each country. 
 languages <- read.csv(file.path(dropbox_file_path, 
@@ -140,16 +114,11 @@ language_codes_all <- language_codes_all[!is.na(language_codes_all)]
 language_codes_all <- language_codes_all[language_codes_all != ""]
 language_codes_all <- language_codes_all %>% sort()
 
-language_codes_all <- language_codes_all 
-langauge_codes_all <- "en"
-
-#language_codes_all <- language_codes_all[language_codes_all != "my"]
-
 # Prep Parameters Based on Folder Name -----------------------------------------
 for(OUT_FOLDER in OUT_FOLDER_LIST){
   
   if(grepl("timeseries_regions_", OUT_FOLDER)){
-    ALL_TERMS <- T
+    ALL_TERMS <- F
     ALL_COUNTRIES <- F
     onlyInterest <- F
   } else if(grepl("timeseriesALL_", OUT_FOLDER)){
@@ -169,47 +138,55 @@ for(OUT_FOLDER in OUT_FOLDER_LIST){
     str_replace_all("_", " ")
   
   if(ALL_TERMS){
-    keywords_sub_df <- keywords_df
+    keywords_sub_df <- keywords_df[keywords_df$keyword_en %in% keywords_en_timeseries,]
   } else{
-    keywords_sub_df <- keywords_df[keywords_df$category %in% c("vaccine", "missinformation", "us election missinformation"),]
+    keywords_sub_df <- keywords_df %>%
+      dplyr::filter(category %in% c("vaccine", "missinformation", "us election missinformation"))
   }
   
-  ## Check if root folter eixts; if not, create
-  # dir.create only creates if doesn't already exist
+  ## Check if root folder exists; if not, create
+  # (dir.create only creates if doesn't already exist)
   dir.create(file.path(dropbox_file_path, "Data", "google_trends", "RawData", OUT_FOLDER))
   
   if(grepl("timeseriesALL_", OUT_FOLDER)) language_codes_all <- "en"
-
-  # Loop through languages, countries and terms ----------------------------------
-  for(language in rev(language_codes_all)){
+  
+  # Loop through languages, countries and terms --------------------------------
+  for(language in language_codes_all){
     
     ## KEYWORDS
     # Grab keyword for the language and cleanup keyword vector. Remove missing and
     # remove newlines
-    keywords_vec <- keywords_sub_df[[paste0("keyword_", language)]] %>% tolower() %>% as.character()
-    keywords_vec <- keywords_vec[keywords_vec != ""]
-    keywords_vec <- keywords_vec %>% str_replace_all("\\n", "") # some have newline
+    keywords_sub_df_i <- keywords_sub_df
+    
+    keywords_sub_df_i$term_to_scrape <- keywords_sub_df[[paste0("keyword_", language)]] %>% 
+      tolower() %>% 
+      as.character() %>% 
+      str_replace_all("\\n", "")
+    
+    keywords_sub_df_i <- keywords_sub_df_i[keywords_sub_df_i$term_to_scrape != "",]
     
     ## ISO CODES
     # Grab iso/country codes where the selected language is the main language
     iso2 <- languages$Code[languages$Language_code_main %in% language]
     iso2 <- iso2[!is.na(iso2)]
     
+    # In some cases, subset iso2 vector
     if(!ALL_COUNTRIES) iso2 <- iso2[iso2 %in% select_countries_vec]
-    
     if(grepl("timeseriesALL_", OUT_FOLDER)) iso2 <- "all"
     
     ## SCRAPE DATA
-    for(term_i in keywords_vec){
+    for(term_id_i in 1:nrow(keywords_sub_df_i)){
       for(iso_i in iso2){
         
-        comparison_iso <- "US" # DUMMY; delete later
+        term_i <- keywords_sub_df_i$term_to_scrape[term_id_i]
+        term_en_i <- keywords_sub_df_i$keyword_en[term_id_i]
+        
         out_path <- file.path(dropbox_file_path, "Data", "google_trends", "RawData",
                               OUT_FOLDER,
                               paste0("global_gtrends_ref_",
                                      iso_i, 
                                      "_compr",
-                                     comparison_iso,
+                                     "US",
                                      "_term",
                                      term_i,
                                      "_language",
@@ -224,6 +201,7 @@ for(OUT_FOLDER in OUT_FOLDER_LIST){
             
             term_df <- extract_trends(iso_i,
                                       term_i,
+                                      term_en_i,
                                       language,
                                       start_end_date,
                                       onlyInterest,

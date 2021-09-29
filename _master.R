@@ -18,9 +18,7 @@ pacman::p_load(gtrendsR, countrycode, parallel, pbmcapply, ggplot2, jsonlite,
                WDI, scales, rnaturalearth, sp, utf8, ggtext, stargazer, lfe,
                ggrepel, Rfast)
 
-# remotes::install_github("wilkelab/ggtext")
-# library(ggtext)
-
+## User defined functions
 source("https://raw.githubusercontent.com/ramarty/r_google_translate/main/r_google_translate.R")
 
 # Filepaths --------------------------------------------------------------------
@@ -36,20 +34,23 @@ if(Sys.info()[["user"]] == "robmarty") github_file_path <- "~/Documents/Github/c
 if(Sys.info()[["user"]] == "WB521633") covid_twitter_github <- "C:/Users/wb521633/Documents/Github/COVID-19-TweetIDs"
 if(Sys.info()[["user"]] == "robmarty") covid_twitter_github <- "~/Documents/Github/COVID-19-TweetIDs"
 
+if(Sys.info()[["user"]] == "robmarty"){
+  paper_tables <- file.path("~/Dropbox/Apps/Overleaf/COVID-19 and Google Trends Paper/tables")
+  paper_figures <- file.path("~/Dropbox/Apps/Overleaf/COVID-19 and Google Trends Paper/figures")
+}
+
 data_dir <- file.path(dropbox_file_path, "Data")
 gtrends_dir <- file.path(data_dir, "google_trends")
 vaccine_dir <- file.path(data_dir, "usa_vaccine")
 oxpol_dir <- file.path(data_dir, "oxford_covid_policy_tracker")
 
-brazil_twitter_figures_path <- file.path(dropbox_file_path, "Data", "twitter", "Outputs", "figures")
-
-
-google_figures_path <- file.path(dropbox_file_path, "Data", "google_trends", "outputs", "figures")
-
-if(Sys.info()[["user"]] == "robmarty"){
-  paper_tables <- file.path("~/Dropbox/Apps/Overleaf/COVID-19 and Google Trends Paper/tables")
-  paper_figures <- file.path("~/Dropbox/Apps/Overleaf/COVID-19 and Google Trends Paper/figures")
-}
+# Google API Key ---------------------------------------------------------------
+# Only needed for Google translation
+api_key <- read_csv(file.path("~", "Dropbox", "World Bank", "Webscraping", "Files for Server", 
+                              "api_keys.csv")) %>%
+  filter(Account %in% "robertandrew311@gmail.com",
+         Service %in% "Google Directions API") %>%
+  pull(Key)
 
 # Keywords ---------------------------------------------------------------------
 # Keywords to use to evaluate COVID containement policies
@@ -76,16 +77,16 @@ KEYWORDS_CONTAIN_USE <- c("social distance",
                           "lonely",
                           "loneliness",
                           "divorce",
-                          "condom",
-                          "emergency pill",
+                          #"condom",
+                          #"emergency pill",
                           "pregnancy test", 
-                          "abortion",
-                          "plan child",
-                          "plan other children",
-                           "tinder",
-                          "relationship",
-                          "break up", 
-                          "wedding", 
+                          # "abortion",
+                          # "plan child",
+                          # "plan other children",
+                          #  "tinder",
+                          # "relationship",
+                          # "break up", 
+                          # "wedding", 
                           "dating app") 
 
 KEYWORDS_SYMTPOMS <- c("loss of smell",
