@@ -16,7 +16,7 @@ pacman::p_load(gtrendsR, countrycode, parallel, pbmcapply, ggplot2, jsonlite,
                tidyverse, sf, raster, leaflet, leaflet.extras, plotly,
                geosphere, data.table, formattable, tidyr, viridis, data.table,
                WDI, scales, rnaturalearth, sp, utf8, ggtext, stargazer, lfe,
-               ggrepel, Rfast)
+               ggrepel, Rfast, tikzDevice)
 
 ## User defined functions
 source("https://raw.githubusercontent.com/ramarty/r_google_translate/main/r_google_translate.R")

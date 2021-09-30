@@ -9,13 +9,26 @@ languages_df <- read_csv(file.path(dropbox_file_path, "Data",
                                    "countries_modified.csv"))
 
 languages_df <- languages_df %>%
-  dplyr::filter(!is.na(Language_code_5))
+  dplyr::filter(!is.na(Language_code_5)) %>%
+  dplyr::filter(Code != "XK")
 
 keywords_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", 
                                  "keywords", "FinalData", "covid_keywords_alllanguages.Rds"))
 
+# no, nn, and nb are the same; use no
+table(keywords_df$keyword_no == keywords_df$keyword_nn)
+table(keywords_df$keyword_no == keywords_df$keyword_nb)
+keywords_df$keyword_nn <- NULL
+keywords_df$keyword_nb <- NULL
+
 # Extract Data -----------------------------------------------------------------
-for(keyword_en_i in c("fever")){
+for(keyword_en_i in c("fever", 
+                      "doctor",
+                      "hospital", 
+                      "cough",
+                      "football",
+                      "food",
+                      "restaurant")){
   for(iso_i in unique(languages_df$Code)){
     
     OUT_PATH <- file.path(dropbox_file_path, 
@@ -86,11 +99,14 @@ for(keyword_en_i in c("fever")){
             left_join(term_lng_df, by = "keyword")
           df_out$keyword_en <- keyword_en_i
           df_out$n_languages <- length(languages_i)
+          df_out$geo <- iso_i
         }
         
-        # Export ---------------------------------------------------------------
-        saveRDS(df_out, OUT_PATH)
       }
+      
+      # Export -----------------------------------------------------------------
+      saveRDS(df_out, OUT_PATH)
+      
     }
   }
 }
