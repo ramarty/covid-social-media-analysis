@@ -3,15 +3,12 @@
 rextract_if_exists <- F
 sleep_time <- 3
 
-# Load Data --------------------------------------------------------------------
-languages_df <- read_csv(file.path(dropbox_file_path, "Data", 
-                                   "country_primary_language", "RawData",
-                                   "countries_modified.csv"))
+# Load/Prep Language Data ------------------------------------------------------
+languages_df <- readRDS(file.path(dropbox_file_path, "Data", 
+                                  "country_primary_language", "FinalData",
+                                  "countries_modified_clean.Rds"))
 
-languages_df <- languages_df %>%
-  dplyr::filter(!is.na(Language_code_5)) %>%
-  dplyr::filter(Code != "XK")
-
+# Load/Prep Keyword Data -------------------------------------------------------
 keywords_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", 
                                  "keywords", "FinalData", "covid_keywords_alllanguages.Rds"))
 
@@ -29,7 +26,7 @@ for(keyword_en_i in c("fever",
                       "football",
                       "food",
                       "restaurant")){
-  for(iso_i in unique(languages_df$Code)){
+  for(iso_i in unique(languages_df$geo)){
     
     OUT_PATH <- file.path(dropbox_file_path, 
                           "Data", 
@@ -45,7 +42,7 @@ for(keyword_en_i in c("fever",
       # Grab parameters --------------------------------------------------------
       
       ## Grab Languages
-      languages_all <- languages_df$Language_code_5[languages_df$Code %in% iso_i] %>% 
+      languages_all <- languages_df$Language_code_5[languages_df$geo %in% iso_i] %>% 
         str_split(",") %>% 
         unlist()
       

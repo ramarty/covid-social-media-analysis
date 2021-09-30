@@ -16,8 +16,10 @@ min_ignore_0_and_na <- function(x){
 }
 
 # Clean data -------------------------------------------------------------------
+ymd(ox_df$date[1])*1
+
 ox_clean_df <- ox_df %>%
-  dplyr::select(CountryCode, Date, 
+  dplyr::select(geo, date, 
                 "C1_School closing",
                 "C2_Workplace closing",
                 "C3_Cancel public events",
@@ -35,6 +37,10 @@ ox_clean_df <- ox_df %>%
                   `C6_Stay at home requirements` +
                   `C7_Restrictions on internal movement` +
                   `C8_International travel controls`) %>%
+  dplyr::mutate(date = date %>% 
+                  as.character() %>% 
+                  str_replace_all("-", "") %>%
+                  as.numeric()) %>%
   dplyr::mutate_at(vars(c("C1_School closing",
                           "C2_Workplace closing",
                           "C3_Cancel public events",
@@ -44,16 +50,11 @@ ox_clean_df <- ox_df %>%
                           "C7_Restrictions on internal movement",
                           "C8_International travel controls",
                           "C_policy")), 
-                   ~is_greater_zero(.) * Date) %>%
-  dplyr::select(-Date) %>%
-  dplyr::group_by(CountryCode) %>%
+                   ~is_greater_zero(.) * date) %>%
+  dplyr::select(-date) %>%
+  dplyr::group_by(geo) %>%
   dplyr::summarise_all(min_ignore_0_and_na) %>%
-  dplyr::mutate_if(is.numeric, . %>% as.character() %>% ymd()) %>%
-  dplyr::mutate(geo = CountryCode %>% countrycode(origin = "iso3c",
-                                                  destination = "iso2c")) %>%
-  dplyr::mutate(geo = case_when(CountryCode == "RKS" ~ "XK",
-                                TRUE ~ geo)) %>%
-  dplyr::select(-CountryCode)
+  dplyr::mutate_if(is.numeric, . %>% as.character() %>% ymd()) 
 
 names(ox_clean_df) <- names(ox_clean_df) %>%
   tolower() %>%

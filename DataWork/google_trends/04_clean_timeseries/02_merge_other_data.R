@@ -10,10 +10,9 @@ cases_df <- read.csv(file.path(dropbox_file_path, "Data", "global_admin_data",
 
 wdi_df <- readRDS(file.path(dropbox_file_path, "Data", "wdi", "RawData", "wdi_data.Rds"))
 
-lockdowns_df <- readRDS(file.path(dropbox_file_path, "Data", "lockdowns", "FinalData",
-                                  "lockdowns_full.Rds"))
+ox_earliest_measure_df <- readRDS(file.path(oxpol_dir, "FinalData", "OxCGRT_earliest_measure.Rds"))
 
-ox_df <- readRDS(file.path(oxpol_dir, "FinalData", "OxCGRT_earliest_measure.Rds"))
+ox_nat_timeseries_df <- readRDS(file.path(oxpol_dir, "FinalData", "OxCGRT_national_timeseries.Rds"))
 
 gmobility_df <- read.csv(file.path(dropbox_file_path, "Data", "google_mobility", "RawData",
                                    "Global_Mobility_Report.csv"),
@@ -63,7 +62,7 @@ if(F){
 }
 
 # Days Since Oxford Policies ---------------------------------------------------
-gtrends_df <- merge(gtrends_df, ox_df, by = "geo", all.x = T, all.y = F)
+gtrends_df <- merge(gtrends_df, ox_earliest_measure_df, by = "geo", all.x = T, all.y = F)
 
 gtrends_df <- gtrends_df %>%
   mutate(days_since_c1_school_closing = date - c1_school_closing,
@@ -100,38 +99,7 @@ if(T){
 }
 
 # Merge Oxford Policy Response Data --------------------------------------------
-if(T){
-  oxpol_df <- read_csv("https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker/master/data/OxCGRT_latest.csv")
-  
-  oxpol_clean_df <- oxpol_df %>%
-    dplyr::filter(Jurisdiction %in% "NAT_TOTAL") %>%
-    dplyr::mutate(Date = Date %>% as.character() %>% ymd(),
-                  geo = countrycode(CountryCode, origin = "iso3c", destination = "iso2c")) %>%
-    dplyr::mutate(geo = case_when(
-      CountryCode == "RKS" ~ "RS",
-      TRUE ~ geo
-    )) %>%
-    dplyr::select(Date, geo, 
-                  "E1_Income support",
-                  "E2_Debt/contract relief",
-                  "E3_Fiscal measures",
-                  "E4_International support",
-                  "C1_School closing",
-                  "C2_Workplace closing",
-                  "C3_Cancel public events",
-                  "C4_Restrictions on gatherings",
-                  "C5_Close public transport",
-                  "C6_Stay at home requirements",
-                  "C7_Restrictions on internal movement",
-                  "C8_International travel controls",
-                  StringencyIndex, 
-                  GovernmentResponseIndex, 
-                  EconomicSupportIndex,
-                  ContainmentHealthIndex) %>%
-    dplyr::rename(date = Date)
-  
-  gtrends_df <- merge(gtrends_df, oxpol_clean_df, by = c("geo", "date"), all.x=T, all.y=F)
-}
+gtrends_df <- merge(gtrends_df, ox_nat_timeseries_df, by = c("geo", "date"), all.x=T, all.y=F)
 
 # Add continent/regions --------------------------------------------------------
 gtrends_df$un_regionsub_name <- gtrends_df$geo %>% countrycode(origin = "iso2c", destination = "un.regionsub.name")

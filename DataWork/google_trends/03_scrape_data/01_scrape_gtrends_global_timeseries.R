@@ -105,11 +105,13 @@ keywords_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends",
 
 ## Language Dataset
 # Indicates which language to use for each country. 
-languages <- read.csv(file.path(dropbox_file_path, 
-                                "Data", "country_primary_language", "countries_lang.csv"),
-                      stringsAsFactors = F) 
+languages <- readRDS(file.path(dropbox_file_path, 
+                               "Data", 
+                               "country_primary_language", 
+                               "FinalData",
+                               "country_language.Rds"))
 
-language_codes_all <- languages$Language_code_main %>% unique()
+language_codes_all <- languages$language_best %>% unique()
 language_codes_all <- language_codes_all[!is.na(language_codes_all)]
 language_codes_all <- language_codes_all[language_codes_all != ""]
 language_codes_all <- language_codes_all %>% sort()
@@ -167,7 +169,7 @@ for(OUT_FOLDER in OUT_FOLDER_LIST){
     
     ## ISO CODES
     # Grab iso/country codes where the selected language is the main language
-    iso2 <- languages$Code[languages$Language_code_main %in% language]
+    iso2 <- languages$geo[languages$language_best %in% language]
     iso2 <- iso2[!is.na(iso2)]
     
     # In some cases, subset iso2 vector
@@ -181,14 +183,25 @@ for(OUT_FOLDER in OUT_FOLDER_LIST){
         term_i <- keywords_sub_df_i$term_to_scrape[term_id_i]
         term_en_i <- keywords_sub_df_i$keyword_en[term_id_i]
         
+        # out_path <- file.path(dropbox_file_path, "Data", "google_trends", "RawData",
+        #                       OUT_FOLDER,
+        #                       paste0("global_gtrends_ref_",
+        #                              iso_i, 
+        #                              "_compr",
+        #                              "US",
+        #                              "_term",
+        #                              term_i,
+        #                              "_language",
+        #                              language,
+        #                              ".Rds"))
         out_path <- file.path(dropbox_file_path, "Data", "google_trends", "RawData",
                               OUT_FOLDER,
-                              paste0("global_gtrends_ref_",
+                              paste0("gtrends_",
                                      iso_i, 
-                                     "_compr",
-                                     "US",
                                      "_term",
                                      term_i,
+                                     "_termen",
+                                     term_en_i,
                                      "_language",
                                      language,
                                      ".Rds"))

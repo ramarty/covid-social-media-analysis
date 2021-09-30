@@ -40,6 +40,7 @@ if(Sys.info()[["user"]] == "robmarty"){
 }
 
 data_dir <- file.path(dropbox_file_path, "Data")
+who_covid_dir <- file.path(data_dir, "who_covid")
 gtrends_dir <- file.path(data_dir, "google_trends")
 vaccine_dir <- file.path(data_dir, "usa_vaccine")
 oxpol_dir <- file.path(data_dir, "oxford_covid_policy_tracker")
@@ -68,7 +69,7 @@ KEYWORDS_CONTAIN_USE <- c("social distance",
                           "anxiety",
                           "anxiety attack",
                           "anxiety symptoms",
-                          #"overwhelmed", # panic
+                          "overwhelmed", 
                           "panic",
                           "hysteria",
                           "suicide",
@@ -77,16 +78,16 @@ KEYWORDS_CONTAIN_USE <- c("social distance",
                           "lonely",
                           "loneliness",
                           "divorce",
-                          #"condom",
-                          #"emergency pill",
+                          "condom",
+                          "emergency pill",
                           "pregnancy test", 
-                          # "abortion",
-                          # "plan child",
-                          # "plan other children",
-                          #  "tinder",
-                          # "relationship",
-                          # "break up", 
-                          # "wedding", 
+                          "abortion",
+                          "plan child",
+                          "plan other children",
+                          "tinder",
+                          "relationship",
+                          "break up", 
+                          "wedding", 
                           "dating app") 
 
 KEYWORDS_SYMTPOMS <- c("loss of smell",
@@ -113,3 +114,6 @@ lm_post_confint_tidy <- function(lm){
   
   return(lm_confint)
 }
+
+
+
