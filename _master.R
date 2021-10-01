@@ -93,11 +93,17 @@ KEYWORDS_CONTAIN_USE <- c("social distance",
 KEYWORDS_SYMTPOMS <- c("loss of smell",
                        "loss of taste",
                        "i can't smell",
+                       "i can't taste",
                        "ageusia",
                        "anosmia",
                        "pneumonia",
+                       "cough",
                        "fever",
-                       "how to treat coronavirus")
+                       "shortness of breath",
+                       "how to treat coronavirus",
+                       "covid symptoms",
+                       "coronavirus",
+                       "covid-19")
 
 # Common Functions -------------------------------------------------------------
 lm_post_confint_tidy <- function(lm){
