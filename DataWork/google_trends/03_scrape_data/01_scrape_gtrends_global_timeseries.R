@@ -10,7 +10,7 @@
 
 # Setup ------------------------------------------------------------------------
 ## Parameters
-SLEEP_TIME      <- 0.5 # number of seconds to pause after each scrape
+SLEEP_TIME      <- 2 # number of seconds to pause after each scrape
 overwrite_files <- F # overwrite data?
 
 ## Timeframe to scrape
@@ -33,7 +33,7 @@ select_countries_vec <- c("US")
 
 ## Which keywords to scrape for [timeseries]. For [timeseries_region], uses
 # vaccine and missinformation related keywords
-keywords_en_timeseries <- c(KEYWORDS_SYMTPOMS, KEYWORDS_CONTAIN_USE)
+keywords_en_timeseries <- c(KEYWORDS_SYMTPOMS, KEYWORDS_CONTAIN_USE) %>% sort()
 
 # Function to Scrape Google Data -----------------------------------------------
 extract_trends <- function(iso_i,
@@ -86,7 +86,7 @@ extract_trends <- function(iso_i,
     }
     
     # 4. Take a quick nap b/c of google rate limits
-    Sys.sleep(sleep_time)
+    Sys.sleep(sleep_time + runif(1))
     
     print(iso_i)
     print(nrow(out_df))
@@ -208,7 +208,7 @@ for(OUT_FOLDER in OUT_FOLDER_LIST){
         
         if(!file.exists(out_path) | overwrite_files){
           print(start_end_date)
-          print(paste(language, iso_i, term_i, "-------------------------------"))
+          print(paste(language, iso_i, term_i, term_en_i, "------------------"))
           
           tryCatch({
             
