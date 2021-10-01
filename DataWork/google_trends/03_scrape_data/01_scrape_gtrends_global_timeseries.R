@@ -101,7 +101,7 @@ extract_trends <- function(iso_i,
 
 ## Keywords Dataset
 keywords_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", 
-                                 "keywords", "FinalData", "covid_keywords_alllanguages_clean.Rds"))
+                                 "keywords", "FinalData", "covid_keywords_alllanguages.Rds"))
 
 ## Language Dataset
 # Indicates which language to use for each country. 
