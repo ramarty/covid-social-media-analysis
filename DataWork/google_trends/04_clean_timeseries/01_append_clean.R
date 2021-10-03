@@ -12,7 +12,7 @@ clean_google_data <- function(df){
   df$hits <- df$hits %>% as.numeric()
   
   df <- df %>%
-    dplyr::select(hits, date, keyword, geo, language)
+    dplyr::select(hits, date, keyword, keyword_en, geo, language)
   
   return(df)
 }
@@ -21,7 +21,7 @@ gtrends_m2_df <- file.path(dropbox_file_path, "Data", "google_trends", "RawData"
                            "timeseries_2019-01-01_2019-09-27") %>%
   list.files(pattern = "*.Rds", full.names = T) %>%
   map_df(readRDS) %>%
-  distinct(date, keyword, geo, time, language, .keep_all = T) %>%
+  distinct(date, keyword, keyword_en, geo, time, language, .keep_all = T) %>%
   filter(!is.na(date)) %>%
   clean_google_data() %>%
   dplyr::rename(hits_tm2 = hits) 
@@ -30,7 +30,7 @@ gtrends_m1_df <- file.path(dropbox_file_path, "Data", "google_trends", "RawData"
                            "timeseries_2019-07-01_2020-03-26") %>%
   list.files(pattern = "*.Rds", full.names = T) %>%
   map_df(readRDS) %>%
-  distinct(date, keyword, geo, time, language, .keep_all = T) %>%
+  distinct(date, keyword, keyword_en, geo, time, language, .keep_all = T) %>%
   filter(!is.na(date)) %>%
   clean_google_data() %>%
   dplyr::rename(hits_tm1 = hits) 
@@ -39,7 +39,7 @@ gtrends_0_df <- file.path(dropbox_file_path, "Data", "google_trends", "RawData",
                           "timeseries_2020-01-01_2020-09-26") %>%
   list.files(pattern = "*.Rds", full.names = T) %>%
   map_df(readRDS) %>%
-  distinct(date, keyword, geo, time, language, .keep_all = T) %>%
+  distinct(date, keyword, keyword_en, geo, time, language, .keep_all = T) %>%
   filter(!is.na(date)) %>%
   clean_google_data() %>%
   dplyr::rename(hits_t0 = hits) 
@@ -48,7 +48,7 @@ gtrends_p1_df <- file.path(dropbox_file_path, "Data", "google_trends", "RawData"
                            "timeseries_2020-07-05_2021-03-31") %>%
   list.files(pattern = "*.Rds", full.names = T) %>%
   map_df(readRDS) %>%
-  distinct(date, keyword, geo, time, language, .keep_all = T) %>%
+  distinct(date, keyword, keyword_en, geo, time, language, .keep_all = T) %>%
   filter(!is.na(date)) %>%
   clean_google_data() %>%
   dplyr::rename(hits_tp1 = hits) 
@@ -57,7 +57,7 @@ gtrends_p2_df <- file.path(dropbox_file_path, "Data", "google_trends", "RawData"
                            "timeseries_2020-11-04_2021-07-31") %>%
   list.files(pattern = "*.Rds", full.names = T) %>%
   map_df(readRDS) %>%
-  distinct(date, keyword, geo, time, language, .keep_all = T) %>%
+  #distinct(date, keyword, keyword_en, geo, time, language, .keep_all = T) %>%
   filter(!is.na(date)) %>%
   clean_google_data() %>%
   dplyr::rename(hits_tp2 = hits) 

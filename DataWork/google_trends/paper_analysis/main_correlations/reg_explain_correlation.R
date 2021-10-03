@@ -9,24 +9,26 @@ gtrends_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "Fin
 gtrends_losssmell_df <- gtrends_df %>%
   dplyr::filter(keyword_en %in% "loss of smell",
                 type %in% "Cases") %>%
-  mutate(income = income %>% factor(levels = c("Low income",
+  mutate(income = income %>% factor(levels = c("High income",
+                                               "Low income",
                                                "Lower middle income",
-                                               "Upper middle income",
-                                               "High income")))
+                                               "Upper middle income")))
 
 gtrends_losssmell_df$lag <- as.numeric(gtrends_losssmell_df$lag)
+gtrends_losssmell_df$gdp_pc_ln <- log(gtrends_losssmell_df$gdp_pc)
 
+# factor(income)
 lm1_cor <- lm(cor_nolag ~ log(cases_total), data = gtrends_losssmell_df)
 lm2_cor <- lm(cor_nolag ~ per_pop_using_internet, data = gtrends_losssmell_df)
 lm3_cor <- lm(cor_nolag ~ mobile_cell_sub_per100, data = gtrends_losssmell_df)
-lm4_cor <- lm(cor_nolag ~ factor(income), data = gtrends_losssmell_df)
-lm5_cor <- lm(cor_nolag ~ log(cases_total) + per_pop_using_internet + mobile_cell_sub_per100 + factor(income), data = gtrends_losssmell_df)
+lm4_cor <- lm(cor_nolag ~ gdp_pc_ln, data = gtrends_losssmell_df)
+lm5_cor <- lm(cor_nolag ~ log(cases_total) + per_pop_using_internet + mobile_cell_sub_per100 + gdp_pc_ln, data = gtrends_losssmell_df)
 
 lm1_lag <- lm(lag ~ log(cases_total), data = gtrends_losssmell_df)
 lm2_lag <- lm(lag ~ per_pop_using_internet, data = gtrends_losssmell_df)
 lm3_lag <- lm(lag ~ mobile_cell_sub_per100, data = gtrends_losssmell_df)
-lm4_lag <- lm(lag ~ factor(income), data = gtrends_losssmell_df)
-lm5_lag <- lm(lag ~ log(cases_total) + per_pop_using_internet + mobile_cell_sub_per100 + factor(income), data = gtrends_losssmell_df)
+lm4_lag <- lm(lag ~ gdp_pc_ln, data = gtrends_losssmell_df)
+lm5_lag <- lm(lag ~ log(cases_total) + per_pop_using_internet + mobile_cell_sub_per100 + gdp_pc_ln, data = gtrends_losssmell_df)
 
 # Correlation between loss of smell search interest and COVID-19
 stargazer(lm1_cor,
@@ -45,9 +47,7 @@ stargazer(lm1_cor,
           covariate.labels = c("Total COVID-19 Cases, log",
                                "Per Pop. Using Internet",
                                "Mobile Cell Sub. per 100",
-                               "Lower middle income",
-                               "Upper middle income",
-                               "High income"),
+                               "GDP Per Cap, Log"),
           omit.stat = c("f","ser", "rsq"),
           align=TRUE,
           no.space=TRUE,

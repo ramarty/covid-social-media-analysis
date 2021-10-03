@@ -8,10 +8,14 @@
 
 #Sys.setlocale("LC_CTYPE", "en_US.UTF-8")
 
+library(dplyr)
+library(stringr)
+library(tidyr)
+library(gtrendsR)
 
 # Setup ------------------------------------------------------------------------
 ## Parameters
-SLEEP_TIME      <- 0.01 # number of seconds to pause after each scrape
+SLEEP_TIME      <- 0.2 # number of seconds to pause after each scrape
 overwrite_files <- F # overwrite data?
 rev_language_codes <- T
 LANGUAGE_SUBSET <- "all" # "all", "en_only", "no_en"
@@ -27,14 +31,67 @@ GTRENDS_TO_SCRAPE <- c("timeseries_2018-09-01_2019-05-28",
                        "timeseries_2019-07-01_2020-03-26",
                        "timeseries_2020-01-01_2020-09-26",
                        "timeseries_2020-07-05_2021-03-31",
-                       "timeseries_2020-11-04_2021-07-31",
-                       "timeseries_2021-01-04_2021-09-30") 
+                       "timeseries_2020-11-04_2021-07-31") 
+
+GTRENDS_TO_SCRAPE <- GTRENDS_TO_SCRAPE[1]
 
 #"timeseries_regions_2020-12-01_2021-05-31",
 #"timeseries_regions_2020-12-01_2021-07-31"
 
 ## Which countries to use when scraping [timeseries_region]
 select_countries_vec <- c("US")
+
+# Keywords ---------------------------------------------------------------------
+# Keywords to use to evaluate COVID containement policies
+KEYWORDS_CONTAIN_USE <- c("social distance",
+                          "stay at home",
+                          
+                          "unemployment",
+                          "unemployment insurance",
+                          "unemployment benefits",
+                          "unemployment office",
+                          "file for unemployment",
+                          "debt",
+                          
+                          "boredom",
+                          "anxiety",
+                          "anxiety attack",
+                          "anxiety symptoms",
+                          "overwhelmed", 
+                          "panic",
+                          "hysteria",
+                          "suicide",
+                          "insomnia",
+                          "social isolation",
+                          "lonely",
+                          "loneliness",
+                          "divorce",
+                          #"condom",
+                          "emergency pill",
+                          "pregnancy test", 
+                          #"abortion",
+                          #"plan child",
+                          #"plan other children",
+                          "tinder",
+                          #"relationship",
+                          # "break up", 
+                          "wedding", 
+                          "dating app") 
+
+KEYWORDS_SYMTPOMS <- c("loss of smell",
+                       "loss of taste",
+                       "i can't smell",
+                       "i can't taste",
+                       "ageusia",
+                       "anosmia",
+                       "pneumonia",
+                       "cough",
+                       "fever",
+                       "shortness of breath",
+                       "how to treat coronavirus",
+                       "covid symptoms",
+                       "coronavirus",
+                       "covid-19")
 
 ## Which keywords to scrape for [timeseries]. For [timeseries_region], uses
 # vaccine and missinformation related keywords
@@ -105,15 +162,11 @@ extract_trends <- function(iso_i,
 # Load / Initial Data Prep -----------------------------------------------------
 
 ## Keywords Dataset
-keywords_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", 
-                                 "keywords", "FinalData", "covid_keywords_alllanguages.Rds"))
+keywords_df <- readRDS(file.path("TO_UPLOAD", "covid_keywords_alllanguages.Rds"))
 
 ## Language Dataset
 # Indicates which language to use for each country. 
-languages <- readRDS(file.path(dropbox_file_path, 
-                               "Data", 
-                               "country_primary_language", 
-                               "FinalData",
+languages <- readRDS(file.path("TO_UPLOAD",
                                "country_language.Rds"))
 
 language_codes_all <- languages$language_best %>% unique()
@@ -165,7 +218,7 @@ for(GTRENDS_TO_SCRAPE_i in GTRENDS_TO_SCRAPE){
     str_replace_all(str_replace_all(start_end_date, " ", "_"),"") %>%
     str_replace_all("_$", "")
   
-  dir.create(file.path(dropbox_file_path, "Data", "google_trends", "RawData", OUT_FOLDER))
+  dir.create(file.path("TO_UPLOAD", OUT_FOLDER))
   
   if(grepl("timeseriesALL_", GTRENDS_TO_SCRAPE_i)) language_codes_all <- "en"
   
@@ -204,7 +257,7 @@ for(GTRENDS_TO_SCRAPE_i in GTRENDS_TO_SCRAPE){
         term_i <- keywords_sub_df_i$term_to_scrape[term_id_i]
         term_en_i <- keywords_sub_df_i$keyword_en[term_id_i]
         
-        out_path <- file.path(dropbox_file_path, "Data", "google_trends", "RawData",
+        out_path <- file.path("TO_UPLOAD",
                               OUT_FOLDER,
                               paste0("gtrends_date",
                                      start_end_date,
