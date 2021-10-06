@@ -7,15 +7,20 @@ gtrends_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "Fin
 
 # Moving Averaage --------------------------------------------------------------
 ## Doesn't work with non-leading NAs, so remove NAs then merge back in
-gtrends_ma_hits_df <- gtrends_df %>%
-  filter(!is.na(hits)) %>%
+gtrends_df <- gtrends_df %>%
   arrange(date) %>%
   group_by(geo, keyword_en) %>%
   dplyr::mutate(hits_ma7 = runMean(hits, n = 7)) %>%
-  dplyr::select(geo, date, language, keyword, keyword_en, hits_ma7) 
+  ungroup()
 
-gtrends_df <- gtrends_df %>%
-  left_join(gtrends_ma_hits_df, by = c("geo", "date", "keyword_en", "keyword", "language")) 
+# gtrends_ma_hits_df <- gtrends_df %>%
+#   arrange(date) %>%
+#   group_by(geo, keyword_en) %>%
+#   dplyr::mutate(hits_ma7 = runMean(hits, n = 7)) %>%
+#   dplyr::select(geo, date, language, keyword_en, hits_ma7) 
+# 
+# gtrends_df <- gtrends_df %>%
+#   left_join(gtrends_ma_hits_df, by = c("geo", "date", "keyword_en", "language")) 
 
 # Days since lockdown - year agnostic ------------------------------------------
 # Calculate year since lockdown, agnostic of year. So April 21, 2020 and April
@@ -23,7 +28,7 @@ gtrends_df <- gtrends_df %>%
 
 gtrends_df <- gtrends_df %>%
   dplyr::mutate(year = date %>% year,
-                c_policy_mm_dd = c_policy %>% substring(6,10)) %>%
+                c_policy_mm_dd = c_policy_first_date %>% substring(6,10)) %>%
   dplyr::mutate(c_policy_2020 = paste0("2020-", c_policy_mm_dd) %>% ymd(),
                 c_policy_2019 = paste0("2019-", c_policy_mm_dd) %>% ymd(),
                 pandemic_time = as.numeric(date >= ymd("2019-09-01"))) %>%

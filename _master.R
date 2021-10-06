@@ -92,8 +92,8 @@ KEYWORDS_CONTAIN_USE <- c("social distance",
 
 KEYWORDS_SYMTPOMS <- c("loss of smell",
                        "loss of taste",
-                       "i can't smell",
-                       "i can't taste",
+                       "I can't smell",
+                       "I can't taste",
                        "ageusia",
                        "anosmia",
                        "pneumonia",
@@ -104,6 +104,10 @@ KEYWORDS_SYMTPOMS <- c("loss of smell",
                        "covid symptoms",
                        "coronavirus",
                        "covid-19")
+
+KEYWORDS_TIMESERIES_ALL <- c(KEYWORDS_CONTAIN_USE, KEYWORDS_SYMTPOMS) %>% unique()
+KEYWORDS_TIMESERIES_ALL_lw <- tolower(KEYWORDS_TIMESERIES_ALL)
+KEYWORDS_SYMTPOMS_lw <- tolower(KEYWORDS_SYMTPOMS)
 
 # Common Functions -------------------------------------------------------------
 lm_post_confint_tidy <- function(lm){

@@ -4,7 +4,7 @@
 gtrends_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
                                 "gtrends_full_timeseries",
                                 "correlation_datasets",
-                                "correlations_gtrends_since2020-01-01_until2021-07-31.Rds"))
+                                "correlations_gtrends_since2020-01-01_until2021-09-30.Rds"))
 
 gtrends_losssmell_df <- gtrends_df %>%
   dplyr::filter(keyword_en %in% "loss of smell",
@@ -18,6 +18,7 @@ gtrends_losssmell_df$lag <- as.numeric(gtrends_losssmell_df$lag)
 gtrends_losssmell_df$gdp_pc_ln <- log(gtrends_losssmell_df$gdp_pc)
 
 # factor(income)
+# gdp_pc_ln
 lm1_cor <- lm(cor_nolag ~ log(cases_total), data = gtrends_losssmell_df)
 lm2_cor <- lm(cor_nolag ~ per_pop_using_internet, data = gtrends_losssmell_df)
 lm3_cor <- lm(cor_nolag ~ mobile_cell_sub_per100, data = gtrends_losssmell_df)

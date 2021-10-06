@@ -4,46 +4,43 @@
 gtrends_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
                                 "gtrends_full_timeseries",
                                 "correlation_datasets",
-                                "gtrends_since2020-01-01_until2021-07-31.Rds"))
+                                "gtrends_since2020-01-01_until2021-09-30.Rds"))
 
 gtrends_df$cases_new <- gtrends_df$cases_new_ma7
 
 # Prep Data --------------------------------------------------------------------
 ## Subset and scale between 0 and 1
 gtrends_df <- gtrends_df %>%
-  filter(keyword_en %in% "loss of smell",
-         !is.na(Country)) %>%
+  dplyr::filter(keyword_en %in% "loss of smell") %>%
   group_by(geo, keyword_en) %>%
   mutate(hits_ma7 = hits_ma7 / max(hits_ma7, na.rm=T),
          cases_new = cases_new / max(cases_new, na.rm=T)) 
 
 ## Shorten country name
-gtrends_df$Country[gtrends_df$Country %in% "occupied Palestinian territory, including east Jerusalem"] <- "Palestine"
-gtrends_df$Country[gtrends_df$Country %in% "Iran (Islamic Republic of)"] <- "Iran"
-gtrends_df$Country[gtrends_df$Country %in% "Bolivia (Plurinational State of)"] <- "Bolivia"
-gtrends_df$Country[gtrends_df$Country %in% "United Republic of Tanzania"] <- "Tanzania"
-gtrends_df$Country[gtrends_df$Country %in% "Venezuela (Bolivarian Republic of)"] <- "Venezuela"
-gtrends_df$Country[gtrends_df$Country %in% "Bosnia and Herzegovina"] <- "Bosnia & Herzegovina"
-gtrends_df$Country[gtrends_df$Country %in% "Viet Nam"] <- "Vietnam"
+gtrends_df$country[gtrends_df$country %in% "occupied Palestinian territory, including east Jerusalem"] <- "Palestine"
+gtrends_df$country[gtrends_df$country %in% "Iran (Islamic Republic of)"] <- "Iran"
+gtrends_df$country[gtrends_df$country %in% "Bolivia (Plurinational State of)"] <- "Bolivia"
+gtrends_df$country[gtrends_df$country %in% "United Republic of Tanzania"] <- "Tanzania"
+gtrends_df$country[gtrends_df$country %in% "Venezuela (Bolivarian Republic of)"] <- "Venezuela"
+gtrends_df$country[gtrends_df$country %in% "Bosnia and Herzegovina"] <- "Bosnia & Herzegovina"
+gtrends_df$country[gtrends_df$country %in% "Viet Nam"] <- "Vietnam"
 
 ## Correlation in title
 gtrends_df <- gtrends_df %>%
-  dplyr::mutate(Country = paste0(Country, "\nCorrelation: ", cor_casesMA7_hitsMA7_nolag %>% round(2)))
+  dplyr::mutate(country = paste0(country, "\nCorrelation: ", cor_casesMA7_hitsMA7_nolag %>% round(2)))
 
-gtrends_df$Country = gtrends_df$Country %>% as.factor()
-gtrends_df$Country <- reorder(gtrends_df$Country, gtrends_df$cor_casesMA7_hitsMA7_nolag) %>% fct_rev
+gtrends_df$country = gtrends_df$country %>% as.factor()
+gtrends_df$country <- reorder(gtrends_df$country, gtrends_df$cor_casesMA7_hitsMA7_nolag) %>% fct_rev
 
 # Figure: Top Countries --------------------------------------------------------
-gtrends_df %>%
-  dplyr::filter(cases_total > 0,
-                cor_casesMA7_hitsMA7_nolag > 0.505) %>%
-  pull(geo) %>%
-  unique() %>%
-  length()
+geo_use <- gtrends_df %>%
+  distinct(geo, cor_casesMA7_hitsMA7_nolag) %>%
+  arrange(desc(cor_casesMA7_hitsMA7_nolag)) %>%
+  head(28) %>%
+  pull(geo)
 
 p_top <- gtrends_df %>%
-  dplyr::filter(cases_total > 0,
-                cor_casesMA7_hitsMA7_nolag > 0.505) %>%
+  dplyr::filter(geo %in% geo_use) %>%
   ggplot() +
   geom_col(aes(x = date, y = cases_new),
            fill = "#ffc266", # orange3
@@ -69,7 +66,7 @@ p_top <- gtrends_df %>%
         panel.background = element_blank(), 
         axis.line = element_blank(),
         plot.title = element_markdown(lineheight = 1.1, hjust = 0.5, face = "bold",size=5)) +
-  facet_wrap(~Country, 
+  facet_wrap(~country, 
              ncol = 4,
              scales = "free") 
 
@@ -104,7 +101,7 @@ p_all <- gtrends_df %>%
         panel.background = element_blank(), 
         axis.line = element_blank(),
         plot.title = element_markdown(lineheight = 1.1, hjust = 0.5, face = "bold",size=5)) +
-  facet_wrap(~Country, 
+  facet_wrap(~country, 
              ncol = 8,
              scales = "free") 
 

@@ -84,30 +84,6 @@ df <- df %>%
   dplyr::mutate(EconomicSupportIndex_max = 
                   max_narm(EconomicSupportIndex[(pandemic_time == 1) & 
                                                   (days_since_c_policy_yearcurrent_post %in% T)])) %>%
-  
-  dplyr::mutate(E1_Income_support_max = 
-                  max_narm(E1_Income_support[(pandemic_time == 1) & 
-                                               (days_since_c_policy_yearcurrent_post %in% T)])) %>%
-  
-  dplyr::mutate(E1_Income_support_max = 
-                  max_narm(E1_Income_support[(pandemic_time == 1) & 
-                                               (days_since_c_policy_yearcurrent_post %in% T)])) %>%
-  
-  dplyr::mutate(E1_Income_support_max = 
-                  max_narm(E1_Income_support[(pandemic_time == 1) & 
-                                               (days_since_c_policy_yearcurrent_post %in% T)])) %>%
-  
-  dplyr::mutate(E2_Debt_contract_relief_max = 
-                  max_narm(E2_Debt_contract_relief[(pandemic_time == 1) & 
-                                                     (days_since_c_policy_yearcurrent_post %in% T)])) %>%
-  
-  dplyr::mutate(E3_Fiscal_measures_max = 
-                  max_narm(E3_Fiscal_measures[(pandemic_time == 1) & 
-                                                (days_since_c_policy_yearcurrent_post %in% T)])) %>%
-  
-  dplyr::mutate(E4_International_support_max = 
-                  max_narm(E4_International_support[(pandemic_time == 1) & 
-                                                      (days_since_c_policy_yearcurrent_post %in% T)])) %>%
   ungroup() %>%
   mutate(EconomicSupportIndex_max_cat = case_when(
     EconomicSupportIndex_max == 0 ~ 0,
@@ -161,12 +137,7 @@ df <- df %>%
                 did_StringencyIndex_max = days_since_c_policy_yearcurrent_post_X_year2020 * StringencyIndex_max,
                 did_GovernmentResponseIndex_max = days_since_c_policy_yearcurrent_post_X_year2020 * GovernmentResponseIndex_max,
                 did_EconomicSupportIndex_max = days_since_c_policy_yearcurrent_post_X_year2020 * EconomicSupportIndex_max,
-                did_EconomicSupportIndex_max_cat = days_since_c_policy_yearcurrent_post_X_year2020 * EconomicSupportIndex_max_cat,
-                
-                did_E1_Income_support_max = days_since_c_policy_yearcurrent_post_X_year2020 * E1_Income_support_max,
-                did_E2_Debt_contract_relief_max = days_since_c_policy_yearcurrent_post_X_year2020 * E2_Debt_contract_relief_max,
-                did_E3_Fiscal_measures_max = days_since_c_policy_yearcurrent_post_X_year2020 * E3_Fiscal_measures_max,
-                did_E4_International_support_max = days_since_c_policy_yearcurrent_post_X_year2020 * E4_International_support_max) %>%
+                did_EconomicSupportIndex_max_cat = days_since_c_policy_yearcurrent_post_X_year2020 * EconomicSupportIndex_max_cat) %>%
   
   dplyr::mutate(did_gm_avg_min_X_did_EconomicSupportIndex_max = did_gm_avg_min * did_EconomicSupportIndex_max,
                 did_StringencyIndex_max_X_did_EconomicSupportIndex_max = did_StringencyIndex_max * did_EconomicSupportIndex_max,
@@ -206,44 +177,12 @@ run_regs <- function(keyword_i, df){
   out4 <- felm(hits_ma7_log ~ pandemic_time + 
                  days_since_c_policy_yearcurrent_post + 
                  days_since_c_policy_yearcurrent_post_X_year2020 +
-                 did_E1_Income_support_max | geo + week | 0 | 0, 
-               data = df[df$keyword_en %in% keyword_i,]) %>%
-    lm_post_confint_tidy() %>%
-    mutate(type = "did_E1_Income_support_max")
-  
-  out5 <- felm(hits_ma7_log ~ pandemic_time + 
-                 days_since_c_policy_yearcurrent_post + 
-                 days_since_c_policy_yearcurrent_post_X_year2020 +
-                 did_E2_Debt_contract_relief_max | geo + week | 0 | 0, 
-               data = df[df$keyword_en %in% keyword_i,]) %>%
-    lm_post_confint_tidy() %>%
-    mutate(type = "did_E2_Debt_contract_relief_max")
-  
-  out6 <- felm(hits_ma7_log ~ pandemic_time + 
-                 days_since_c_policy_yearcurrent_post + 
-                 days_since_c_policy_yearcurrent_post_X_year2020 +
-                 did_E3_Fiscal_measures_max | geo + week | 0 | 0, 
-               data = df[df$keyword_en %in% keyword_i,]) %>%
-    lm_post_confint_tidy() %>%
-    mutate(type = "did_E3_Fiscal_measures_max")
-  
-  out7 <- felm(hits_ma7_log ~ pandemic_time + 
-                 days_since_c_policy_yearcurrent_post + 
-                 days_since_c_policy_yearcurrent_post_X_year2020 +
-                 did_E4_International_support_max | geo + week | 0 | 0, 
-               data = df[df$keyword_en %in% keyword_i,]) %>%
-    lm_post_confint_tidy() %>%
-    mutate(type = "did_E4_International_support_max")
-  
-  out8 <- felm(hits_ma7_log ~ pandemic_time + 
-                 days_since_c_policy_yearcurrent_post + 
-                 days_since_c_policy_yearcurrent_post_X_year2020 +
                  did_StringencyIndex_max | geo + week | 0 | 0, 
                data = df[df$keyword_en %in% keyword_i,]) %>%
     lm_post_confint_tidy() %>%
     mutate(type = "did_StringencyIndex_max")
   
-  out9 <- felm(hits_ma7_log ~ pandemic_time + 
+  out5 <- felm(hits_ma7_log ~ pandemic_time + 
                  days_since_c_policy_yearcurrent_post + 
                  days_since_c_policy_yearcurrent_post_X_year2020 +
                  did_gm_avg_min | geo + week | 0 | 0, 
@@ -251,7 +190,7 @@ run_regs <- function(keyword_i, df){
     lm_post_confint_tidy() %>%
     mutate(type = "did_gm_avg_min")
   
-  out10 <- felm(hits_ma7_log ~ pandemic_time + 
+  out6 <- felm(hits_ma7_log ~ pandemic_time + 
                   days_since_c_policy_yearcurrent_post + 
                   days_since_c_policy_yearcurrent_post_X_year2020 +
                   did_gm_avg_min +
@@ -260,7 +199,7 @@ run_regs <- function(keyword_i, df){
     lm_post_confint_tidy() %>%
     mutate(type = "did_gm_avg_min_AND_did_EconomicSupportIndex_max")
   
-  out11 <- felm(hits_ma7_log ~ pandemic_time + 
+  out7 <- felm(hits_ma7_log ~ pandemic_time + 
                   days_since_c_policy_yearcurrent_post + 
                   days_since_c_policy_yearcurrent_post_X_year2020 +
                   did_StringencyIndex_max +
@@ -269,7 +208,7 @@ run_regs <- function(keyword_i, df){
     lm_post_confint_tidy() %>%
     mutate(type = "did_StringencyIndex_max_AND_did_EconomicSupportIndex_max")
   
-  out12 <- felm(hits_ma7_log ~ pandemic_time + 
+  out8 <- felm(hits_ma7_log ~ pandemic_time + 
                   days_since_c_policy_yearcurrent_post + 
                   days_since_c_policy_yearcurrent_post_X_year2020 +
                   did_gm_avg_min +
@@ -279,7 +218,7 @@ run_regs <- function(keyword_i, df){
     lm_post_confint_tidy() %>%
     mutate(type = "did_gm_avg_min_AND_did_EconomicSupportIndex_max_INTER")
   
-  out13 <- felm(hits_ma7_log ~ pandemic_time + 
+  out9 <- felm(hits_ma7_log ~ pandemic_time + 
                   days_since_c_policy_yearcurrent_post + 
                   days_since_c_policy_yearcurrent_post_X_year2020 +
                   did_StringencyIndex_max +
@@ -290,7 +229,7 @@ run_regs <- function(keyword_i, df){
     mutate(type = "did_StringencyIndex_max_AND_did_EconomicSupportIndex_max_INTER")
   
   ###########
-  out14 <- felm(hits_ma7_log ~ pandemic_time + 
+  out10 <- felm(hits_ma7_log ~ pandemic_time + 
                   days_since_c_policy_yearcurrent_post + 
                   days_since_c_policy_yearcurrent_post_X_year2020 +
                   did_gm_avg_min +
@@ -299,7 +238,7 @@ run_regs <- function(keyword_i, df){
     lm_post_confint_tidy() %>%
     mutate(type = "did_gm_avg_min_AND_did_EconomicSupportIndex_max_cat")
   
-  out15 <- felm(hits_ma7_log ~ pandemic_time + 
+  out11 <- felm(hits_ma7_log ~ pandemic_time + 
                   days_since_c_policy_yearcurrent_post + 
                   days_since_c_policy_yearcurrent_post_X_year2020 +
                   did_StringencyIndex_max +
@@ -308,7 +247,7 @@ run_regs <- function(keyword_i, df){
     lm_post_confint_tidy() %>%
     mutate(type = "did_StringencyIndex_max_AND_did_EconomicSupportIndex_max_cat")
   
-  out16 <- felm(hits_ma7_log ~ pandemic_time + 
+  out12 <- felm(hits_ma7_log ~ pandemic_time + 
                   days_since_c_policy_yearcurrent_post + 
                   days_since_c_policy_yearcurrent_post_X_year2020 +
                   did_gm_avg_min +
@@ -318,7 +257,7 @@ run_regs <- function(keyword_i, df){
     lm_post_confint_tidy() %>%
     mutate(type = "did_gm_avg_min_AND_did_EconomicSupportIndex_max_cat_INTER")
   
-  out17 <- felm(hits_ma7_log ~ pandemic_time + 
+  out13 <- felm(hits_ma7_log ~ pandemic_time + 
                   days_since_c_policy_yearcurrent_post + 
                   days_since_c_policy_yearcurrent_post_X_year2020 +
                   did_StringencyIndex_max +
@@ -327,42 +266,6 @@ run_regs <- function(keyword_i, df){
                 data = df[df$keyword_en %in% keyword_i,]) %>%
     lm_post_confint_tidy() %>%
     mutate(type = "did_StringencyIndex_max_AND_did_EconomicSupportIndex_max_cat_INTER")
-  
-  
-  if(F){
-    library(effects)
-    
-    out12_lm <- lm(hits_ma7_log ~ pandemic_time + 
-                     days_since_c_policy_yearcurrent_post + 
-                     days_since_c_policy_yearcurrent_post_X_year2020 +
-                     did_StringencyIndex_max +
-                     did_EconomicSupportIndex_max +
-                     did_StringencyIndex_max*did_EconomicSupportIndex_max, 
-                   data = df[df$keyword_en %in% keyword_i,])
-    
-    ef1 <- effect(term="did_StringencyIndex_max*did_EconomicSupportIndex_max", 
-                  xlevels= list(did_EconomicSupportIndex_max=c(0, 50, 100)), 
-                  mod=out12_lm)
-    efdata1<-as.data.frame(ef1)
-    efdata1$did_EconomicSupportIndex_max <- as.factor(efdata1$did_EconomicSupportIndex_max)
-    
-    ggplot(efdata1, 
-           aes(x=did_StringencyIndex_max, 
-               y=fit, 
-               color=did_EconomicSupportIndex_max,
-               group=did_EconomicSupportIndex_max)) + 
-      geom_point() + 
-      geom_line(size=1.2) +
-      geom_ribbon(aes(ymin=fit-se, ymax=fit+se, fill=did_EconomicSupportIndex_max),alpha=0.3) + 
-      labs(title = "", 
-           x= "Strigency", 
-           y="Search Interest", 
-           color="Economic Support", 
-           fill="Economic Support") + 
-      theme_classic() + 
-      theme(text=element_text(size=20))
-    
-  }
   
   out_all <- bind_rows(
     out1,
@@ -377,11 +280,7 @@ run_regs <- function(keyword_i, df){
     out10,
     out11,
     out12,
-    out13,
-    out14,
-    out15,
-    out16,
-    out17
+    out13
   )
   
   out_all$keyword <- keyword_i

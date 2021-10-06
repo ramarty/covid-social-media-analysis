@@ -26,8 +26,8 @@ begin_day <- c("2020-01-01",
                # "2020-12-01",
                "2021-01-01")
 
-end_day <- c("2020-12-01", 
-             "2021-07-31")
+end_day <- c("2020-12-31", 
+             "2021-09-30")
 
 for(begin_day_i in begin_day){
   for(end_day_i in end_day){
@@ -40,14 +40,18 @@ for(begin_day_i in begin_day){
     gtrends_full_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
                                          "gtrends_full_timeseries", "gtrends_otherdata_varclean_complete.Rds"))
     
+    gtrends_full_df <- gtrends_full_df %>%
+      dplyr::filter(date >= as.Date(begin_day_i),
+                    date <= as.Date(end_day_i)) 
+    
     gtrends_df <- gtrends_full_df %>%
       dplyr::select(geo, date, keyword_en,
                     cases_new_ma7, death_new_ma7, 
                     cases_new, death_new, 
                     hits_ma7, hits) %>%
-      dplyr::filter(date >= as.Date(begin_day_i),
-                    date <= as.Date(end_day_i)) %>%
       dplyr::arrange(date)
+    
+    gc()
     
     # Correlations across different leads/lags -----------------------------------
     gtrends_cor_long_df <- map_df(-21:21, function(leadlag){

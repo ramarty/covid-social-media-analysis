@@ -8,13 +8,12 @@
 
 #Sys.setlocale("LC_CTYPE", "en_US.UTF-8")
 
-
 # Setup ------------------------------------------------------------------------
 ## Parameters
 SLEEP_TIME      <- 0.01 # number of seconds to pause after each scrape
 overwrite_files <- F # overwrite data?
 rev_language_codes <- T
-LANGUAGE_SUBSET <- "all" # "all", "en_only", "no_en"
+LANGUAGE_SUBSET <- "en_only" # "all", "en_only", "no_en"
 
 ## Timeframe to scrape
 # -- [timeseries]_[begin date]_[end date] to scrape time series data for all 
@@ -38,7 +37,7 @@ select_countries_vec <- c("US")
 
 ## Which keywords to scrape for [timeseries]. For [timeseries_region], uses
 # vaccine and missinformation related keywords
-keywords_en_timeseries <- c(KEYWORDS_SYMTPOMS, KEYWORDS_CONTAIN_USE) #%>% sort()
+keywords_en_timeseries <- KEYWORDS_TIMESERIES_ALL
 
 # Function to Scrape Google Data -----------------------------------------------
 extract_trends <- function(iso_i,

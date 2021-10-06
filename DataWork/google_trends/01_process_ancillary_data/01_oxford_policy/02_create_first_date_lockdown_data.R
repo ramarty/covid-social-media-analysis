@@ -60,6 +60,9 @@ names(ox_clean_df) <- names(ox_clean_df) %>%
   tolower() %>%
   str_replace_all(" ", "_")
 
+ox_clean_df <- ox_clean_df %>% 
+  rename_at(vars(-geo), ~ paste0(., '_first_date'))
+  
 # Export data ------------------------------------------------------------------
 saveRDS(ox_clean_df, 
         file.path(oxpol_dir, "FinalData", "OxCGRT_earliest_measure.Rds"))

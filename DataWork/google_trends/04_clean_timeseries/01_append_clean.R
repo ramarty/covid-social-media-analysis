@@ -12,62 +12,60 @@ clean_google_data <- function(df){
   df$hits <- df$hits %>% as.numeric()
   
   df <- df %>%
-    dplyr::select(hits, date, keyword, keyword_en, geo, language)
+    dplyr::select(date, keyword_en, geo, language, hits) %>%
+    tidyr::complete(date,
+                    keyword_en = KEYWORDS_TIMESERIES_ALL,
+                    nesting(geo, language),
+                    fill = list(hits = 0))
+  
+  df$keyword_en <- df$keyword_en %>% tolower()
   
   return(df)
 }
 
-gtrends_m2_df <- file.path(dropbox_file_path, "Data", "google_trends", "RawData",
-                           "timeseries_2019-01-01_2019-09-27") %>%
-  list.files(pattern = "*.Rds", full.names = T) %>%
+gtrends_m3_df <- file.path(dropbox_file_path, "Data", "google_trends", "RawData", "timeseries") %>%
+  list.files(pattern = "gtrends_date2018-09-01 2019-05-28*", full.names = T) %>%
   map_df(readRDS) %>%
-  distinct(date, keyword, keyword_en, geo, time, language, .keep_all = T) %>%
-  filter(!is.na(date)) %>%
+  clean_google_data() %>%
+  dplyr::rename(hits_tm3 = hits) 
+
+gtrends_m2_df <- file.path(dropbox_file_path, "Data", "google_trends", "RawData", "timeseries") %>%
+  list.files(pattern = "gtrends_date2019-01-01 2019-09-27*", full.names = T) %>%
+  map_df(readRDS) %>%
   clean_google_data() %>%
   dplyr::rename(hits_tm2 = hits) 
 
-gtrends_m1_df <- file.path(dropbox_file_path, "Data", "google_trends", "RawData",
-                           "timeseries_2019-07-01_2020-03-26") %>%
-  list.files(pattern = "*.Rds", full.names = T) %>%
+gtrends_m1_df <- file.path(dropbox_file_path, "Data", "google_trends", "RawData", "timeseries") %>%
+  list.files(pattern = "gtrends_date2019-07-01 2020-03-26*", full.names = T) %>%
   map_df(readRDS) %>%
-  distinct(date, keyword, keyword_en, geo, time, language, .keep_all = T) %>%
-  filter(!is.na(date)) %>%
   clean_google_data() %>%
-  dplyr::rename(hits_tm1 = hits) 
+  dplyr::rename(hits_tm1 = hits)
 
-gtrends_0_df <- file.path(dropbox_file_path, "Data", "google_trends", "RawData",
-                          "timeseries_2020-01-01_2020-09-26") %>%
-  list.files(pattern = "*.Rds", full.names = T) %>%
+gtrends_0_df <- file.path(dropbox_file_path, "Data", "google_trends", "RawData", "timeseries") %>%
+  list.files(pattern = "gtrends_date2020-01-01 2020-09-26*", full.names = T) %>%
   map_df(readRDS) %>%
-  distinct(date, keyword, keyword_en, geo, time, language, .keep_all = T) %>%
-  filter(!is.na(date)) %>%
   clean_google_data() %>%
   dplyr::rename(hits_t0 = hits) 
 
-gtrends_p1_df <- file.path(dropbox_file_path, "Data", "google_trends", "RawData",
-                           "timeseries_2020-07-05_2021-03-31") %>%
-  list.files(pattern = "*.Rds", full.names = T) %>%
+gtrends_p1_df <- file.path(dropbox_file_path, "Data", "google_trends", "RawData", "timeseries") %>%
+  list.files(pattern = "gtrends_date2020-07-05 2021-03-31*", full.names = T) %>%
   map_df(readRDS) %>%
-  distinct(date, keyword, keyword_en, geo, time, language, .keep_all = T) %>%
-  filter(!is.na(date)) %>%
   clean_google_data() %>%
   dplyr::rename(hits_tp1 = hits) 
 
-gtrends_p2_df <- file.path(dropbox_file_path, "Data", "google_trends", "RawData",
-                           "timeseries_2020-11-04_2021-07-31") %>%
-  list.files(pattern = "*.Rds", full.names = T) %>%
+gtrends_p2_df <- file.path(dropbox_file_path, "Data", "google_trends", "RawData", "timeseries") %>%
+  list.files(pattern = "gtrends_date2021-01-04 2021-09-30*", full.names = T) %>%
   map_df(readRDS) %>%
-  #distinct(date, keyword, keyword_en, geo, time, language, .keep_all = T) %>%
-  filter(!is.na(date)) %>%
   clean_google_data() %>%
   dplyr::rename(hits_tp2 = hits) 
 
 # Merge ------------------------------------------------------------------------
 gtrends_df <- gtrends_0_df %>%
-  full_join(gtrends_m2_df, by = c("date", "keyword", "geo", "language")) %>%
-  full_join(gtrends_m1_df, by = c("date", "keyword", "geo", "language")) %>%
-  full_join(gtrends_p1_df, by = c("date", "keyword", "geo", "language")) %>%
-  full_join(gtrends_p2_df, by = c("date", "keyword", "geo", "language"))
+  full_join(gtrends_m3_df, by = c("date", "keyword_en", "geo", "language")) %>%
+  full_join(gtrends_m2_df, by = c("date", "keyword_en", "geo", "language")) %>%
+  full_join(gtrends_m1_df, by = c("date", "keyword_en", "geo", "language")) %>%
+  full_join(gtrends_p1_df, by = c("date", "keyword_en", "geo", "language")) %>%
+  full_join(gtrends_p2_df, by = c("date", "keyword_en", "geo", "language"))
 
 # Blend hits -------------------------------------------------------------------
 # https://stats.stackexchange.com/questions/281162/scale-a-number-between-a-range
@@ -90,7 +88,7 @@ make_consistent_hits_var <- function(gtrends_df,
   ## Scale hits_2 to be like hits_1
   gtrends_df <- gtrends_df %>%
     dplyr::mutate(overlap = !is.na(hits_1) & !is.na(hits_2)) %>%
-    dplyr::group_by(keyword, geo, language) %>%
+    dplyr::group_by(keyword_en, geo, language) %>%
     dplyr::mutate(hits_1_o_max = max(hits_1[overlap %in% T]),
                   hits_1_o_min = min(hits_1[overlap %in% T]),
                   hits_2_o_max = max(hits_2[overlap %in% T]),
@@ -103,7 +101,7 @@ make_consistent_hits_var <- function(gtrends_df,
   
   ## Do certain keywords not overlap for any dates?
   gtrends_df <- gtrends_df %>%
-    dplyr::group_by(keyword, geo, language) %>%
+    dplyr::group_by(keyword_en, geo, language) %>%
     dplyr::mutate(overlap_anytime = max(overlap)) %>%
     ungroup()
   
@@ -142,101 +140,47 @@ make_consistent_hits_var <- function(gtrends_df,
   return(gtrends_df)
 }
 
-# Dividing by hits value in some cases, wher hits can range from 0 to 100.
+# Dividing by hits value in some cases, where hits can range from 0 to 100.
 # Add 1 so don't have zeros
 #gtrends_df <- gtrends_df %>%
 #  dplyr::mutate(hits_t1 = hits_t1 + 1,
 #                hits_t2 = hits_t2 + 1)
 gtrends_df <- make_consistent_hits_var(gtrends_df, "hits_t0",      "hits_tm1", "hits_tm1_adj")
 gtrends_df <- make_consistent_hits_var(gtrends_df, "hits_tm1_adj", "hits_tm2", "hits_tm2_adj")
-gtrends_df <- make_consistent_hits_var(gtrends_df, "hits_tm2_adj", "hits_tp1", "hits_tp1_adj")
+gtrends_df <- make_consistent_hits_var(gtrends_df, "hits_tm2_adj", "hits_tm3", "hits_tm3_adj")
+gtrends_df <- make_consistent_hits_var(gtrends_df, "hits_tm3_adj", "hits_tp1", "hits_tp1_adj")
 gtrends_df <- make_consistent_hits_var(gtrends_df, "hits_tp1_adj", "hits_tp2", "hits_tp2_adj")
-
-#gtrends_df <- make_consistent_hits_var(gtrends_df, "hits_t1",     "hits_t2", "hits_t2_adj")
-#gtrends_df <- make_consistent_hits_var(gtrends_df, "hits_t2_adj", "hits_t3",  "hits_t3_adj")
-
-# Choose One Language per Country ----------------------------------------------
-#### Merge in Language
-languages <- read.csv(file.path(dropbox_file_path, 
-                                "Data", "country_primary_language", "countries_lang.csv"),
-                      stringsAsFactors = F) 
-
-languages <- languages %>%
-  dplyr::select(Code, Language_code_main) %>%
-  dplyr::rename(geo = Code,
-                state_language = Language_code_main) %>%
-  filter(!(state_language == ""),
-         !is.na(languages)) 
-
-gtrends_df <- merge(gtrends_df, languages, by = "geo", all.x = T, all.y = F)
-
-#### Only keep if google hits language matches state language
-gtrends_df <- gtrends_df %>%
-  filter(!is.na(state_language)) %>%
-  filter(language == state_language)
-
-# Merge in English Version of Keyword ------------------------------------------
-keywords <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", 
-                              "keywords", "FinalData","covid_keywords_alllanguages_clean.Rds"))
-
-#### Dataset with english and translated word
-keywords <- keywords %>%
-  dplyr::select(names(keywords) %>% str_subset("keyword")) %>%
-  dplyr::mutate(keyword = keyword_en) %>%
-  pivot_longer(cols = -c(keyword)) %>%
-  dplyr::rename(keyword_en = keyword) %>%
-  dplyr::rename(keyword = value) %>%
-  dplyr::mutate(language = name %>% str_replace_all("keyword_", "")) %>%
-  dplyr::select(keyword_en, keyword, language) %>%
-  
-  mutate(keyword = keyword %>% tolower(),
-         keyword_en = keyword_en %>% tolower())
-
-head(keywords)
-
-#### Merge
-gtrends_df <- merge(gtrends_df, keywords, by = c("keyword", "language"), all.x=T, all.y=F)
-#gtrends_dfb <- merge(gtrends_df, keywords, by = "keyword", all.x=T, all.y=F)
-# TODO: Some keywords in different languages are mapped to the same english keyword
 
 # Cleanup ----------------------------------------------------------------------
 gtrends_df <- gtrends_df %>%
-  dplyr::select(keyword, keyword_en, geo, date, language, 
-                hits_t0, hits_tm1, hits_tm2, hits_tp1, hits_tp2, hits_tp2_adj) %>%
+  dplyr::select(keyword_en, geo, date, language,
+                hits_tp2_adj) %>%
   dplyr::mutate(date = date %>% as.Date()) %>%
   dplyr::rename(hits = hits_tp2_adj) 
 
-#gtrends_df$hits[gtrends_df$hits %in% Inf] <- NA
+gtrends_df$hits[is.na(gtrends_df$hits)] <- 0
+
+## Merge in original keyword (in original language
+keywords_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", 
+                                 "keywords", "FinalData", "covid_keywords_alllanguages.Rds"))
+
+keywords_df <- keywords_df %>%
+  dplyr::select(-c(category, scrape, priority_to_scrape, reference)) %>%
+  pivot_longer(-c(id, keyword_en)) %>%
+  dplyr::rename(keyword = value,
+                language = name) %>%
+  dplyr::mutate(language = language %>% str_replace_all("keyword_", ""),
+                keyword_en = keyword_en %>% tolower()) %>%
+  dplyr::select(-id) %>%
+  distinct() 
+
+gtrends_df <- left_join(gtrends_df, keywords_df,
+                        by = c("language", "keyword_en"))
+
+gtrends_df$keyword[gtrends_df$language %in% "en"] <- 
+  gtrends_df$keyword_en[gtrends_df$language %in% "en"]
 
 # Save Data --------------------------------------------------------------------
-## TODO: check why need
-gtrends_df <- gtrends_df %>%
-  distinct(keyword, keyword_en, geo, date, language, .keep_all = T)
-
 saveRDS(gtrends_df, file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
-                              "gtrends_full_timeseries", "gtrends.Rds"))
-
-# MAKE COMPLETE VERSION ========================================================
-gtrends_complete_df <- gtrends_df %>%
-  ungroup() %>%
-  dplyr::filter(keyword_en %in% c(KEYWORDS_CONTAIN_USE, KEYWORDS_SYMTPOMS)) 
-
-# WHY WOULD HAVE NA??
-gtrends_complete_df$hits[is.na(gtrends_complete_df$hits)] <- 0
-
-gtrends_complete_df <- gtrends_complete_df %>%
-  ungroup() %>%
-  tidyr::complete(geo, keyword_en, date,
-                  fill = list(hits = 0)) 
-
-# gtrends_complete_df <- gtrends_complete_df %>%
-#   ungroup() %>%
-#   tidyr::complete(geo = unique(gtrends_complete_df$geo), 
-#                   keyword_en = KEYWORDS_CONTAIN_USE, 
-#                   date = seq(ymd("2019-01-01"), ymd("2021-07-31"), by =1), 
-#                   fill = list(hits = 0)) 
-
-saveRDS(gtrends_complete_df,
-        file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
-                  "gtrends_full_timeseries", "gtrends_complete.Rds"))
+                              "gtrends_full_timeseries", "gtrends_complete.Rds"))
 

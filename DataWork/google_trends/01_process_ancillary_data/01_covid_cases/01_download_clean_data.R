@@ -18,14 +18,16 @@ cases_df <- cases_df %>%
                 death_new = New_deaths,
                 geo = Country_code,
                 date = Date_reported,
-                country = Country) 
-
+                country = Country) %>%
+  dplyr::mutate(date = date %>% as.Date())
+  
 # Add moving average -----------------------------------------------------------
 cases_df <- cases_df %>%
-  arrange(date) %>%
-  group_by(geo) %>%
-  mutate(cases_new_ma7 = runMean(cases_new, n = 7),
-         death_new_ma7 = runMean(death_new, n = 7))
+  dplyr::arrange(date) %>%
+  dplyr::group_by(geo) %>%
+  dplyr::mutate(cases_new_ma7 = runMean(cases_new, n = 7),
+                death_new_ma7 = runMean(death_new, n = 7)) %>%
+  ungroup()
 
 # Export -----------------------------------------------------------------------
 saveRDS(cases_df, file.path(who_covid_dir, "FinalData", "covid.Rds"))
