@@ -27,35 +27,67 @@ keywords_to_use <- c("debt",
                      "social distance",
                      "stay at home")
 
-# Load/Prep Data: Trends -------------------------------------------------------
-gtrends_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
-                                "gtrends_full_timeseries", "gtrends_otherdata_varclean_complete.Rds"))
+prep_keywords <- function(df){
+  
+  df <- df %>%
+    dplyr::mutate(keyword_type = case_when(
+      keyword_en %in% c("anxiety",
+                        "anxiety attack",
+                        "anxiety symptoms",
+                        "boredom",
+                        "hysteria",
+                        "insomnia",
+                        "loneliness",
+                        "lonely",
+                        "panic",
+                        "social isolation",
+                        "overwhelmed",
+                        "suicide") ~ "Mental Health",
+      
+      keyword_en %in% c("debt",
+                        "file for unemployment",
+                        "unemployment",
+                        "unemployment benefits",
+                        "unemployment insurance",
+                        "unemployment office") ~ "Economic",
+      
+      keyword_en %in% c("abortion",
+                        "break up",
+                        "condom",
+                        "dating app",
+                        "divorce",
+                        "emergency pill",
+                        "plan child",
+                        "plan other children",
+                        "pregnancy test",
+                        "relationship",
+                        "tinder",
+                        "wedding") ~ "Relationships\n&Family Planning",
+      
+      keyword_en %in% c("social distance",
+                        "stay at home") ~ "Social Distancing"
+    )) %>%
+    dplyr::mutate(keyword_en = keyword_en %>% tools::toTitleCase()) 
+  
+  keyword_factor_order <- df %>%
+    distinct(keyword_en, keyword_type) %>%
+    arrange(keyword_type, keyword_en) %>%
+    pull(keyword_en)
+  
+  df <- df %>%
+    dplyr::mutate(keyword_en = factor(keyword_en, levels = keyword_factor_order))
+  
+  return(df)
+}
 
-gtrends_sum_df <- gtrends_df %>%
-  dplyr::filter(!is.na(days_since_c_policy_yearcurrent),
-                keywords_en %in% keywords_to_use)
-
-gtrends_sum_df <- gtrends_sum_df %>%
-  dplyr::filter(pandemic_time %in% c(0, 1),
-                keyword_en %in% KEYWORDS_CONTAIN_USE,
-                days_since_c_policy_yearcurrent >= -90,
-                days_since_c_policy_yearcurrent <= 90) %>%
-  dplyr::select(geo, keyword_en, pandemic_time, days_since_c_policy_yearcurrent, hits_ma7) %>%
-  dplyr::mutate(days_since_c_policy_yearcurrent = days_since_c_policy_yearcurrent %>% as.numeric) %>%
-  tidyr::complete(geo = unique(gtrends_sum_df$geo), 
-                  keyword_en = KEYWORDS_CONTAIN_USE, 
-                  days_since_c_policy_yearcurrent = -90:90, 
-                  pandemic_time = c(0, 1),
-                  fill = list(hits_ma7 = 0)) 
-
-## Delete if no hits or policy data
-gtrends_sum_df <- gtrends_sum_df %>%
-  group_by(geo, keyword_en) %>%
-  dplyr::mutate(hits_ma7_geoSUM = sum(hits_ma7)) %>%
-  ungroup() %>%
-  dplyr::filter(hits_ma7_geoSUM > 0)
-
-gtrends_sum_df <- gtrends_sum_df %>%
+# Load/Prep Data [For Trends] --------------------------------------------------
+df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "FinalData", "results", 
+                        "did_pooled_data.Rds")) %>%
+  
+  # Filter keywords
+  dplyr::filter(keyword_en %in% keywords_to_use) %>%
+  
+  ## Standardized hits value
   group_by(keyword_en, geo) %>%
   dplyr::mutate(hits_ma7_min = min(hits_ma7, na.rm=T),
                 hits_ma7_max = max(hits_ma7, na.rm=T)) %>%
@@ -63,50 +95,28 @@ gtrends_sum_df <- gtrends_sum_df %>%
   dplyr::mutate(hits_ma7_std = ((hits_ma7 - hits_ma7_min) / (hits_ma7_max - hits_ma7_min))*100) %>%
   dplyr::group_by(keyword_en, pandemic_time, days_since_c_policy_yearcurrent) %>%
   dplyr::summarise(hits_ma7_std = mean(hits_ma7_std, na.rm = T)) %>%
-  #dplyr::mutate(keyword_en = keyword_en %>% tools::toTitleCase() %>% paste0("\nN Countries = ", N_countries_keyword))
-  dplyr::mutate(keyword_en = keyword_en %>% tools::toTitleCase()) %>%
-  dplyr::mutate(keyword_en = keyword_en %>%
-                  factor(levels = c("Debt",
-                                    "File for Unemployment",
-                                    "Unemployment",
-                                    "Unemployment Benefits",
-                                    "Unemployment Insurance",
-                                    "Unemployment Office",
-
-                                    "Anxiety",
-                                    "Anxiety Attack",
-                                    #"Anxiety Symptoms",
-                                    "Boredom",
-                                    #"Hysteria",
-                                    "Insomnia",
-                                    #"Loneliness",
-                                    "Lonely",
-                                    "Panic",
-                                    "Social Isolation",
-                                    "Suicide",
-
-                                    "Divorce",
-                                    "Wedding",
-                                    "Emergency Pill",
-                                    "Pregnancy Test",
-
-                                    "Social Distance",
-                                    "Stay at Home"))) %>%
+  ungroup() %>%
+  
+  # Prep variables
+  prep_keywords() %>%
   dplyr::mutate(pandemic_time = case_when(
     pandemic_time == 1 ~ "Pandemic",
     pandemic_time == 0 ~ "Pre-Pandemic"
   ))
 
-# Load/Prep Data: DiD Data -----------------------------------------------------
-df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "FinalData", "results", 
-                        "did_pooled_results.Rds"))
-
-df <- df %>%
+# Load/Prep Regression Results -------------------------------------------------
+coef_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "FinalData", "results", 
+                             "did_pooled_results.Rds")) %>%
+  
+  ## Prep keywords
+  mutate(keyword_en = keyword) %>%
+  dplyr::filter(keyword_en %in% keywords_to_use) %>%
+  prep_keywords() %>%
+  
+  ## Prep Coefficients
   dplyr::filter(variable %>% 
-                  str_detect("days_since_c_policy_yearcurrent_post_X_year2020|did_"),
-                keyword %in% keywords_to_use) %>%
-  dplyr::filter(type %in% c(#"did_gm_avg_min_AND_did_EconomicSupportIndex_max_INTER",
-    #"did_StringencyIndex_max_AND_did_EconomicSupportIndex_max_INTER",
+                  str_detect("days_since_c_policy_yearcurrent_post_X_year2020|did_")) %>%
+  dplyr::filter(type %in% c(
     "did_gm_avg_min_AND_did_EconomicSupportIndex_max",
     "did_StringencyIndex_max_AND_did_EconomicSupportIndex_max",
     "Overall")) %>%
@@ -127,72 +137,10 @@ df <- df %>%
     type == "did_StringencyIndex_max_AND_did_EconomicSupportIndex_max" ~ "stringency_index",
     TRUE ~ type,
   )) %>%
-  mutate(sig = ifelse(pvalue <= 0.05, "Sig", "Not Sig")) %>%
-  dplyr::mutate(keyword_type = case_when(
-    keyword %in% c("anxiety",
-                   "anxiety attack",
-                   "anxiety symptoms",
-                   "boredom",
-                   "hysteria",
-                   "insomnia",
-                   "loneliness",
-                   "lonely",
-                   "panic",
-                   "social isolation",
-                   "suicide") ~ "Mental Health",
-    
-    keyword %in% c("debt",
-                   "file for unemployment",
-                   "unemployment",
-                   "unemployment benefits",
-                   "unemployment insurance",
-                   "unemployment office") ~ "Economic",
-    
-    keyword %in% c("divorce",
-                   "wedding",
-                   "emergency pill",
-                   "pregnancy test") ~ "Relationships\n&Family Planning",
-    
-    keyword %in% c("social distance",
-                   "stay at home") ~ "Social Distancing"
-  )) %>%
-  mutate(keyword = keyword %>%
-           as.character() %>%
-           tools::toTitleCase()) %>%
-  dplyr::mutate(keyword = keyword %>%
-                  factor(levels = c("Debt",
-                                    "File for Unemployment",
-                                    "Unemployment",
-                                    "Unemployment Benefits",
-                                    "Unemployment Insurance",
-                                    "Unemployment Office",
-                                    
-                                    "Anxiety",
-                                    "Anxiety Attack",
-                                    #"Anxiety Symptoms",
-                                    "Boredom",
-                                    #"Hysteria",
-                                    "Insomnia",
-                                    #"Loneliness",
-                                    "Lonely",
-                                    "Panic",
-                                    "Social Isolation",
-                                    "Suicide",
-                                    
-                                    "Divorce",
-                                    "Wedding",
-                                    "Emergency Pill",
-                                    "Pregnancy Test",
-                                    
-                                    "Social Distance",
-                                    "Stay at Home"))) %>%
   dplyr::mutate(variable = variable %>% fct_rev) 
 
 # Trends Figure ----------------------------------------------------------------
-p_trends <- gtrends_sum_df[!(gtrends_sum_df$keyword_en %in% "Plan Other Children"),] %>% 
-  dplyr::mutate(pandemic_time_str = ifelse(pandemic_time == 1,
-                                           "Pandemic",
-                                           "Pre-Pandemic")) %>%
+p_trends <- df %>%
   ggplot() +
   geom_vline(xintercept = 0) +
   geom_line(aes(x = days_since_c_policy_yearcurrent,
@@ -212,13 +160,13 @@ p_trends <- gtrends_sum_df[!(gtrends_sum_df$keyword_en %in% "Plan Other Children
 #         axis.title.y = element_text(angle = 0, vjust = 0.5)
 
 # Overall Impact Figure --------------------------------------------------------
-p_overall <- df %>% 
+p_overall <- coef_df %>% 
   dplyr::filter(type == "Overall") %>%
-  mutate(keyword = keyword %>% fct_rev()) %>%
+  dplyr::mutate(keyword_en = keyword_en %>% fct_rev()) %>%
   ggplot(aes(xmin = p025,
              xmax = p975,
              x = b,
-             y = keyword,
+             y = keyword_en,
              color = keyword_type)) +
   geom_point() +
   geom_linerange() +
@@ -228,7 +176,7 @@ p_overall <- df %>%
   labs(color = "Category",
        x = "Coefficient (+/- 95% CI)",
        y = "Search Term",
-       title = "B. Diff-in-Diff Results: Impact of Contaiment Policies on Search Interest") +
+       title = "B. Diff-in-Diff Results: Impact of Contaiment Policies on\nSearch Interest") +
   theme(legend.position = "none")
 
 # Interaction Figures ----------------------------------------------------------
@@ -238,7 +186,7 @@ p_interact <- list()
 for(type_i in c("stringency_index", 
                 "mobility_reduction")){
   
-  p_interact[[type_i]] <- df %>% 
+  p_interact[[type_i]] <- coef_df %>% 
     dplyr::filter(type != "Overall") %>%
     dplyr::filter(type == type_i) %>%
     ggplot(aes(xmin = p025,
@@ -259,7 +207,7 @@ for(type_i in c("stringency_index",
           axis.text.y = element_text(color = "black")) +
     theme(legend.position = "bottom") +
     #scale_color_manual(values = c("black", "firebrick2")) +
-    facet_wrap(~keyword,
+    facet_wrap(~keyword_en,
                scales = "free_x")
   
 }

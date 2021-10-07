@@ -105,6 +105,13 @@ KEYWORDS_SYMTPOMS <- c("loss of smell",
                        "coronavirus",
                        "covid-19")
 
+VACCINE_KEYWORDS <- c("ivermectin",
+                      "vaccine",
+                      "covid vaccine",
+                      "covid vaccine side effects",
+                      "covid vaccine safety",
+                      "covid microchip")
+
 KEYWORDS_TIMESERIES_ALL <- c(KEYWORDS_CONTAIN_USE, KEYWORDS_SYMTPOMS) %>% unique()
 KEYWORDS_TIMESERIES_ALL_lw <- tolower(KEYWORDS_TIMESERIES_ALL)
 KEYWORDS_SYMTPOMS_lw <- tolower(KEYWORDS_SYMTPOMS)

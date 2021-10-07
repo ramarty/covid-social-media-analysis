@@ -3,40 +3,25 @@
 #### PARAMETERS
 DASHBOARD_PATH <- file.path(dropbox_file_path, "Data", "google_trends", "DashboardData", "data")
 
-# begin_day <- c("2020-02-01",
-#                "2020-03-01",
-#                "2020-04-01",
-#                "2020-05-01",
-#                "2020-06-01",
-#                "2020-07-01",
-#                "2020-08-01",
-#                "2020-09-01")
+begin_day <- c("2020-02-01",
+               "2020-03-01",
+               "2020-04-01",
+               "2020-05-01",
+               "2020-06-01",
+               "2020-07-01",
+               "2020-08-01",
+               "2020-09-01")
 
-begin_day <- c("2020-01-01",
-               "2021-01-01")
-
-# Load initial data ------------------------------------------------------------
-#### Example Data
-cor_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
-                            "gtrends_full_timeseries",
-                            "correlation_datasets",
-                            paste0("correlations_gtrends_since","2020-01-01","_until2021-09-30.Rds")))
-
-keywords <- cor_df$keyword_en %>% unique() %>% tolower()
+#begin_day <- "2020-02-01"
 
 #### Load Keywords
 keywords_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", 
                                  "keywords", "FinalData", 
-                                 "covid_keywords_alllanguages.Rds"))
-
-keywords_df <- keywords_df %>%
-  dplyr::filter(tolower(keyword_en) %in% keywords) %>%
-  dplyr::distinct(keyword_en, category) %>%
-  dplyr::mutate(category = category %>% tools::toTitleCase())
-
-# Save Keywords/Categories and Date (for selecting) ----------------------------
-saveRDS(begin_day, file.path(DASHBOARD_PATH, "begin_date_cor.Rds"))
-saveRDS(keywords_df, file.path(DASHBOARD_PATH, "keywords_categories.Rds"))
+                                 "covid_keywords_alllanguages_clean.Rds"))
+keywords <- keywords_df %>%
+  filter(scrape %in% "yes") %>%
+  pull(keyword_en) %>%
+  tolower()
 
 # World Shapefile --------------------------------------------------------------
 # world_sp <- readRDS(file.path(dropbox_file_path, "Data", "world_shapefile", 
@@ -73,15 +58,14 @@ for(begin_day_i in begin_day){
   
   print(paste(begin_day_i, "-------------------------------------------------"))
   
+  # cor_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
+  #                             "global_with_refstate",
+  #                             paste0("gl_gtrends_ref","US","_adj_cases_correlations_since_",begin_day_i,".Rds")))
+  # 
   cor_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
                                 "gtrends_full_timeseries",
                                 "correlation_datasets",
-                                paste0("correlations_gtrends_since",begin_day_i,"_until2021-09-30.Rds")))
-  
-  #cor_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
-  #                            "gtrends_full_timeseries",
-  #                            "correlation_datasets",
-  #                            paste0("correlations_gtrends_otherdata_varclean_since",begin_day_i,".Rds")))
+                                paste0("correlations_gtrends_otherdata_varclean_since",begin_day_i,".Rds")))
   
   cor_df <- cor_df[tolower(cor_df$keyword_en) %in% keywords,]
   
@@ -90,16 +74,14 @@ for(begin_day_i in begin_day){
 
   saveRDS(cor_df, file.path(DASHBOARD_PATH, paste0("correlations_since_",begin_day_i,".Rds")))
   
+  
   # gTrends ----------------------------------------------------------------------
-  # gtrends_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
-  #                               "gtrends_full_timeseries",
-  #                               "correlation_datasets",
-  #                               paste0("gtrends_otherdata_varclean_since",begin_day_i,"_until2021-09-30.Rds")))
-  # 
   gtrends_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
-                                  "gtrends_full_timeseries",
-                                  "correlation_datasets",
-                                  paste0("gtrends_since",begin_day_i,"_until2021-09-30.Rds")))
+                                "gtrends_full_timeseries",
+                                "correlation_datasets",
+                                paste0("gtrends_otherdata_varclean_since",begin_day_i,".Rds")))
+  
+  #gtrends_df <- gtrends_df[gtrends_df$geo %in% c("US", "BR", "IN"),]
   
   gtrends_df <- gtrends_df[tolower(gtrends_df$keyword_en) %in% keywords,]
   gtrends_df <- gtrends_df[!is.na(gtrends_df$keyword_en),]
@@ -126,6 +108,45 @@ for(begin_day_i in begin_day){
       SPARK_HEIGHT <- 150
       SPARK_WIDTH <- 200
     }
+    
+    # gtrends_sum_df <- gtrends_df %>% 
+    #   arrange(date) %>%
+    #   group_by(name, continent, keyword_en,
+    #            cases_total, death_total) %>% 
+    #   summarize(cases_new_spark = spk_chr(cases_new,
+    #                                       lineColor = 'orange', 
+    #                                       fillColor = 'orange',
+    #                                       chartRangeMin = 0,
+    #                                       chartRangeMax = 8,
+    #                                       width = width,
+    #                                       height = height,
+    #                                       tooltipChartTitle = "COVID-19 Cases",
+    #                                       highlightLineColor = 'orange', 
+    #                                       highlightSpotColor = 'orange'),
+    #             death_new_spark = spk_chr(death_new,
+    #                                       lineColor = 'orange', 
+    #                                       fillColor = 'orange',
+    #                                       chartRangeMin = 0,
+    #                                       chartRangeMax = 8,
+    #                                       width = width,
+    #                                       height = height,
+    #                                       tooltipChartTitle = "COVID-19 Deaths",
+    #                                       highlightLineColor = 'orange', 
+    #                                       highlightSpotColor = 'orange'),
+    #             hits_ma7_spark = spk_chr(hits_ma7,
+    #                                      lineColor = 'forestgreen', 
+    #                                      fillColor = 'forestgreen',
+    #                                      chartRangeMin = 0,
+    #                                      chartRangeMax = 8,
+    #                                      width = width,
+    #                                      height = height,
+    #                                      tooltipChartTitle = "Search Activity",
+    #                                      highlightLineColor = 'orange', 
+    #                                      highlightSpotColor = 'orange'),
+    #             cor_casesMA7_hitsMA7_max = cor_casesMA7_hitsMA7_max[1], 
+    #             cor_casesMA7_hitsMA7_lag = cor_casesMA7_hitsMA7_lag[1],
+    #             cor_deathMA7_hitsMA7_max = cor_deathMA7_hitsMA7_max[1], 
+    #             cor_deathMA7_hitsMA7_lag = cor_deathMA7_hitsMA7_lag[1]) 
     
     # COMPOSIT
     gtrends_df$group <- paste0(gtrends_df$name,

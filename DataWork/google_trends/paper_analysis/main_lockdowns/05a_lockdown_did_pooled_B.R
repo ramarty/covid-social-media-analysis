@@ -16,34 +16,13 @@ max_narm <- function(x){
 df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "FinalData", "results", 
                         "did_pooled_data.Rds"))
 
+## Further restrict dates
+df <- df %>%
+  dplyr::filter(abs(days_since_c_policy_yearcurrent) <= 90)
+
 names(df) <- names(df) %>%
   str_replace_all(" ", "_") %>%
   str_replace_all("/", "_")
-
-
-
-# a <- df %>%
-#   group_by(geo) %>%
-#   summarise(EconomicSupportIndex = max_narm(EconomicSupportIndex))
-# a$EconomicSupportIndex[a$EconomicSupportIndex > 0] %>% hist()
-# table(a$EconomicSupportIndex == 0)
-# table(a$EconomicSupportIndex > 0 & a$EconomicSupportIndex <= 50)
-# table(a$EconomicSupportIndex > 50 & a$EconomicSupportIndex)
-
-# df$`E1_Income support` %>% table()
-# df$`E2_Debt/contract relief` %>% table()
-# log(df$`E3_Fiscal measures`+1) %>% hist()
-# scale(log(df$`E4_International support`+ 1)) %>% hist()
-# df$EconomicSupportIndex %>% hist()
-# df$StringencyIndex %>% hist()
-# df$C %>% table()
-# df$c2_workplace_closing
-# df$c3_cancel_public_events
-# df$c4_restrictions_on_gatherings
-# df$c5_close_public_transport
-# df$c6_stay_at_home_requirements
-# df$c7_restrictions_on_internal_movement
-# df$c8_international_travel_controls
 
 # Prep Data --------------------------------------------------------------------
 df <- df %>%
@@ -191,40 +170,40 @@ run_regs <- function(keyword_i, df){
     mutate(type = "did_gm_avg_min")
   
   out6 <- felm(hits_ma7_log ~ pandemic_time + 
-                  days_since_c_policy_yearcurrent_post + 
-                  days_since_c_policy_yearcurrent_post_X_year2020 +
-                  did_gm_avg_min +
-                  did_EconomicSupportIndex_max | geo + week | 0 | 0, 
-                data = df[df$keyword_en %in% keyword_i,]) %>%
+                 days_since_c_policy_yearcurrent_post + 
+                 days_since_c_policy_yearcurrent_post_X_year2020 +
+                 did_gm_avg_min +
+                 did_EconomicSupportIndex_max | geo + week | 0 | 0, 
+               data = df[df$keyword_en %in% keyword_i,]) %>%
     lm_post_confint_tidy() %>%
     mutate(type = "did_gm_avg_min_AND_did_EconomicSupportIndex_max")
   
   out7 <- felm(hits_ma7_log ~ pandemic_time + 
-                  days_since_c_policy_yearcurrent_post + 
-                  days_since_c_policy_yearcurrent_post_X_year2020 +
-                  did_StringencyIndex_max +
-                  did_EconomicSupportIndex_max | geo + week | 0 | 0, 
-                data = df[df$keyword_en %in% keyword_i,]) %>%
+                 days_since_c_policy_yearcurrent_post + 
+                 days_since_c_policy_yearcurrent_post_X_year2020 +
+                 did_StringencyIndex_max +
+                 did_EconomicSupportIndex_max | geo + week | 0 | 0, 
+               data = df[df$keyword_en %in% keyword_i,]) %>%
     lm_post_confint_tidy() %>%
     mutate(type = "did_StringencyIndex_max_AND_did_EconomicSupportIndex_max")
   
   out8 <- felm(hits_ma7_log ~ pandemic_time + 
-                  days_since_c_policy_yearcurrent_post + 
-                  days_since_c_policy_yearcurrent_post_X_year2020 +
-                  did_gm_avg_min +
-                  did_EconomicSupportIndex_max +
-                  did_gm_avg_min_X_did_EconomicSupportIndex_max | geo + week | 0 | 0, 
-                data = df[df$keyword_en %in% keyword_i,]) %>%
+                 days_since_c_policy_yearcurrent_post + 
+                 days_since_c_policy_yearcurrent_post_X_year2020 +
+                 did_gm_avg_min +
+                 did_EconomicSupportIndex_max +
+                 did_gm_avg_min_X_did_EconomicSupportIndex_max | geo + week | 0 | 0, 
+               data = df[df$keyword_en %in% keyword_i,]) %>%
     lm_post_confint_tidy() %>%
     mutate(type = "did_gm_avg_min_AND_did_EconomicSupportIndex_max_INTER")
   
   out9 <- felm(hits_ma7_log ~ pandemic_time + 
-                  days_since_c_policy_yearcurrent_post + 
-                  days_since_c_policy_yearcurrent_post_X_year2020 +
-                  did_StringencyIndex_max +
-                  did_EconomicSupportIndex_max +
-                  did_StringencyIndex_max_X_did_EconomicSupportIndex_max | geo + week | 0 | 0, 
-                data = df[df$keyword_en %in% keyword_i,]) %>%
+                 days_since_c_policy_yearcurrent_post + 
+                 days_since_c_policy_yearcurrent_post_X_year2020 +
+                 did_StringencyIndex_max +
+                 did_EconomicSupportIndex_max +
+                 did_StringencyIndex_max_X_did_EconomicSupportIndex_max | geo + week | 0 | 0, 
+               data = df[df$keyword_en %in% keyword_i,]) %>%
     lm_post_confint_tidy() %>%
     mutate(type = "did_StringencyIndex_max_AND_did_EconomicSupportIndex_max_INTER")
   
