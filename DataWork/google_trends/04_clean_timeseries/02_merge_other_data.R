@@ -13,6 +13,11 @@ ox_earliest_measure_df <- readRDS(file.path(oxpol_dir, "FinalData", "OxCGRT_earl
 
 ox_nat_timeseries_df <- readRDS(file.path(oxpol_dir, "FinalData", "OxCGRT_national_timeseries.Rds"))
 
+## Oxford Policy - Vaccine
+vac_earliest_df <- readRDS(file.path(oxpol_dir, "FinalData", "OxCGRT_earliest_vaccine_dates.Rds"))
+
+vac_timeseries_df <- readRDS(file.path(oxpol_dir, "FinalData", "OxCGRT_vaccine_national_timeseries.Rds"))
+
 ## WDI
 wdi_df <- readRDS(file.path(dropbox_file_path, "Data", "wdi", "RawData", "wdi_data.Rds"))
 
@@ -41,6 +46,26 @@ gtrends_df <- gtrends_df %>%
 # Merge Oxford Policy Response Data --------------------------------------------
 gtrends_df <- gtrends_df %>%
   left_join(ox_nat_timeseries_df, by = c("geo", "date"))
+
+# Merge Oxford Vaccine Timeseries ----------------------------------------------
+gtrends_df <- gtrends_df %>%
+  left_join(vac_timeseries_df, by = c("geo", "date"))
+
+# Days Since Vaccines ----------------------------------------------------------
+gtrends_df <- gtrends_df %>%
+  left_join(vac_earliest_df, by = "geo")
+
+gtrends_df <- gtrends_df %>%
+  mutate(days_since_v1_vaccine_1 = date - v1_vaccine_1_first_date,
+         days_since_v1_vaccine_2 = date - v1_vaccine_2_first_date,
+         days_since_v2_vaccine_1 = date - v2_vaccine_1_first_date,
+         days_since_v2_vaccine_2 = date - v2_vaccine_2_first_date,
+         days_since_v2_vaccine_3 = date - v2_vaccine_3_first_date,) %>%
+  dplyr::select(-c(v1_vaccine_1_first_date,
+                   v1_vaccine_2_first_date,
+                   v2_vaccine_1_first_date,
+                   v2_vaccine_2_first_date,
+                   v2_vaccine_3_first_date))
 
 # Days Since Oxford Policies ---------------------------------------------------
 gtrends_df <- gtrends_df %>%

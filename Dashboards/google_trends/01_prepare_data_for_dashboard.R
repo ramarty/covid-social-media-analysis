@@ -29,14 +29,15 @@ keywords_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends",
                                  "keywords", "FinalData", 
                                  "covid_keywords_alllanguages.Rds"))
 
-keywords_df <- keywords_df %>%
+keywords_cat_df <- keywords_df %>%
   dplyr::filter(tolower(keyword_en) %in% keywords) %>%
   dplyr::distinct(keyword_en, category) %>%
   dplyr::mutate(category = category %>% tools::toTitleCase())
 
 # Save Keywords/Categories and Date (for selecting) ----------------------------
 saveRDS(begin_day, file.path(DASHBOARD_PATH, "begin_date_cor.Rds"))
-saveRDS(keywords_df, file.path(DASHBOARD_PATH, "keywords_categories.Rds"))
+saveRDS(keywords_cat_df, file.path(DASHBOARD_PATH, "keywords_categories.Rds"))
+saveRDS(keywords_df, file.path(DASHBOARD_PATH, "keywords.Rds"))
 
 # World Shapefile --------------------------------------------------------------
 # world_sp <- readRDS(file.path(dropbox_file_path, "Data", "world_shapefile", 

@@ -26,8 +26,9 @@ GTRENDS_TO_SCRAPE <- c("timeseries_2018-09-01_2019-05-28",
                        "timeseries_2019-07-01_2020-03-26",
                        "timeseries_2020-01-01_2020-09-26",
                        "timeseries_2020-07-05_2021-03-31",
-                       "timeseries_2020-11-04_2021-07-31",
-                       "timeseries_2021-01-04_2021-09-30") 
+                       #"timeseries_2020-11-04_2021-07-31",
+                       "timeseries_2021-01-04_2021-09-30") %>%
+  rev()
 
 #"timeseries_regions_2020-12-01_2021-05-31",
 #"timeseries_regions_2020-12-01_2021-07-31"
@@ -106,6 +107,10 @@ extract_trends <- function(iso_i,
 ## Keywords Dataset
 keywords_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", 
                                  "keywords", "FinalData", "covid_keywords_alllanguages.Rds"))
+
+vac_words <- keywords_df$keyword_en[keywords_df$category %>% str_detect("vaccine")]
+
+keywords_en_timeseries <- c(keywords_en_timeseries, vac_words) %>% unique()
 
 ## Language Dataset
 # Indicates which language to use for each country. 

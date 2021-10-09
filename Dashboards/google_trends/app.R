@@ -82,15 +82,7 @@ add_deps <- function(dtbl, name, pkg = name) {
 }
 
 # Prep Objects -----------------------------------------------------------------
-cor_after_dates <- c("2020-02-01",
-                     "2020-03-01",
-                     "2020-04-01",
-                     "2020-05-01",
-                     "2020-06-01",
-                     "2020-07-01",
-                     "2020-08-01")
-
-
+cor_after_dates <- readRDS(file.path("data", "begin_date_cor.Rds"))
 
 # Defaults
 gtrends_df <- readRDS(file.path("data", paste0("gtrends_since_",cor_after_dates[1],".Rds")))
@@ -109,32 +101,14 @@ LOAD_GTRENDS_INIT <- TRUE
 
 keyword_list <- gtrends_df$keyword_en %>% unique()
 
-keywords_df <- readRDS(file.path("data", "covid_keywords.Rds"))
-languges_df <- read_csv(file.path("data", "countries_lang.csv"))
+keywords_df <- readRDS(file.path("data", "keywords.Rds"))
+keywords_cat_df <- readRDS(file.path("data", "keywords_categories.Rds"))
+languges_df <- readRDS(file.path("data", "countries_lang.Rds"))
 
 ## Prep keywords
 keywords_df$keyword_en <- keywords_df$keyword_en %>% tools::toTitleCase()
 keywords_df <- keywords_df[keywords_df$keyword_en %in% gtrends_df$keyword_en,]
 keywords_df$category <- keywords_df$category %>% tools::toTitleCase() 
-
-keywords_clean_df <- keywords_df %>%
-  dplyr::rename(Portuguese = keyword_pt,
-                English = keyword_en,
-                Spanish = keyword_es,
-                French = keyword_fr,
-                Arabic = keyword_ar,
-                German = keyword_de,
-                Mandarin = keyword_zh,
-                Dutch = keyword_nl,
-                Italian = keyword_it,
-                Norwegian = keyword_no,
-                Swedish = keyword_sv,
-                Russian = keyword_ru,
-                Greek = keyword_el,
-                Turkish = keyword_tr) %>%
-  dplyr::filter(scrape %in% c("yes")) %>%
-  dplyr::select(English, Spanish, Portuguese, French, Arabic, German, Mandarin,
-                Dutch, Italian, Norwegian, Swedish, Russian, Greek, Turkish) 
 
 # FUNCTIONS ========
 gtpath <- ""
@@ -1886,7 +1860,7 @@ server = (function(input, output, session) {
     geo <- world$geo[world$name %in% input$select_country] %>% as.character()
     
     search_en <- input$select_keyword_country
-    language_code <- languges_df$Language_code_main[languges_df$Code %in% geo][1]
+    language_code <- languges_df$language_best[languges_df$geo %in% geo][1]
     
     if(length(search_en) %in% 0) search_en <- "Loss of Smell"
     if(length(language_code) %in% 0) language_code <- "en"
@@ -1899,7 +1873,7 @@ server = (function(input, output, session) {
       out <- ""
     } else{
       out <- paste0("<h4>", "'", search_en[1], "' translated into ",
-                    languges_df$Language_main[languges_df$Code %in% geo][1],": ",
+                    languges_df$Language[languges_df$geo %in% geo][1],": ",
                     search[1],
                     "</h4>")
       
@@ -1928,7 +1902,7 @@ server = (function(input, output, session) {
     
     ## Search term
     search_en <- input$select_keyword_country
-    language_code <- languges_df$Language_code_main[languges_df$Code %in% geo][1]
+    language_code <- languges_df$language_best[languges_df$geo %in% geo][1]
     
     if(length(search_en) %in% 0) search_en <- "Loss of Smell"
     if(length(language_code) %in% 0) language_code <- "en"
@@ -1957,7 +1931,7 @@ server = (function(input, output, session) {
     
     ## Search term
     search_en <- input$select_keyword_country
-    language_code <- languges_df$Language_code_main[languges_df$Code %in% geo][1]
+    language_code <- languges_df$language_best[languges_df$geo %in% geo][1]
     
     if(length(search_en) %in% 0) search_en <- "Loss of Smell"
     if(length(language_code) %in% 0) language_code <- "en"
@@ -1979,16 +1953,7 @@ server = (function(input, output, session) {
   output$language_table <- renderTable({
     
     languges_df %>%
-      dplyr::select(Name, Language_main) %>%
-      dplyr::rename(Country = Name,
-                    Language = Language_main) %>%
-      dplyr::mutate(Country = Country %>% tools::toTitleCase(),
-                    Language = Language %>% 
-                      str_replace_all("Chinese (Traditional)",
-                                      "Chinese (Simplified)") %>%
-                      tools::toTitleCase()) %>%
-      distinct(Country, Language) %>%
-      arrange(Country)
+      dplyr::select(Country, Language) 
     
   })
   

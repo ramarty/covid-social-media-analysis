@@ -163,7 +163,16 @@ for(begin_day_i in begin_day){
       dplyr::select(-c(keyword, keyword_en, cases, death, date)) %>%
       distinct(geo, .keep_all = T)
     
-    cor_max_df <- merge(cor_max_df, gtrends_otherdata, by = "geo", all.x=T, all.y=F)
+    gtrends_otherdata_sum <- gtrends_full_df %>%
+      group_by(geo) %>%
+      dplyr::summarise(h2_testing_policy_max = max(h2_testing_policy, na.rm=T),
+                       h2_testing_policy_median = median(h2_testing_policy, na.rm=T))
+    gtrends_otherdata_sum$h2_testing_policy_max[gtrends_otherdata_sum$h2_testing_policy_max %in% -Inf] <- NA
+    gtrends_otherdata_sum$h2_testing_policy_median[gtrends_otherdata_sum$h2_testing_policy_median %in% -Inf] <- NA
+    
+    cor_max_df <- cor_max_df %>%
+      left_join(gtrends_otherdata, by = "geo") %>%
+      left_join(gtrends_otherdata_sum, by = "geo")
     
     # Export ---------------------------------------------------------------------
     saveRDS(gtrends_panel_df, file.path(dropbox_file_path, "Data", "google_trends", "FinalData",

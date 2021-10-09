@@ -4,7 +4,7 @@
 gtrends_df <- readRDS(file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
                                 "gtrends_full_timeseries",
                                 "correlation_datasets",
-                                "correlations_gtrends_since2020-01-01_until2021-09-30.Rds"))
+                                "correlations_gtrends_since2020-01-01_until2020-12-31.Rds")) # 2021-09-30
 
 gtrends_losssmell_df <- gtrends_df %>%
   dplyr::filter(keyword_en %in% "loss of smell",
@@ -23,13 +23,17 @@ lm1_cor <- lm(cor_nolag ~ log(cases_total), data = gtrends_losssmell_df)
 lm2_cor <- lm(cor_nolag ~ per_pop_using_internet, data = gtrends_losssmell_df)
 lm3_cor <- lm(cor_nolag ~ mobile_cell_sub_per100, data = gtrends_losssmell_df)
 lm4_cor <- lm(cor_nolag ~ gdp_pc_ln, data = gtrends_losssmell_df)
+lm4_cor <- lm(cor_nolag ~ factor(h2_testing_policy_median), data = gtrends_losssmell_df)
 lm5_cor <- lm(cor_nolag ~ log(cases_total) + per_pop_using_internet + mobile_cell_sub_per100 + gdp_pc_ln, data = gtrends_losssmell_df)
+summary(lm4_cor)
 
 lm1_lag <- lm(lag ~ log(cases_total), data = gtrends_losssmell_df)
 lm2_lag <- lm(lag ~ per_pop_using_internet, data = gtrends_losssmell_df)
 lm3_lag <- lm(lag ~ mobile_cell_sub_per100, data = gtrends_losssmell_df)
 lm4_lag <- lm(lag ~ gdp_pc_ln, data = gtrends_losssmell_df)
+lm4_lag <- lm(lag ~ factor(h2_testing_policy_max), data = gtrends_losssmell_df)
 lm5_lag <- lm(lag ~ log(cases_total) + per_pop_using_internet + mobile_cell_sub_per100 + gdp_pc_ln, data = gtrends_losssmell_df)
+summary(lm4_lag)
 
 # Correlation between loss of smell search interest and COVID-19
 stargazer(lm1_cor,

@@ -17,3 +17,7 @@ for(SCAPED_FILE_i in SCRAPED_FILES){
 file.path(gtrends_dir, "RawData", "timeseries") %>%
   list.files(pattern = "*.Rds") %>%
   length()
+
+
+
+

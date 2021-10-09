@@ -16,7 +16,7 @@ pacman::p_load(gtrendsR, countrycode, parallel, pbmcapply, ggplot2, jsonlite,
                tidyverse, sf, raster, leaflet, leaflet.extras, plotly,
                geosphere, data.table, formattable, tidyr, viridis, data.table,
                WDI, scales, rnaturalearth, sp, utf8, ggtext, stargazer, lfe,
-               ggrepel, Rfast, tikzDevice)
+               ggrepel, Rfast, tikzDevice, ISOcodes)
 
 ## User defined functions
 source("https://raw.githubusercontent.com/ramarty/r_google_translate/main/r_google_translate.R")
@@ -112,7 +112,7 @@ VACCINE_KEYWORDS <- c("ivermectin",
                       "covid vaccine safety",
                       "covid microchip")
 
-KEYWORDS_TIMESERIES_ALL <- c(KEYWORDS_CONTAIN_USE, KEYWORDS_SYMTPOMS) %>% unique()
+KEYWORDS_TIMESERIES_ALL <- c(KEYWORDS_CONTAIN_USE, KEYWORDS_SYMTPOMS, VACCINE_KEYWORDS) %>% unique()
 KEYWORDS_TIMESERIES_ALL_lw <- tolower(KEYWORDS_TIMESERIES_ALL)
 KEYWORDS_SYMTPOMS_lw <- tolower(KEYWORDS_SYMTPOMS)
 

@@ -5,6 +5,8 @@
 keywords_df <- read_csv(file.path(dropbox_file_path, "Data", "google_trends", 
                                   "keywords", "RawData", "covid_keywords_english.csv"))
 
+keywords_df$keyword_en <- tolower(keywords_df$keyword_en)
+
 ## Language for each country
 languages_df <- readRDS(file.path(dropbox_file_path, "Data", 
                                   "country_primary_language", "FinalData",
