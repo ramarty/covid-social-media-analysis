@@ -43,6 +43,11 @@ select_countries_vec <- c("US")
 # vaccine and missinformation related keywords
 keywords_en_timeseries <- KEYWORDS_TIMESERIES_ALL
 
+## Countries with Vaccine Data
+ONLY_SCRAPE_ISO_WITH_VACCINE_DATA <- T
+vac_clean_df <- readRDS(file.path(oxpol_dir, "FinalData", "OxCGRT_earliest_vaccine_dates.Rds"))
+vaccine_countries <- vac_clean_df$geo %>% unique() %>% sort()
+
 # Function to Scrape Google Data -----------------------------------------------
 extract_trends <- function(iso_i,
                            term_i, 

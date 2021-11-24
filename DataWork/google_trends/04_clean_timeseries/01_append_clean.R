@@ -13,6 +13,7 @@ clean_google_data <- function(df){
   
   df <- df %>%
     dplyr::select(date, keyword_en, geo, language, hits) %>%
+    dplyr::filter(keyword_en %in% KEYWORDS_TIMESERIES_ALL) %>%
     tidyr::complete(date,
                     keyword_en = KEYWORDS_TIMESERIES_ALL,
                     nesting(geo, language),

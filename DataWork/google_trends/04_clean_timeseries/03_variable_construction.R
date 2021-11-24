@@ -70,6 +70,24 @@ saveRDS(gtrends_df,
         file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
                   "gtrends_full_timeseries", "gtrends_otherdata_varclean_complete.Rds"))
 
+## Export subsets for quicker loading
+saveRDS(gtrends_df %>%
+          dplyr::filter(keyword_en %in% KEYWORDS_CONTAIN_USE),
+        file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
+                  "gtrends_full_timeseries", "gtrends_otherdata_varclean_complete_containment.Rds"))
+
+saveRDS(gtrends_df %>%
+          dplyr::filter(keyword_en %in% KEYWORDS_SYMTPOMS),
+        file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
+                  "gtrends_full_timeseries", "gtrends_otherdata_varclean_complete_symptoms.Rds"))
+
+saveRDS(gtrends_df %>%
+          dplyr::filter(keyword_en %in% VACCINE_KEYWORDS),
+        file.path(dropbox_file_path, "Data", "google_trends", "FinalData",
+                  "gtrends_full_timeseries", "gtrends_otherdata_varclean_complete_vaccine.Rds"))
+
+
+ 
 
 
 

@@ -105,14 +105,69 @@ KEYWORDS_SYMTPOMS <- c("loss of smell",
                        "coronavirus",
                        "covid-19")
 
-VACCINE_KEYWORDS <- c("ivermectin",
+VACCINE_KEYWORDS <- c("vaccine approved",
+                      "is vaccine approved",
                       "vaccine",
                       "covid vaccine",
+                      "can i get the vaccine",
+                      
+                      "vaccine appointment",
+                      "pharmacy",
+                      
                       "covid vaccine side effects",
                       "covid vaccine safety",
-                      "covid microchip")
+                      "safety of covid vaccine",
+                      "does the covid vaccine make you sick",
+                      "long term effects of covid vaccine",
+                      "negative side effects of covid vaccine",
+                      
+                      
+                      
+                      "does covid vaccine change dna",
+                      "covid vaccine change dna",
+                      
+                      "is the covid vaccine the mark of the beast",
+                      "is covid vaccine the mark of the beast",
+                      "covid vaccine mark of the best",
+                      
+                      "covid vaccine infertility",
+                      "covid vaccine cause infertility",
+                      "can covid vaccine cause infertility",
+                      "does covid vaccine cause infertility",
+                      
+                      "covid vaccine cause autism",
+                      "covid vaccine austism",
+                      
+                      "covid microchip",
+                      "covid vaccine microchip",
+                      
+                      "ivermectin",
+                      
+                      
+                      "antivaccines",
+                      "vaccine conspiracy",
+                      "vaccine allergy",
+                      "vaccine mercury",
+                      "vaccine aluminum",
+                      "vaccine dna",
+                      "vaccine harm",
+                      "vaccine injuries",
+                      "vaccine near me",
+                      "vaccines are poison",
+                      "vaccines kill",
+
+
+                      "covid vaccine dangerous",
+                   )
+
+keywords_df <- read_csv(file.path(dropbox_file_path, "Data", "google_trends", 
+                                  "keywords", "RawData", "covid_keywords_english.csv"))
+
+keywords_df$keyword_en[keywords_df$category %>% str_detect("vac")] %>% unique()
+
 
 KEYWORDS_TIMESERIES_ALL <- c(KEYWORDS_CONTAIN_USE, KEYWORDS_SYMTPOMS, VACCINE_KEYWORDS) %>% unique()
+
 KEYWORDS_TIMESERIES_ALL_lw <- tolower(KEYWORDS_TIMESERIES_ALL)
 KEYWORDS_SYMTPOMS_lw <- tolower(KEYWORDS_SYMTPOMS)
 

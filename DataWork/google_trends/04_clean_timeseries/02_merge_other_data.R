@@ -39,6 +39,43 @@ gtrends_df <- gtrends_df %>%
 #gtrends_df$cases[gtrends_df$date %in% as.Date(c("2020-01-01", "2020-01-02"))] <- 0
 #gtrends_df$death[gtrends_df$date %in% as.Date(c("2020-01-01", "2020-01-02"))] <- 0
 
+# Global Vaccine Dosage Data ---------------------------------------------------
+gvac_df <- read.csv(file.path(dropbox_file_path, "Data", "global_vaccine", "RawData", "covid-vaccination-doses-per-capita.csv"),
+                    stringsAsFactors = F)
+
+## Add vaccination rate
+gvac_df <- gvac_df %>%
+  dplyr::filter(!is.na(Code),
+                Code != "") %>%
+  dplyr::mutate(geo = countrycode(Code, origin = "iso3c", destination = "iso2c")) %>%
+  dplyr::mutate(geo = case_when(
+    Entity %in% "Kosovo" ~ "XK",
+    TRUE ~ geo
+  )) %>%
+  dplyr::filter(!is.na(geo)) %>%
+  dplyr::rename(date = Day) %>%
+  dplyr::select(date, geo, total_vaccinations_per_hundred) %>%
+  dplyr::mutate(date = ymd(date))
+
+## First date of vaccinations
+gvac_first_df <- gvac_df %>%
+  dplyr::filter(total_vaccinations_per_hundred > 0) %>%
+  arrange(date) %>%
+  distinct(geo, .keep_all = T) %>%
+  dplyr::select(date, geo) %>%
+  dplyr::rename(date_first_vaccine_given = date) 
+
+## Merge
+gtrends_df <- gtrends_df %>%
+  left_join(gvac_df, by = c("geo", "date"))
+
+gtrends_df <- gtrends_df %>%
+  left_join(gvac_first_df, by = "geo")
+
+## Days since first vaccine given
+gtrends_df <- gtrends_df %>%
+  mutate(days_since_first_vaccine_given = date - date_first_vaccine_given)
+
 # Merge WDI --------------------------------------------------------------------
 gtrends_df <- gtrends_df %>%
   left_join(wdi_df, by = "geo")

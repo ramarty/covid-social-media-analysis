@@ -18,7 +18,7 @@ library(gtrendsR)
 SLEEP_TIME      <- 0.2 # number of seconds to pause after each scrape
 overwrite_files <- F # overwrite data?
 rev_language_codes <- T
-LANGUAGE_SUBSET <- "all" # "all", "en_only", "no_en"
+LANGUAGE_SUBSET <- "en_only" # "all", "en_only", "no_en"
 
 ## Timeframe to scrape
 # -- [timeseries]_[begin date]_[end date] to scrape time series data for all 
@@ -31,7 +31,7 @@ GTRENDS_TO_SCRAPE <- c("timeseries_2018-09-01_2019-05-28",
                        "timeseries_2019-07-01_2020-03-26",
                        "timeseries_2020-01-01_2020-09-26",
                        "timeseries_2020-07-05_2021-03-31",
-                       "timeseries_2020-11-04_2021-07-31") 
+                       "timeseries_2021-01-04_2021-09-30") 
 
 GTRENDS_TO_SCRAPE <- GTRENDS_TO_SCRAPE[1]
 
@@ -40,6 +40,8 @@ GTRENDS_TO_SCRAPE <- GTRENDS_TO_SCRAPE[1]
 
 ## Which countries to use when scraping [timeseries_region]
 select_countries_vec <- c("US")
+
+scraped_files_df <- readRDS(file.path("TO_UPLOAD", "scraped_files.Rds"))
 
 # Keywords ---------------------------------------------------------------------
 # Keywords to use to evaluate COVID containement policies
@@ -93,9 +95,40 @@ KEYWORDS_SYMTPOMS <- c("loss of smell",
                        "coronavirus",
                        "covid-19")
 
+VACCINE_KEYWORDS <- c("antivaccines",
+                      "ivermectin",
+                      "is vaccine approved",
+                      "vaccine",
+                      "vaccine conspiracy",
+                      "vaccine allergy",
+                      "vaccine mercury",
+                      "vaccine aluminum",
+                      "vaccine dna",
+                      "vaccine appointment",
+                      "vaccine approved",
+                      #"vaccine damage",
+                      #"vaccine fraud",
+                      "vaccine harm",
+                      "vaccine injuries",
+                      "vaccine near me",
+                      "vaccines are poison",
+                      "vaccines kill",
+                      "can i get the vaccine",
+                      "covid vaccine",
+                      "covid vaccine side effects",
+                      "covid vaccine safety",
+                      "covid vaccine infertility",
+                      "covid vaccine cause infertility",
+                      "does covid vaccine change dna",
+                      "covid vaccine change dna",
+                      "safety of covid vaccine",
+                      "covid vaccine safety",
+                      "covid vaccine dangerous",
+                      "covid microchip")
+
 ## Which keywords to scrape for [timeseries]. For [timeseries_region], uses
 # vaccine and missinformation related keywords
-keywords_en_timeseries <- c(KEYWORDS_SYMTPOMS, KEYWORDS_CONTAIN_USE) #%>% sort()
+keywords_en_timeseries <- c(VACCINE_KEYWORDS) #%>% sort()
 
 # Function to Scrape Google Data -----------------------------------------------
 extract_trends <- function(iso_i,
@@ -205,6 +238,11 @@ for(GTRENDS_TO_SCRAPE_i in GTRENDS_TO_SCRAPE){
     str_replace_all("timeseries_", "") %>%
     str_replace_all("_", " ")
   
+  vac_words <- keywords_df$keyword_en[keywords_df$category %>% str_detect("vaccine")]
+  
+  #keywords_en_timeseries <- c(keywords_en_timeseries, vac_words) %>% unique()
+  keywords_en_timeseries <- c(keywords_en_timeseries, vac_words) %>% unique()
+  
   if(ALL_TERMS){
     keywords_sub_df <- keywords_df[keywords_df$keyword_en %in% keywords_en_timeseries,]
   } else{
@@ -269,32 +307,44 @@ for(GTRENDS_TO_SCRAPE_i in GTRENDS_TO_SCRAPE){
                                      language,
                                      ".Rds"))
         
-        if(!file.exists(out_path) | overwrite_files){
-          print(start_end_date)
-          print(paste(language, iso_i, term_i, term_en_i, "------------------"))
-          
-          tryCatch({
-            
-            term_df <- extract_trends(iso_i,
-                                      term_i,
-                                      term_en_i,
-                                      language,
-                                      start_end_date,
-                                      onlyInterest,
-                                      SLEEP_TIME)
-            
-            saveRDS(term_df, out_path)
-            
-            Sys.sleep(0.01) # pause after each term
-            
-          }, error=function(e){})
-          
-        } 
+        EXISTS <- paste0("gtrends_date",
+                         start_end_date,
+                         "_iso",
+                         iso_i, 
+                         "_termen",
+                         term_en_i,
+                         "_language",
+                         language,
+                         ".Rds") %in% scraped_files_df$file_name
         
+        if(!EXISTS){
+          if(!file.exists(out_path) | overwrite_files){
+            print(start_end_date)
+            print(paste(language, iso_i, term_i, term_en_i, "------------------"))
+            
+            tryCatch({
+              
+              term_df <- extract_trends(iso_i,
+                                        term_i,
+                                        term_en_i,
+                                        language,
+                                        start_end_date,
+                                        onlyInterest,
+                                        SLEEP_TIME)
+              
+              saveRDS(term_df, out_path)
+              
+              Sys.sleep(0.01) # pause after each term
+              
+            }, error=function(e){})
+            
+          } 
+          
+        }
       }
+      
+      # end language loop
     }
-    
-    # end language loop
   }
 }
 
