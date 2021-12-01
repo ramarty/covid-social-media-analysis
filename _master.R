@@ -16,7 +16,7 @@ pacman::p_load(gtrendsR, countrycode, parallel, pbmcapply, ggplot2, jsonlite,
                tidyverse, sf, raster, leaflet, leaflet.extras, plotly,
                geosphere, data.table, formattable, tidyr, viridis, data.table,
                WDI, scales, rnaturalearth, sp, utf8, ggtext, stargazer, lfe,
-               ggrepel, Rfast, tikzDevice, ISOcodes)
+               ggrepel, Rfast, tikzDevice, ISOcodes, ggthemes)
 
 ## User defined functions
 source("https://raw.githubusercontent.com/ramarty/r_google_translate/main/r_google_translate.R")
@@ -103,68 +103,67 @@ KEYWORDS_SYMTPOMS <- c("loss of smell",
                        "how to treat coronavirus",
                        "covid symptoms",
                        "coronavirus",
-                       "covid-19")
+                       "covid-19") 
 
-VACCINE_KEYWORDS <- c("vaccine approved",
-                      "is vaccine approved",
-                      "vaccine",
-                      "covid vaccine",
-                      "can i get the vaccine",
+# "vaccine cause autism"  
+#  "Bill Gates BioTerrorist" 
+# "Antivaccines"  
+# "Fuck vaccines"  
+# "Vaccine damage" 
+# "Vaccine harm"  
+#  "covid 19 vaccine priority list"  
+# "vaccine approved" 
+# "is vaccine approved" 
+#  "vaccine sex"   
+# "adverse effect"  
+# "vaccine disease"   
+VACCINE_KEYWORDS <- c("does covid vaccine change dna",             "covid vaccine change dna",             
+                      "safety of covid vaccine",                    "covid vaccine safety",                      
+                      "covid vaccine side effects",                 "covid vaccine dangerous",                   
+                      "long term effects of covid vaccine",         "negative side effects of covid vaccine",    
+                      "is the covid vaccine the mark of the beast", "is covid vaccine the mark of the beast",    
+                      "covid vaccine",                              "covid vaccine cause infertility",           
+                      "can covid vaccine cause infertility",        "does covid vaccine cause infertility",      
+                      "covid vaccine infertility",                  "covid vaccine mark of the best",            
+                      "covid vaccine austism",                     
+                      "covid vaccine cause autism",                 "covid microchip",                           
+                      "covid vaccine microchip",                    "ivermectin",                                
+                      "COVID vaccine mercury",                                     
+                      "Covid vaccine is poison",                   
+                      "Medical freedom",                           
+                      "Vaccine failure",                           
+                      "Vaccine fraud",                             
+                      "Vaccine injuries",                           "Vaccines are poison",                       
+                      "Vaccines kill",                              "covid vaccine unsafe",                      
+                      "covid vaccine ineffective",                  "blood clots",                               
+                      "covid vaccine blood clots",                  "where covid vaccine",                       
+                      "covid vaccine appointment",                  "vaccine appointment",                       
+                      "pharmacy",                                   "vaccine near me",                           
+                      "get covid vaccine near me",                  "where get covid vaccine near me",           
+                      "where can I get the covid vaccine",          "where to get vaccine covid near me",        
+                      "covid vaccine center",                       "where to get covid vaccine",                
+                      "covid vaccine appointment near me",          "can i get the vaccine",                     
+                      "can I get the covid vaccine",                "covid vaccine priority",                    
+                      "covid vaccine priority list",                        
+                      "sick from covid vaccine",                    "covid vaccine sick",                        
+                      "does the covid vaccine make you sick",       "do you get sick after covid vaccine",       
+                      "covid vaccine second dose",                  "covid vaccine second dose sick",            
                       
-                      "vaccine appointment",
-                      "pharmacy",
+                      "covid vaccine approved",                     "is covid vaccine approved",                 
+                      "vaccine approval",                           "vaccine reaction",                          
+                      "vaccine conspiracy",                         "vaccine allergy",                           
+                      "vaccine toxins",                            
+                      "vaccine mercury",                            "vaccine aluminum",                          
                       
-                      "covid vaccine side effects",
-                      "covid vaccine safety",
-                      "safety of covid vaccine",
-                      "does the covid vaccine make you sick",
-                      "long term effects of covid vaccine",
-                      "negative side effects of covid vaccine",
-                      
-                      
-                      
-                      "does covid vaccine change dna",
-                      "covid vaccine change dna",
-                      
-                      "is the covid vaccine the mark of the beast",
-                      "is covid vaccine the mark of the beast",
-                      "covid vaccine mark of the best",
-                      
-                      "covid vaccine infertility",
-                      "covid vaccine cause infertility",
-                      "can covid vaccine cause infertility",
-                      "does covid vaccine cause infertility",
-                      
-                      "covid vaccine cause autism",
-                      "covid vaccine austism",
-                      
-                      "covid microchip",
-                      "covid vaccine microchip",
-                      
-                      "ivermectin",
-                      
-                      
-                      "antivaccines",
-                      "vaccine conspiracy",
-                      "vaccine allergy",
-                      "vaccine mercury",
-                      "vaccine aluminum",
-                      "vaccine dna",
-                      "vaccine harm",
-                      "vaccine injuries",
-                      "vaccine near me",
-                      "vaccines are poison",
-                      "vaccines kill",
+                      "vaccine dna", "vaccine",
+                      "needle phobia",
+                      "fear of needles",
+                      "trypanophobia")
 
+#keywords_df <- read_csv(file.path(dropbox_file_path, "Data", "google_trends", 
+#                                  "keywords", "RawData", "covid_keywords_english.csv"))
 
-                      "covid vaccine dangerous",
-                   )
-
-keywords_df <- read_csv(file.path(dropbox_file_path, "Data", "google_trends", 
-                                  "keywords", "RawData", "covid_keywords_english.csv"))
-
-keywords_df$keyword_en[keywords_df$category %>% str_detect("vac")] %>% unique()
-
+#keywords_df$keyword_en[keywords_df$category %>% str_detect("vac")] %>% unique()
 
 KEYWORDS_TIMESERIES_ALL <- c(KEYWORDS_CONTAIN_USE, KEYWORDS_SYMTPOMS, VACCINE_KEYWORDS) %>% unique()
 

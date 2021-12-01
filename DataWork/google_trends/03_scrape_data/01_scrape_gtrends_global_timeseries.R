@@ -22,22 +22,22 @@ LANGUAGE_SUBSET <- "all" # "all", "en_only", "no_en"
 #    for select keywords and to capture data at the State level; does not 
 #    capture the time series
 
-#                        #"timeseries_2020-11-04_2021-07-31",
-
-
 GTRENDS_TO_SCRAPE <- c("timeseries_2018-09-01_2019-05-28",
                        "timeseries_2019-01-01_2019-09-27",
                        "timeseries_2019-07-01_2020-03-26",
                        "timeseries_2020-01-01_2020-09-26",
                        "timeseries_2020-07-05_2021-03-31",
-                       "timeseries_2021-01-04_2021-09-30") %>%
+                       "timeseries_2021-01-04_2021-09-30",
+                       
+                       "timeseries_regions_2020-12-01_2021-05-31",
+                       "timeseries_regions_2021-03-01_2021-05-31",
+                       
+                       "timeseries_regions_2020-12-01_2021-09-30",
+                       "timeseries_regions_2021-03-01_2021-09-30") %>%
   rev()
 
-#"timeseries_regions_2020-12-01_2021-05-31",
-#"timeseries_regions_2020-12-01_2021-07-31"
-
 ## Which countries to use when scraping [timeseries_region]
-select_countries_vec <- c("US")
+regions_countries_vec <- c("US")
 
 ## Which keywords to scrape for [timeseries]. For [timeseries_region], uses
 # vaccine and missinformation related keywords
@@ -124,10 +124,6 @@ languages <- readRDS(file.path(dropbox_file_path,
                                "FinalData",
                                "country_language.Rds"))
 
-if(ONLY_SCRAPE_ISO_WITH_VACCINE_DATA){
-  languages <- languages[languages$geo %in% vaccine_countries,]
-}
-
 language_codes_all <- languages$language_best %>% unique()
 language_codes_all <- language_codes_all[!is.na(language_codes_all)]
 language_codes_all <- language_codes_all[language_codes_all != ""]
@@ -140,8 +136,6 @@ if(LANGUAGE_SUBSET %in% "en_only"){
 if(LANGUAGE_SUBSET %in% "no_en"){
   language_codes_all <- language_codes_all[language_codes_all != "en"]
 }
-
-#language_codes_all <- c("en", "es", "fr")
 
 # Prep Parameters Based on Folder Name -----------------------------------------
 for(GTRENDS_TO_SCRAPE_i in GTRENDS_TO_SCRAPE){
@@ -169,8 +163,22 @@ for(GTRENDS_TO_SCRAPE_i in GTRENDS_TO_SCRAPE){
   if(ALL_TERMS){
     keywords_sub_df <- keywords_df[keywords_df$keyword_en %in% keywords_en_timeseries,]
   } else{
-    keywords_sub_df <- keywords_df %>%
-      dplyr::filter(category %in% c("vaccine", "missinformation", "us election missinformation"))
+    keywords_sub_df <- keywords_df[keywords_df$keyword_en %in% c("vaccine",
+                                                                 "covid vaccine",
+                                                                 "covid-19",
+                                                                 "covid vaccine side effects",
+                                                                 "covid vaccine safety",
+                                                                 "covid microchip",
+                                                                 "covid vaccine cause infertility",
+                                                                 "does covid vaccine change dna",
+                                                                 "ivermectin",
+                                                                 "is the covid vaccine the mark of the beast"),]
+    
+    keywords_sub_df <- keywords_sub_df %>%
+      dplyr::filter(category %in% c("coronavirus general",
+                                    "treatment",
+                                    "vaccine", 
+                                    "missinformation"))
   }
   
   ## Check if root folder exists; if not, create
@@ -208,7 +216,7 @@ for(GTRENDS_TO_SCRAPE_i in GTRENDS_TO_SCRAPE){
     iso2 <- iso2[!is.na(iso2)]
     
     # In some cases, subset iso2 vector
-    if(!ALL_COUNTRIES) iso2 <- iso2[iso2 %in% select_countries_vec]
+    if(!ALL_COUNTRIES) iso2 <- iso2[iso2 %in% regions_countries_vec]
     if(grepl("timeseriesALL_", GTRENDS_TO_SCRAPE_i)) iso2 <- "all"
     
     ## SCRAPE DATA
