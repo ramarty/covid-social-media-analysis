@@ -69,6 +69,53 @@ for(keyword_type in c("symptoms", "contain", "vaccine")){
   gtrends_df <- gtrends_df %>%
     dplyr::mutate(mm_dd = date %>% substring(6,10))
   
+  # Add Categories -------------------------------------------------------------
+  if(keyword_type %in% "vaccine"){
+    
+    gtrends_df <- gtrends_df %>%
+      dplyr::mutate(keyword_cat = case_when(
+        # Searches specifically related to appointments
+        keyword_en %in% c("can i get the covid vaccine",
+                          "covid vaccine appointment",
+                          "vaccine appointment",
+                          "covid vaccine center") ~ "Vaccine Appointment",
+        
+        keyword_en %in% c("covid vaccine",
+                          "covid vaccine priority",
+                          "covid vaccine priority list",
+                          "covid vaccine approved",
+                          "is covid vaccine approved", ## COULD DELETE
+                          "covid vaccine second dose",
+                          "vaccine near me", ## COULD DELETE
+                          "where to get covid vaccine",
+                          "vaccine") ~ "Vaccine General",
+        
+        keyword_en %in% c("covid vaccine blood clots",
+                          "covid vaccine safety",
+                          "covid vaccine sick", ## COULD DELETE
+                          "covid vaccine side effects",
+                          "safety of covid vaccine",
+                          "vaccine allergy",
+                          "long term effects of covid vaccine",
+                          "vaccine reaction",
+                          "fear of needles",
+                          "needle phobia",
+                          "trypanophobia") ~ "Side Effects & Safety",
+        
+        keyword_en %in% c("covid microchip",
+                          "covid vaccine microchip",
+                          "covid vaccine cause infertility",
+                          "covid vaccine infertility",
+                          "covid vaccine change dna",
+                          "does covid vaccine change dna",
+                          "covid vaccine dangerous",
+                          "is the covid vaccine the mark of the beast",
+                          "covid vaccine mercury",
+                          "ivermectin") ~ "Misinformation"
+      ))
+    
+  }
+  
   # Export =======================================================================
   saveRDS(gtrends_df,
           file.path(dropbox_file_path, "Data", "google_trends", "FinalData",

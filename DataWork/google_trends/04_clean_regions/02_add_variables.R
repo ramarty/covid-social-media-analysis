@@ -92,7 +92,16 @@ saveRDS(gtrends_df, file.path(dropbox_file_path, "Data", "google_trends", "Final
                               "gtrends_regional_clean.Rds"))
 
 
+gtrends_df$time_span %>% table()
 
+gtrends_df %>%
+  dplyr::filter(time_span %in% "2020-12-01 2021-09-30") %>%
+  ggplot() +
+  geom_point(aes(x = hits, 
+                 y = vax_per100_2021_09_30)) +
+  facet_wrap(~keyword_en)
+
+gtrends_df$keyword %>% table()
 
 
 #### Share of people vaccinated as of June 18

@@ -21,3 +21,6 @@ for(time_span in c("2020-12-01_2021-05-31",
                          paste0("gtrends_missinfo_", time_span, ".Rds")))
 }
 
+
+
+

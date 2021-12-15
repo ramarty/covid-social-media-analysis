@@ -32,8 +32,8 @@ GTRENDS_TO_SCRAPE <- c("timeseries_2018-09-01_2019-05-28",
                        "timeseries_regions_2020-12-01_2021-05-31",
                        "timeseries_regions_2021-03-01_2021-05-31",
                        
-                       "timeseries_regions_2020-12-01_2021-09-30",
-                       "timeseries_regions_2021-03-01_2021-09-30") %>%
+                       "timeseries_regions_2021-03-01_2021-09-30",
+                       "timeseries_regions_2020-12-01_2021-09-30") %>%
   rev()
 
 ## Which countries to use when scraping [timeseries_region]
@@ -163,22 +163,24 @@ for(GTRENDS_TO_SCRAPE_i in GTRENDS_TO_SCRAPE){
   if(ALL_TERMS){
     keywords_sub_df <- keywords_df[keywords_df$keyword_en %in% keywords_en_timeseries,]
   } else{
-    keywords_sub_df <- keywords_df[keywords_df$keyword_en %in% c("vaccine",
-                                                                 "covid vaccine",
-                                                                 "covid-19",
-                                                                 "covid vaccine side effects",
-                                                                 "covid vaccine safety",
-                                                                 "covid microchip",
-                                                                 "covid vaccine cause infertility",
-                                                                 "does covid vaccine change dna",
-                                                                 "ivermectin",
-                                                                 "is the covid vaccine the mark of the beast"),]
+
+    # keywords_sub_df <- keywords_df[keywords_df$keyword_en %in% c("vaccine",
+    #                                                              "covid vaccine",
+    #                                                              "covid-19",
+    #                                                              "covid vaccine side effects",
+    #                                                              "covid vaccine safety",
+    #                                                              "covid microchip",
+    #                                                              "covid vaccine cause infertility",
+    #                                                              "does covid vaccine change dna",
+    #                                                              "ivermectin",
+    #                                                              "is the covid vaccine the mark of the beast"),]
     
-    keywords_sub_df <- keywords_sub_df %>%
+    keywords_sub_df <- keywords_df %>%
       dplyr::filter(category %in% c("coronavirus general",
                                     "treatment",
                                     "vaccine", 
-                                    "missinformation"))
+                                    "missinformation",
+                                    "vaccine misinformation"))
   }
   
   ## Check if root folder exists; if not, create
